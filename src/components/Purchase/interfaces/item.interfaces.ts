@@ -1,0 +1,1 @@
+export type { PurchaseItem as Item } from './purchase.interfaces';
