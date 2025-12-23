@@ -3,8 +3,8 @@
     <!-- ============================= -->
     <!-- Breadcrumb -->
     <!-- ============================= -->
-    <div class="card flex justify-center mt-3 mb-3">
-      <Breadcrumb :home="breadcrumbHome" :model="breadcrumbItems" />
+    <div class="card flex justify-center mt-2 mb-3">
+        <Breadcrumb :home="breadcrumbHome" :model="breadcrumbItems" />
     </div>
 
     <!-- ============================= -->
@@ -25,7 +25,7 @@
     <!-- ============================= -->
     <div class="flex justify-between mb-3">
       <Button 
-        class="p-button-sm bg-teal-500" 
+        class="p-button-sm" 
         label="قسم جديد" 
         icon="fas fa-plus" 
         @click="openAddEditDepartmentDialog()" 
@@ -49,13 +49,12 @@
     >
       <!-- Table Header with Search -->
       <template #header>
-        <div class="flex justify-between items-center">
-          <IconField>
-            <InputIcon>
-              <i class="pi pi-search" />
-            </InputIcon>
-            <InputText v-model="filters.global.value" placeholder="بحث شامل..." />
-          </IconField>
+        <div class="">
+          <FloatLabel variant="on">
+            <InputText v-model="filters.global.value" style="width: 20vw"/>
+            <label for="global_filter_field"><i class="fas fa-search"/> بحث شامل</label>
+          </FloatLabel>
+          <small class="text-gray-500 text-xs">البحث الشامل على جميع الحقول مثل [الاسم, كود القسم, مدير القسم, الوصف]</small>
         </div>
       </template>
 
@@ -67,31 +66,33 @@
       <!-- Columns -->
       <Column field="id" sortable>
         <template #header>
-          <i class="fas fa-hashtag text-gray-500"></i>
+          <span v-tooltip="{ value: 'الرقم التسلسلي الخاص بالقسم', showDelay: 500, hideDelay: 300 }">
+            <i class="fas fa-hashtag text-gray-500"></i>
+          </span>
         </template>
       </Column>
 
-      <Column field="name" header="اسم القسم" sortable>
+      <Column field="name" sortable>
         <template #header>
-          <i class="fa-solid fa-object-group text-gray-500"></i>
+          <span v-tooltip="{ value: 'اسم القسم الكامل الذي يضهر في جميع الصفحات والتقارير', showDelay: 500, hideDelay: 300 }">
+            <i class="fa-solid fa-object-group text-gray-500"></i>اسم القسم
+          </span>
         </template>
       </Column>
 
-      <Column field="code" header="رمز القسم" sortable>
+      <Column field="code" sortable>
         <template #header>
-          <i class="fa-solid fa-square-binary text-gray-500"></i>
+          <span v-tooltip="{ value: 'الرمز الفريد الخاص بالقسم', showDelay: 500, hideDelay: 300 }">
+            <i class="fa-solid fa-square-binary text-gray-500"></i>رمز القسم
+          </span>
         </template>
       </Column>
 
-      <Column field="username" header="اسم المستخدم" sortable>
+      <Column field="manager.name" sortable>
         <template #header>
-          <i class="fa-solid fa-tag text-gray-500"></i>
-        </template>
-      </Column>
-
-      <Column field="manager.name" header="المدير" sortable>
-        <template #header>
-          <i class="fas fa-user-tie text-gray-500"></i>
+          <span v-tooltip="{ value: 'مدير القسم وهوه الشخص الذي لديه صلاحيات كامله على القسم', showDelay: 500, hideDelay: 300 }">
+            <i class="fas fa-user-tie text-gray-500"></i>المدير
+          </span>
         </template>
         <template #body="slotProps">
           <!-- Display Manager Name -->
@@ -131,21 +132,25 @@
         </template>
       </Column>
 
-      <Column field="description" header="الوصف" sortable>
+      <Column field="description" sortable>
         <template #header>
-          <i class="fa-solid fa-text-width text-gray-500"></i>
+          <span v-tooltip="{ value: 'الوصف الخاص بالقسم وجميع تفاصيل القسم', showDelay: 500, hideDelay: 300 }">
+            <i class="fa-solid fa-text-width text-gray-500"></i>الوصف
+          </span>
         </template>
       </Column>
 
       <!-- Actions Column -->
-      <Column header="الادارة">
+      <Column>
         <template #header>
-          <i class="fas fa-cogs text-gray-500"></i>
+          <span v-tooltip="{ value: 'ازرار ادارة القسم [تعديل, حذف, عرض المستخدمين]', showDelay: 500, hideDelay: 300 }">
+            <i class="fas fa-cogs text-gray-500"></i>الادارة
+          </span>
         </template>
         <template #body="{ data }">
-          <Button icon="fas fa-users" class="ml-1" severity="secondary" rounded variant="outlined" aria-label="all users" @click="openUsersDialog(data)" />
-          <Button icon="fas fa-edit" class="ml-1" severity="secondary" rounded variant="outlined" aria-label="edit" @click="openAddEditDepartmentDialog(data)" />
-          <Button icon="fas fa-trash-alt" severity="danger" rounded variant="outlined" aria-label="delete" @click.stop="confirmDeleteDepartment(data)" />
+          <Button icon="fas fa-users" class="ml-1" severity="secondary" rounded variant="outlined" aria-label="all users" @click="openUsersDialog(data)" v-tooltip="{ value: 'عرض جميع المستخدمين المنتمين الى القسم', showDelay: 1000, hideDelay: 300 }"/>
+          <Button icon="fas fa-edit" class="ml-1" severity="secondary" rounded variant="outlined" aria-label="edit" @click="openAddEditDepartmentDialog(data)" v-tooltip="{ value: 'تعديل بيانات القسم', showDelay: 1000, hideDelay: 300 }"/>
+          <Button icon="fas fa-trash-alt" severity="danger" rounded variant="outlined" aria-label="delete" @click.stop="confirmDeleteDepartment(data)" v-tooltip="{ value: 'حذف بيانات القسم', showDelay: 1000, hideDelay: 300 }"/>
         </template>
       </Column>
     </DataTable>
@@ -162,46 +167,51 @@
       dir="rtl"
     >
       <div class="flex flex-column gap-4 mt-3">
-        <IconField>
-          <InputIcon class="fa-solid fa-font" />
-          <InputText v-model="departmentForm.name" placeholder="اسم القسم" fluid />
-        </IconField>
+        <FloatLabel variant="on">
+          <InputText id="name_feild" v-model="departmentForm.name" fluid />
+          <label for="name_feild"><i class="fas fa-font"/> اسم القسم</label>
+        </FloatLabel>
 
-        <IconField>
-          <InputIcon class="fas fa-tag"/>
-          <InputText v-model="departmentForm.username" placeholder="اسم قسم فريد" fluid />
-        </IconField>
+        <FloatLabel variant="on">
+          <InputText id="code_field" v-model="departmentForm.code" fluid />
+          <label for="code_field"><i class="fas fa-barcode"/> رمز القسم</label>
+        </FloatLabel>
 
-        <IconField>
-          <InputIcon class="fa-solid fa-barcode"/>
-          <InputText v-model="departmentForm.code" placeholder="رمز القسم" fluid />
-        </IconField>
 
-        <!-- Manager Selection -->
-        <Select 
-          v-model="departmentForm.manager" 
-          :options="allUsers" 
-          filter 
-          optionLabel="name" 
-          placeholder="اختر مدير القسم" 
-          class="w-full md:w-56" 
-        />
+        <FloatLabel variant="on">
+          <Select 
+            id="manager_field"
+            v-model="departmentForm.manager" 
+            :options="allUsers"
+            filter 
+            optionLabel="name"
+            class="w-full md:w-56" 
+          />
+          <label for="manager_field"><i class="fas fa-user-tie"/> مدير القسم</label>
+        </FloatLabel>
+
 
         <!-- Users Selection -->
-        <MultiSelect 
-          v-model="departmentForm.users" 
-          optionLabel="name" 
-          :options="filteredUsers" 
-          filter 
-          placeholder="اختر المستخدمين" 
-          display="chip" 
-          class="w-full md:w-80"
-        />
+        <FloatLabel variant="on">
+          <MultiSelect 
+            id="users_field"
+            v-model="departmentForm.users" 
+            optionLabel="name" 
+            :options="filteredUsers" 
+            filter 
+            display="chip" 
+            class="w-full md:w-80"
+          />
+          <label for="users_field"><i class="fas fa-users"/> المستخدمين</label>
+        </FloatLabel>
+        <small class="text-yellow-200 text-s mt-0"></small>
 
-        <IconField>
-          <InputIcon class="fa-solid fa-text-width"/>
-          <Textarea v-model="departmentForm.description" rows="5" style="resize: none" fluid />
-        </IconField>
+
+        <FloatLabel variant="on">
+          <Textarea id="description_field" v-model="departmentForm.description" rows="5" style="resize: none" fluid />
+          <label for="description_field"><i class="fas fa-text-width"/> الملاحظات</label>
+        </FloatLabel>
+
       </div>
 
       <template #footer>
@@ -314,6 +324,7 @@ import Popover from 'primevue/popover';
 import Message from 'primevue/message';
 import Toast from 'primevue/toast';
 import ConfirmDialog from 'primevue/confirmdialog';
+import FloatLabel from 'primevue/floatlabel';
 
 import DepartmentService, { Department } from "./DepartmentService";
 // import type { Department } from "./DepartmentService";
@@ -362,8 +373,8 @@ const userFilters = reactive({
 // Breadcrumb
 const breadcrumbHome = ref({ icon: "pi pi-home", to: "/" });
 const breadcrumbItems = ref([
-  { label: "الرئيسية", to: "/" },
-  { label: "الأقسام", to: "/departments" },
+  { label: "الرئيسية", to: "/", icon: "fas fa-house" },
+  { label: "الأقسام", to: "/departments", icon: "fa-solid fa-people-roof" },
 ]);
 
 // Refs for Popovers
@@ -373,9 +384,9 @@ const managerInfo = ref();
    Computed Properties
 ============================= */
 // Exclude manager from users list in MultiSelect
-const filteredUsers = computed(() =>
-  allUsers.value.filter(user => user.id !== departmentForm.value.manager?.id)
-);
+const filteredUsers = computed(() => {
+    return allUsers.value.filter(user => user.id !== departmentForm.value.manager?.id)
+});
 
 /* =============================
    API Calls
@@ -392,12 +403,49 @@ const fetchAllDepartments = async () => {
   }
 };
 
-const getAllUsers = async () => {
+const getAllUsers = async (department?: any) => {
   try {
+    let availableUsers: any[] = [];
+
+    // جلب المستخدمين الغير منتمين لأي قسم
+    availableUsers = await DepartmentService.getAvailableForDepartment();
     allUsers.value = await usersService.getAllUsers();
+
+    // إضافة المستخدمين المنتسبين للقسم الحالي
+    if (department && department.users) {
+      const currentUsers = department.users.map((user: any) => ({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        username: user.username
+      }));
+
+      const userIds = new Set(availableUsers.map(u => u.id));
+      currentUsers.forEach(u => {
+        if (!userIds.has(u.id)) availableUsers.push(u);
+      });
+    }
+
+    // إضافة المدير الحالي إذا لم يكن موجودًا
+    if (department?.manager && !availableUsers.find(u => u.id === department.manager.id)) {
+      availableUsers.push({
+        id: department.manager.id,
+        name: department.manager.name,
+        email: department.manager.email,
+        username: department.manager.username
+      });
+    }
+
+    allUsers.value = availableUsers;
+
   } catch (err) {
     console.error(err);
-    toast.add({ severity: "error", summary: "خطاء", detail: "حدث خطاء اثناء جلب بيانات المستخدمين", life: 3000 });
+    toast.add({
+      severity: "error",
+      summary: "خطأ",
+      detail: "حدث خطأ اثناء جلب بيانات المستخدمين",
+      life: 3000
+    });
   }
 };
 
@@ -407,15 +455,15 @@ const getAllUsers = async () => {
 
 // Open Add/Edit Department Dialog
 const openAddEditDepartmentDialog = async (department: any = null) => {
-  await getAllUsers();
+  await getAllUsers(department);
 
   if (department) {
     isEditMode.value = true;
 
-    const manager = department.manager
-      ? allUsers.value.find(user => user.id === department.manager.id) || department.manager
-      : null;
-
+    console.log('users: ', allUsers.value)
+    // المدير الحالي من القائمة نفسها
+    const manager = allUsers.value.find(user => user.id === department.manager?.id) || null;
+    console.log('mn1', manager)
     const users = department.users
       ?.map((user: any) => allUsers.value.find(u => u.id === user.id) || user)
       .filter((user: any) => user) || [];
@@ -429,6 +477,7 @@ const openAddEditDepartmentDialog = async (department: any = null) => {
       manager: manager,
       users: users,
     };
+    console.log('mn2: ', manager);
   } else {
     resetForm();
   }
@@ -541,7 +590,6 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.card {
-  padding: 1rem;
-}
+
 </style>
+

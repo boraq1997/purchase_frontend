@@ -1,17 +1,24 @@
 <template>
     <div class="roles-management-page p-4" dir="rtl">
         <!-- ============================= -->
-        <!-- Header & Breadcrumb -->
+        <!-- Header & Breadcrumb Section -->
         <!-- ============================= -->
-        <div class="page-header mb-4">
-            <Breadcrumb :home="breadcrumbHome" :model="breadcrumbItems" class="bg-transparent p-0" />
+        <div class="card flex justify-center">
+            <Breadcrumb 
+                :home="breadcrumbHome" 
+                :model="breadcrumbItems" 
+            />
         </div>
 
         <!-- ============================= -->
         <!-- Loading Overlay -->
         <!-- ============================= -->
         <div v-if="isLoading" class="loading-overlay">
-            <ProgressSpinner strokeWidth="4" animationDuration=".5s" style="width: 60px; height: 60px" />
+            <ProgressSpinner 
+                strokeWidth="4" 
+                animationDuration=".5s" 
+                style="width: 60px; height: 60px" 
+            />
             <span class="mt-3 text-lg">جاري تحميل البيانات...</span>
         </div>
 
@@ -19,7 +26,7 @@
         <!-- Main Content -->
         <!-- ============================= -->
         <div v-else>
-            <!-- Action Bar -->
+            <!-- Action Bar: Add New Role -->
             <div class="flex justify-content-end mb-4">
                 <Button 
                     label="إضافة مجموعة جديدة" 
@@ -29,37 +36,88 @@
                 />
             </div>
 
+            <!-- Filter Section -->
+            <div class="p-4 rounded-lg shadow space-y-4" dir="rtl">
+                <!-- Reset Filter Button -->
+                <div class="flex justify-content-end mb-2">
+                    <Button
+                        label="اعادة تعيين الفلترة"
+                        icon="pi pi-filter-slash"
+                        severity="secondary"
+                        text
+                        size="small"
+                        @click="resetFilter"
+                        class="reset-button"
+                    />
+                </div>
+
+                <!-- Filters: Search & Permissions -->
+                <div class="grid gap-4">
+                    <div class="col">
+                        <InputText 
+                            v-model="filters.search" 
+                            placeholder="بحث عام..." 
+                            fluid
+                        />
+                    </div>
+                    <div class="col">
+                        <MultiSelect
+                            v-model="filters.permissions"
+                            :options="allPermissions"
+                            optionLabel="name"
+                            optionValue="name"
+                            display="chip"
+                            placeholder="فلترة حسب الصلاحيات"
+                            @change="getAllRoles"
+                            fluid
+                        />
+                    </div>
+                </div>
+            </div>
+
             <!-- Roles List (Card View) -->
             <div class="grid">
-                <div v-for="role in allRoles" :key="role.id" class="col-12">
+                <div 
+                    v-for="role in filteredRoles" 
+                    :key="role.id" 
+                    class="col-12"
+                >
                     <Panel
                         :collapsed="openPanel !== role.id"
                         toggleable
                         @toggle="togglePanel(role.id)"
                     >
+                        <!-- Panel Header -->
                         <template #header>
                             <div class="flex items-center gap-2">
-                                    <Button 
-                                        icon="fas fa-edit"
-                                        variant="outlined"
-                                        severity="secondary"
-                                        @click="openAddEditRole(role)"
-                                    />
-                                    <Button
-                                        icon="fas fa-trash-alt"
-                                        variant="outlined"
-                                        severity="danger"
-                                        @click="confirmDeleteRole(role)"
-                                    />
+                                <!-- Edit & Delete Buttons -->
+                                <Button 
+                                    icon="fas fa-edit"
+                                    variant="outlined"
+                                    severity="secondary"
+                                    @click="openAddEditRole(role)"
+                                />
+                                <Button
+                                    icon="fas fa-trash-alt"
+                                    variant="outlined"
+                                    severity="danger"
+                                    @click="confirmDeleteRole(role)"
+                                />
+                                
+                                <!-- Role Name -->
                                 <span class="font-bold mt-2">{{ role.name }}</span>
 
+                                <!-- Creation Date -->
                                 <span class="text-color-secondary text-sm mt-2">
                                     <i class="fas fa-calendar-alt mr-1"></i>
                                     تاريخ الإنشاء: {{ new Date(role.created_at).toLocaleDateString('ar-EG') }}
                                 </span>
                             </div>
                         </template>
+
+                        <!-- Role Card -->
                         <Card class="role-card mb-4 overflow-hidden">
+                            <!-- Card Header -->
                             <template #header>
                                 <div class="card-header p-3 flex align-items-center justify-content-between">
                                     <div class="flex align-items-center">
@@ -68,6 +126,8 @@
                                     </div>
                                 </div>
                             </template>
+
+                            <!-- Card Content: Permissions -->
                             <template #content>
                                 <div v-if="Object.keys(role.groupedPermissions).length > 0" class="p-1">
                                     <div class="grid -m-1">
@@ -76,6 +136,7 @@
                                             :key="group"
                                             class="col-12 md:col-6 lg:col-4 p-1"
                                         >
+                                            <!-- Permission Group Card -->
                                             <div class="permission-group p-3 border-round h-full">
                                                 <h4 class="font-semibold text-base mb-3 capitalize">
                                                     <i :class="getGroupIcon(group)" class="mr-2 text-primary"></i>
@@ -95,6 +156,8 @@
                                         </div>
                                     </div>
                                 </div>
+
+                                <!-- No Permissions Placeholder -->
                                 <div v-else class="p-4 text-center text-color-secondary">
                                     <i class="fas fa-shield-alt fa-2x mb-2"></i>
                                     <p>لا توجد صلاحيات محددة لهذه المجموعة.</p>
@@ -107,7 +170,7 @@
         </div>
 
         <!-- ============================= -->
-        <!-- Add/Edit Dialog -->
+        <!-- Add/Edit Role Dialog -->
         <!-- ============================= -->
         <Dialog
             v-model:visible="addEditRoleDialogVisible"
@@ -118,15 +181,20 @@
             @hide="resetForm"
             dir="rtl"
         >
+            <!-- Form Fields -->
             <div class="form-container p-fluid mt-4">
+                <!-- Role Name -->
                 <div class="field">
                     <FloatLabel variant="on">
                         <InputText id="roleName" v-model="roleForm.name" fluid/>
                         <label for="roleName"><i class="fas fa-user-shield"/> اسم المجموعة</label>
                     </FloatLabel>
-                    <small class="text-yellow-200 text-s mt-0">اسم المجموعة العام كي يتم اختياره عند اضافة مستخدمين جدد</small>
+                    <small class="text-yellow-200 text-s mt-0">
+                        اسم المجموعة العام كي يتم اختياره عند اضافة مستخدمين جدد
+                    </small>
                 </div>
 
+                <!-- Role Permissions -->
                 <div class="field">
                     <FloatLabel variant="on">
                         <MultiSelect
@@ -141,6 +209,7 @@
                             filter
                             class="w-full"
                         >
+                            <!-- Custom Option Group Template -->
                             <template #optiongroup="slotProps">
                                 <div class="flex align-items-center font-bold">
                                     <i :class="getGroupIcon(slotProps.option.label)" class="mr-2 text-primary"></i>
@@ -148,11 +217,17 @@
                                 </div>
                             </template>
                         </MultiSelect>
-                        <label for="permissions" class="font-semibold mb-2"><i class="fas fa-shield-alt"/> الصلاحيات</label>
+                        <label for="permissions" class="font-semibold mb-2">
+                            <i class="fas fa-shield-alt"/> الصلاحيات
+                        </label>
                     </FloatLabel>
-                    <small class="text-yellow-200 text-s mt-0">اختر الصلاحيات التي تحتاج اضافتها الى المجموعة</small>
+                    <small class="text-yellow-200 text-s mt-0">
+                        اختر الصلاحيات التي تحتاج اضافتها الى المجموعة
+                    </small>
                 </div>
             </div>
+
+            <!-- Dialog Footer: Cancel & Save Buttons -->
             <template #footer>
                 <Button
                     label="إلغاء"
@@ -174,71 +249,116 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted, reactive } from 'vue';
+import { ref, onMounted, reactive, computed } from 'vue';
 import { useToast } from "primevue/usetoast";
 import { useConfirm } from "primevue/useconfirm";
 import Breadcrumb from "primevue/breadcrumb";
 import Button from "primevue/button";
 import InputText from "primevue/inputtext";
-import IconField from "primevue/iconfield";
-import InputIcon from "primevue/inputicon";
 import Panel from 'primevue/panel';
-import rolesService from './rolesService';
+import rolesService, { type RoleFilters } from './rolesService';
 import Tag from 'primevue/tag';
-import Toolbar from 'primevue/toolbar';
 import MultiSelect from 'primevue/multiselect';
 import Dialog from "primevue/dialog";
-import { FilterMatchMode } from "@primevue/core/api";
 import ProgressSpinner from 'primevue/progressspinner';
 import Card from 'primevue/card';
-import Tooltip from 'primevue/tooltip';
-import Divider from 'primevue/divider';
 import FloatLabel from 'primevue/floatlabel';
 
 /* =============================
- Refs & State
+ Refs & Reactive State
  ============================= */
+
+// Toast & Confirmation dialogs
 const toast = useToast();
 const confirm = useConfirm();
-const isLoading = ref(true);
-const isSaving = ref(false);
-const isEditMode = ref(false);
-const isConfirming = ref(false);
 
-const allRoles = ref<any[]>([]);
-const allPermissions = ref<any[]>([]);
-const groupedPermissions = ref<any[]>([]);
+// Loading & Saving States
+const isLoading = ref(true);       // Global loading indicator
+const isSaving = ref(false);       // Save button loading
+const isEditMode = ref(false);     // Detect if editing or adding
+const isConfirming = ref(false);   // Prevent multiple delete confirms
+
+// Data Containers
+const allRoles = ref<any[]>([]);        // All roles fetched from API
+const allPermissions = ref<any[]>([]);  // All permissions fetched
+const groupedPermissions = ref<any[]>([]); // Permissions grouped for MultiSelect
+
+// Dialog visibility
 const addEditRoleDialogVisible = ref(false);
 
-// Breadcrumb
+// Breadcrumbs
 const breadcrumbHome = ref({ icon: "pi pi-home", to: "/" });
 const breadcrumbItems = ref([
   { label: "الرئيسية", to: "/", icon: "fas fa-house" },
   { label: "المجموعات والصلاحيات", to: "/roles", icon: "fa-solid fa-shield-halved" },
 ]);
 
+// Role Form
 const roleForm = ref({
     id: undefined,
     name: "",
     permissions: [] as string[]
 });
 
+// Filters
+const filters = reactive<RoleFilters>({
+  search: '',
+  name: '',
+  permissions: [],
+  all: false
+});
+
+// Reset all filters
+const resetFilter = () => {
+  filters.search = '';
+  filters.name = '';
+  filters.permissions = [];
+  getAllRoles();
+};
+
+/* =============================
+ Computed: Filtered Roles
+ ============================= */
+const filteredRoles = computed(() => {
+    isLoading.value = true;
+    const result = allRoles.value.filter(role => {
+        const matchSearch = !filters.search || role.name.includes(filters.search);
+        const matchName = !filters.name || role.name.includes(filters.name);
+        const matchPermissions = !filters.permissions.length || role.permissions.some(p => filters.permissions.includes(p.name));
+        return matchSearch && matchName && matchPermissions;
+    });
+    isLoading.value = false;
+    return result;
+});
+
 /* =============================
  Group Permissions For Display
  ============================= */
-
 const groupPermissions = (permissions: any[]) => {
     const grouped: Record<string, any[]> = {};
+    const actionLabels: Record<string, string> = {
+        view: "عرض",
+        create: "إضافة",
+        edit: "تعديل",
+        delete: "حذف",
+        approve: "اعتماد",
+        review: "مراجعة",
+        finalize: "إنهاء",
+        generate: "توليد"
+    };
 
     permissions.forEach((perm) => {
         const permName = typeof perm === "string" ? perm : perm.name;
+        const parts = permName.split("-");
+        const action = parts[0];
+        const entity = parts.slice(1).join("-") || "عمليات خاصة";
 
-        const [action, entity] = permName.split("-");
         if (!grouped[entity]) grouped[entity] = [];
 
         grouped[entity].push({
             name: permName,
             action,
+            label: actionLabels[action] || action,
             color: getPermissionColor(action),
             icon: getPermissionIcon(action),
         });
@@ -247,6 +367,7 @@ const groupPermissions = (permissions: any[]) => {
     return grouped;
 };
 
+// Map action to color
 const getPermissionColor = (action: string) => {
     switch (action) {
         case "view": return "secondary";
@@ -257,6 +378,7 @@ const getPermissionColor = (action: string) => {
     }
 };
 
+// Map action to icon
 const getPermissionIcon = (action: string) => {
     switch (action) {
         case "view": return "fas fa-eye";
@@ -268,18 +390,18 @@ const getPermissionIcon = (action: string) => {
 };
 
 /* =============================
- Fetch Roles
+ API Calls: Fetch Roles
  ============================= */
-
 const getAllRoles = async () => {
+    isLoading.value = true;
     try {
-        const response = await rolesService.getAllRoles();
+        const response = await rolesService.getAllRoles(filters);
         allRoles.value = response;
 
+        // Group permissions inside each role
         allRoles.value.forEach(role => {
             role.groupedPermissions = groupPermissions(role.permissions);
         });
-
     } catch (err) {
         console.error(err);
         toast.add({
@@ -294,22 +416,19 @@ const getAllRoles = async () => {
 };
 
 /* =============================
- Fetch All Permissions
+ API Calls: Fetch Permissions
  ============================= */
-
 const getPermissions = async () => {
     try {
         const response = await rolesService.getAllPermissions();
-        allPermissions.value = response.data;
+        allPermissions.value = Array.isArray(response) ? response : response.data || [];
 
         const grouped: Record<string, any[]> = {};
 
         allPermissions.value.forEach((perm: any) => {
             const permName = perm.name;
             const [action, entity] = permName.split("-");
-
             if (!grouped[entity]) grouped[entity] = [];
-
             grouped[entity].push({
                 label: action,
                 value: permName
@@ -320,7 +439,6 @@ const getPermissions = async () => {
             label: entity,
             items
         }));
-
     } catch (err) {
         console.error(err);
         toast.add({
@@ -333,9 +451,8 @@ const getPermissions = async () => {
 };
 
 /* =============================
- Open Dialog — Add or Edit
+ Open Dialog: Add or Edit Role
  ============================= */
-
 const openAddEditRole = (role: any = null) => {
     if (role) {
         isEditMode.value = true;
@@ -348,16 +465,13 @@ const openAddEditRole = (role: any = null) => {
         resetForm();
         isEditMode.value = false;
     }
-
     addEditRoleDialogVisible.value = true;
 };
 
 /* =============================
- Save / Update
+ Save / Update Role
  ============================= */
-
 const saveHandling = async () => {
-
     if (!roleForm.value.name || roleForm.value.permissions.length === 0) {
         toast.add({
             severity: "error",
@@ -381,7 +495,6 @@ const saveHandling = async () => {
 
         addEditRoleDialogVisible.value = false;
         await getAllRoles();
-
     } catch (err) {
         console.error(err);
         toast.add({
@@ -396,9 +509,8 @@ const saveHandling = async () => {
 };
 
 /* =============================
- Confirm Delete
+ Confirm Delete Role
  ============================= */
-
 const confirmDeleteRole = (role: any) => {
     if (isConfirming.value) return;
     isConfirming.value = true;
@@ -429,6 +541,9 @@ const confirmDeleteRole = (role: any) => {
     });
 };
 
+/* =============================
+ Reset Form
+ ============================= */
 const resetForm = () => {
     roleForm.value = {
         id: undefined,
@@ -437,6 +552,9 @@ const resetForm = () => {
     };
 };
 
+/* =============================
+ Helper: Get Icon for Permission Group
+ ============================= */
 const getGroupIcon = (group: string) => {
     const icons: { [key: string]: string } = {
         users: 'fas fa-users',
@@ -444,17 +562,22 @@ const getGroupIcon = (group: string) => {
         orders: 'fas fa-shopping-cart',
         settings: 'fas fa-cog',
         reports: 'fas fa-chart-line',
-        // أضف المزيد من الأيقونات حسب الحاجة
+        // Add more icons as needed
     };
-    return icons[group] || 'fas fa-layer-group'; // أيقونة افتراضية
+    return icons[group] || 'fas fa-layer-group'; // Default icon
 };
 
-const openPanel = ref<number | null>(null); // null يعني كل البنل مغلقة
-
+/* =============================
+ Panel Toggle Logic
+ ============================= */
+const openPanel = ref<number | null>(null); // null = all panels closed
 const togglePanel = (roleId: number) => {
     openPanel.value = openPanel.value === roleId ? null : roleId;
-}
+};
 
+/* =============================
+ Lifecycle: On Mounted
+ ============================= */
 onMounted(() => {
     getAllRoles();
     getPermissions();
@@ -472,7 +595,7 @@ onMounted(() => {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(255, 255, 255, 0.8);
+    background-color: rgba(64, 64, 64, 0.8);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -533,5 +656,22 @@ onMounted(() => {
 /* Dialog styling */
 .form-container .field {
     margin-bottom: 1.5rem;
+}
+
+.reset-button {
+    transition: all 0.3s ease;
+}
+
+.reset-button:hover {
+    background: var(--surface-100);
+    transform: scale(1.05);
+}
+
+.reset-button .p-button-icon {
+    color: var(--red-500);
+}
+
+.reset-button:hover .p-button-icon {
+    color: var(--red-600);
 }
 </style>

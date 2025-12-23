@@ -1,59 +1,103 @@
-import api from '../api/api'
+import api from '../api/api';
 
-// =============================
-// 🧩 أنواع البيانات (Interfaces)
-// =============================
+/* =============================
+ 🧩 Data Interfaces
+ ============================= */
 
+// Permission Interface
 export interface Permission {
-  id: number
-  name: string
+  id: number;
+  name: string;
 }
 
+// Role Interface
 export interface Role {
-  id: number
-  name: string
-  permissions: Permission[]
+  id: number;
+  name: string;
+  guard_name?: string;
+  permissions: Permission[];
+  permissions_count?: number;
+  created_at?: string;
 }
 
-// =============================
-// 🧭 خدمة إدارة الأدوار (Roles)
-// =============================
+// Filters for fetching roles
+export interface RoleFilters {
+  search?: string;              // General search text
+  name?: string;                // Filter by role name
+  guard_name?: string;          // Filter by guard name
+  permissions?: string[];       // Filter by permission names
+  permissions_count_min?: number;
+  permissions_count_max?: number;
+  created_from?: string;        // YYYY-MM-DD
+  created_to?: string;          // YYYY-MM-DD
+  order_by?: string;
+  order_dir?: 'asc' | 'desc';
+  all?: boolean;                // Fetch all roles without pagination
+  per_page?: number;            // Pagination limit
+}
+
+/* =============================
+ 🧭 Roles Service
+ ============================= */
 
 class RolesService {
-  // 🟢 جلب جميع الأدوار مع صلاحياتها
-  async getAllRoles(): Promise<Role[]> {
-    const response = await api.get<{ data: Role[] }>('/roles')
-    return response.data.data
+  /**
+   * Fetch all roles with optional filters
+   * @param filters Optional RoleFilters
+   * @returns Array of Role
+   */
+  async getAllRoles(filters?: RoleFilters): Promise<Role[]> {
+    const response = await api.get<{ data: Role[] }>('/roles', { params: filters });
+    return response.data.data;
   }
 
-  // 🟢 جلب جميع الصلاحيات (لعرضها في واجهة اختيار الصلاحيات للدور)
+  /**
+   * Fetch all permissions for roles
+   * @returns Array of Permission
+   */
   async getAllPermissions(): Promise<Permission[]> {
-      const response = await api.get('/permissions');
-      return response.data;   // <-- هنا المشكلة كانت
+    const response = await api.get<{ data: Permission[] }>('/permissions');
+    return response.data.data;
   }
 
-  // 🟡 جلب دور واحد مع صلاحياته
+  /**
+   * Fetch single role by ID including its permissions
+   * @param id Role ID
+   * @returns Role
+   */
   async getRoleById(id: number): Promise<Role> {
-    const response = await api.get<{ data: Role }>(`/roles/${id}`)
-    return response.data.data
+    const response = await api.get<{ data: Role }>(`/roles/${id}`);
+    return response.data.data;
   }
 
-  // 🟢 إنشاء دور جديد مع صلاحياته
+  /**
+   * Create a new role with its permissions
+   * @param payload Partial<Role>
+   * @returns Created Role
+   */
   async createRole(payload: Partial<Role>): Promise<Role> {
-    const response = await api.post<{ data: Role }>('/roles', payload)
-    return response.data.data
+    const response = await api.post<{ data: Role }>('/roles', payload);
+    return response.data.data;
   }
 
-  // 🟠 تعديل دور موجود مع صلاحياته
+  /**
+   * Update an existing role and its permissions
+   * @param id Role ID
+   * @param payload Partial<Role>
+   * @returns Updated Role
+   */
   async updateRole(id: number, payload: Partial<Role>): Promise<Role> {
-    const response = await api.put<{ data: Role }>(`/roles/${id}`, payload)
-    return response.data.data
+    const response = await api.put<{ data: Role }>(`/roles/${id}`, payload);
+    return response.data.data;
   }
 
-  // 🔴 حذف دور
+  /**
+   * Delete a role by ID
+   * @param id Role ID
+   */
   async deleteRole(id: number): Promise<void> {
-    await api.delete(`/roles/${id}`)
+    await api.delete(`/roles/${id}`);
   }
 }
 
-export default new RolesService()
+export default new RolesService();
