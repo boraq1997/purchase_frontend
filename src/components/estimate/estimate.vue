@@ -1,212 +1,658 @@
 <template>
-    <div class="p-4" dir="rtl">
-        <!-- Breadcrumb -->
-        <div class="card flex justify-center mt-3 mb-3">
-            <Breadcrumb :home="breadcrumbHome" :model="breadcrumbItems" />
-        </div>
-
-        <!-- Loading Overlay -->
-        <div v-if="isLoading" class="fixed top-0 left-0 w-screen h-screen flex align-items-center justify-content-center z-5" style="background-color: #2828289c;">
-            <div class="text-primary-500 border-round text-center">
-                <i class="fa-solid fa-circle-notch fa-spin fa-2xl" style="font-size: 80px;"></i>
+    <div class="p-4 lg:p-6" dir="rtl">
+        <!-- Animated Header Section -->
+        <div class="mb-5">
+            <div class="flex flex-column lg:flex-row justify-content-between align-items-start lg:align-items-center gap-4 mb-4">
+                <div>
+                    <!-- <h1 class="text-4xl font-bold text-900 m-0 mb-2 animate-fade-in">
+                        <i class="pi pi-file-edit ml-3 text-primary"></i>
+                        عروض الأسعار
+                    </h1> -->
+                    <Breadcrumb :home="breadcrumbHome" :model="breadcrumbItems" class="" />
+                </div>
+                <Button 
+                    icon="fas fa-plus" 
+                    label="إضافة عرض جديد" 
+                    class=""
+                    @click="openAddEditDialog()"
+                />
             </div>
         </div>
 
-        <!-- Page Header -->
-        <div class="flex gap-2 mb-3">
-            <Button icon="pi pi-plus" label="عرض جديد" />
+        <!-- Loading Overlay -->
+        <div v-if="isLoading" class="fixed top-0 left-0 w-screen h-screen flex align-items-center justify-content-center z-5" 
+             style="background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(8px);">
+            <div class="text-center">
+                <div class="mb-4">
+                    <i class="pi pi-spin pi-spinner text-6xl" style="color: #667eea;"></i>
+                </div>
+                <p class="text-white text-xl font-semibold">جاري التحميل...</p>
+            </div>
         </div>
 
-        <!-- Stats Cards -->
-        <div class="grid mb-4">
-            <div class="col-12 md:col-6 lg:col-3" v-for="(stat, index) in stats" :key="index">
-                <div class="surface-card border-round-lg p-3" style="border: 1px solid var(--surface-border);">
-                    <div class="flex justify-content-between align-items-center">
-                        <div>
-                            <div class="text-500 text-xs mb-2">{{ stat.label }}</div>
-                            <div class="text-900 font-bold text-2xl">{{ stat.value }}</div>
+        <!-- Enhanced Stats Cards with Progress Bars -->
+        <div class="grid mb-5">
+            <!-- Card: Total Estimates -->
+            <div class="col-12 sm:col-6 lg:col-3">
+                <div class="stat-card stat-card-total surface-card border-round-lg p-4 shadow-3 transition-all transition-duration-300 hover:shadow-5">
+                    <div class="flex justify-content-between align-items-start mb-3">
+                        <div class="flex-1">
+                            <span class="block text-600 font-medium mb-2 text-sm">إجمالي العروض</span>
+                            <div class="text-900 font-bold text-3xl mb-1">{{ allEstimate.length }}</div>
+                            <span class="text-sm text-500">جميع عروض الأسعار</span>
                         </div>
-                        <div class="border-circle" :class="stat.bgClass" style="width: 48px; height: 48px;">
-                            <i :class="stat.iconClass"></i>
+                        <div class="icon-container icon-total border-round-lg flex align-items-center justify-content-center">
+                            <i class="pi pi-file text-2xl"></i>
+                        </div>
+                    </div>
+                    <div class="progress-bar progress-total border-round relative overflow-hidden" style="height: 18px;">
+                        <div
+                            class="progress-fill-total h-full transition-all transition-duration-500 flex align-items-center justify-content-center text-white text-xs font-medium"
+                            :style="{ width: '100%' }"
+                        >
+                            100%
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card: Pending -->
+            <div class="col-12 sm:col-6 lg:col-3">
+                <div class="stat-card stat-card-pending surface-card border-round-lg p-4 shadow-3 transition-all transition-duration-300 hover:shadow-5">
+                    <div class="flex justify-content-between align-items-start mb-3">
+                        <div class="flex-1">
+                            <span class="block text-600 font-medium mb-2 text-sm">قيد الانتظار</span>
+                            <div class="text-900 font-bold text-3xl mb-1">{{ statusCounts.pending }}</div>
+                            <span class="text-sm text-500">في انتظار المراجعة</span>
+                        </div>
+                        <div class="icon-container icon-pending border-round-lg flex align-items-center justify-content-center">
+                            <i class="pi pi-clock text-2xl"></i>
+                        </div>
+                    </div>
+                    <div class="progress-bar progress-pending border-round relative overflow-hidden" style="height: 18px;">
+                        <div
+                            class="progress-fill-pending h-full transition-all transition-duration-500 flex align-items-center justify-content-center text-white text-xs font-medium"
+                            :style="{ width: statusPercentages.pending + '%' }"
+                        >
+                            {{ statusPercentages.pending }}%
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card: Approved -->
+            <div class="col-12 sm:col-6 lg:col-3">
+                <div class="stat-card stat-card-approved surface-card border-round-lg p-4 shadow-3 transition-all transition-duration-300 hover:shadow-5">
+                    <div class="flex justify-content-between align-items-start mb-3">
+                        <div class="flex-1">
+                            <span class="block text-600 font-medium mb-2 text-sm">الطلبات المقبولة</span>
+                            <div class="text-900 font-bold text-3xl mb-1">{{ statusCounts.approved }}</div>
+                            <span class="text-sm text-500">تمت الموافقة عليها</span>
+                        </div>
+                        <div class="icon-container icon-approved border-round-lg flex align-items-center justify-content-center">
+                            <i class="pi pi-check-circle text-2xl"></i>
+                        </div>
+                    </div>
+                    <div class="progress-bar progress-approved border-round relative overflow-hidden" style="height: 18px;">
+                        <div
+                            class="progress-fill-approved h-full transition-all transition-duration-500 flex align-items-center justify-content-center text-white text-xs font-medium"
+                            :style="{ width: statusPercentages.approved + '%' }"
+                        >
+                            {{ statusPercentages.approved }}%
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card: Rejected -->
+            <div class="col-12 sm:col-6 lg:col-3">
+                <div class="stat-card stat-card-rejected surface-card border-round-lg p-4 shadow-3 transition-all transition-duration-300 hover:shadow-5">
+                    <div class="flex justify-content-between align-items-start mb-3">
+                        <div class="flex-1">
+                            <span class="block text-600 font-medium mb-2 text-sm">الطلبات المرفوضة</span>
+                            <div class="text-900 font-bold text-3xl mb-1">{{ statusCounts.rejected }}</div>
+                            <span class="text-sm text-500">تم رفضها</span>
+                        </div>
+                        <div class="icon-container icon-rejected border-round-lg flex align-items-center justify-content-center">
+                            <i class="pi pi-times-circle text-2xl"></i>
+                        </div>
+                    </div>
+                    <div class="progress-bar progress-rejected border-round relative overflow-hidden" style="height: 18px;">
+                        <div
+                            class="progress-fill-rejected h-full transition-all transition-duration-500 flex align-items-center justify-content-center text-white text-xs font-medium"
+                            :style="{ width: statusPercentages.rejected + '%' }"
+                        >
+                            {{ statusPercentages.rejected }}%
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Filters -->
-        <div class="grid mb-3 gap-3">
-            <div class="col-12 md:col-3">
-                <IconField class="w-full">
-                    <InputIcon class="fas fa-search" />
-                    <InputText v-model="filters.vendor_name" class="w-full" placeholder="اسم المعرض" />
-                </IconField>
-            </div>
-
-            <div class="col-12 md:col-3">
-                <Select
-                    v-model="filters.department_id"
-                    class="w-full"
-                    :options="allDepartments"
-                    optionLabel="name"
-                    optionValue="id"
-                    placeholder="اختر القسم"
-                    filter
+        <!-- Modern Filter Section -->
+        <div class="p-4 mb-5">
+            
+            <div class="flex justify-content-end mb-2">
+                <Button 
+                    label="إعادة تعيين الفلترة" 
+                    icon="pi pi-filter-slash" 
+                    severity="secondary"
+                    text
+                    size="small"
+                    @click="resetFilters"
+                    class="reset-button"
+                    v-tooltip="{ value: 'قم بالضغط لحذف جميع قيم الفلترة واعادة جلب جميع الطلبات', showDelay: 300, hideDelay: 300 }"
                 />
             </div>
+            <div class="grid">
+                <div class="col-12 md:col-4">
+                    <div class="filter-input-wrapper">
+                        <FloatLabel variant="on" class="w-full">
+                            <InputText 
+                                id="filter_vendor_name"
+                                v-model="filters.vendor_name" 
+                                class="w-full" 
+                            />
+                            <label for="filter_vendor_name"><i class="fas fa-search"/> البحث عن اسم المعرض</label>
+                        </FloatLabel>
+                    <small class="text-gray-500 text-xs">البحث عن  عروض الاسعار بواسطة اسم المعرض</small>
+                    </div>
+                </div>
 
-            <div class="col-12 md:col-3">
-                <IconField class="w-full">
-                    <InputIcon class="fas fa-search" />
-                    <InputText v-model="filters.request_title" class="w-full" placeholder="عنوان الطلب" />
-                </IconField>
+                <div class="col-12 md:col-4">
+                    <FloatLabel variant="on">
+                        <Select
+                            id="filter_department"
+                            v-model="filters.department_id"
+                            class="w-full"
+                            :options="allDepartments"
+                            optionLabel="name"
+                            optionValue="id"
+                            filter
+                        />
+                        <label for="filter_department"><i class="fa-solid fa-object-group"/> اختر القسم</label>
+                    </FloatLabel>
+                    <small class="text-gray-500 text-xs">العروض الخاصه بقسم معين</small>
+                </div>
+
+                <div class="col-12 md:col-4">
+                    <FloatLabel variant="on">
+                        <Select 
+                            id="filter_status"
+                            v-model="filters.status" 
+                            :options="statusOptions" 
+                            filter 
+                            optionLabel="label" 
+                            optionValue="value" 
+                            fluid
+                        />
+                        <label for="filter_status"><i class="pi pi-info-circle ml-2"/> حالة العرض</label>
+                    </FloatLabel>
+                    <small class="text-gray-500 text-xs">بحث وفلترة حسب حالة العرض</small>
+                </div>
+
+                <div class="col-12 md:col-4">
+                    <div class="filter-input-wrapper">
+                        <FloatLabel variant="on" class="w-full">
+                            <InputText 
+                                v-model="filters.request_title" 
+                                class="w-full" 
+                            />
+                            <label for="filter_request_title"><i class="fas fa-search"/> البحث عن عنوان الطلب</label>
+                        </FloatLabel>
+                    </div>
+                </div>
+
+                <div class="col-12 md:col-4">
+                    <FloatLabel variant="on">
+                        <DatePicker 
+                            id="filter_date_from"
+                            v-model="filters.date_from" 
+                            showIcon 
+                            fluid 
+                            iconDisplay="input" 
+                            dateFormat="yy/mm/dd"
+                        />
+                        <label for="filter_date_from"><i class="pi pi-calendar ml-2"/> من تاريخ</label>
+                    </FloatLabel>
+                    <small class="text-gray-500 text-xs">العروض ما بعد التاريخ أعلاه</small>
+                </div>
+
+                <!-- إلى تاريخ -->
+                <div class="col-12 md:col-4">
+                    <FloatLabel variant="on">
+                        <DatePicker 
+                            id="filter_date_to"
+                            v-model="filters.date_to" 
+                            showIcon 
+                            fluid 
+                            iconDisplay="input" 
+                            dateFormat="yy/mm/dd"
+                        />
+                        <label for="filter_date_to"><i class="pi pi-calendar ml-2"/> إلى تاريخ</label>
+                    </FloatLabel>
+                    <small class="text-gray-500 text-xs">العروض ما قبل التاريخ أعلاه</small>
+                </div>
+
             </div>
         </div>
 
-        <!-- Estimates Cards -->
+        <!-- Enhanced Estimates Cards Grid -->
         <div class="grid">
             <div v-for="estimate in allEstimate" :key="estimate.id" class="col-12 lg:col-6 xl:col-4">
-                <Card class="h-full transition-all transition-duration-200 hover:shadow-3">
-                    <template #title>
-                        <div class="flex justify-content-between align-items-start gap-2">
+                <div class="estimate-card surface-card border-round-2xl shadow-2 overflow-hidden h-full transition-all transition-duration-300 hover:shadow-6">
+                    <!-- Card Header with Gradient -->
+                    <div class="card-header p-4">
+                        <div class="flex justify-content-between align-items-start">
                             <div class="flex-1">
-                                <div class="flex align-items-center gap-2 mb-2">
-                                    <Chip :label="`#${estimate.id}`" class="text-xs font-semibold" />
+                                <div class="flex align-items-center gap-2 mb-3">
+                                    <Chip 
+                                        :label="`#${estimate.id}`" 
+                                        class="text-sm font-bold bg-white-alpha-30 text-white px-3"
+                                        style="backdrop-filter: blur(10px);"
+                                    />
                                     <Tag 
                                         :value="getStatusLabel(estimate.status)" 
                                         :severity="getStatusSeverity(estimate.status)"
-                                        class="text-xs font-semibold"
+                                        class="text-sm font-bold px-3"
                                     />
                                 </div>
-                                <h3 class="text-lg font-bold text-900 m-0 mb-1 line-height-3">
+                                <h3 class="text-2xl font-bold text-white m-0 mb-2 line-height-3">
                                     {{ estimate.vendor.name }}
                                 </h3>
-                                <div class="flex align-items-center gap-2 text-xs text-600">
+                                <div class="flex align-items-center gap-2 text-sm text-white-alpha-90">
                                     <i class="pi pi-calendar"></i>
                                     <span>{{ formatDate(estimate.estimate_date) }}</span>
                                 </div>
                             </div>
                         </div>
-                    </template>
+                    </div>
 
-                    <template #content>
-                        <!-- Purchase Request Info -->
-                        <div class="p-3 border-round mb-3" style="background: var(--surface-50);">
-                            <div class="text-xs text-500 mb-1">طلب الشراء</div>
-                            <div class="text-sm font-semibold text-900 mb-1">
+                    <!-- Card Content -->
+                    <div class="p-4">
+                        <!-- Purchase Request Badge -->
+                        <div class="request-badge p-3 border-round-xl mb-4 border-1 border-primary-100"
+                             style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);">
+                            <div class="flex align-items-center gap-2 mb-2">
+                                <i class="pi pi-shopping-cart text-primary"></i>
+                                <span class="text-xs text-500 font-semibold">طلب الشراء</span>
+                            </div>
+                            <div class="text-base font-bold text-900 mb-1">
                                 {{ estimate.purchase_request.title }}
                             </div>
-                            <div class="text-xs text-600">
+                            <div class="text-sm text-600 font-medium">
                                 {{ estimate.purchase_request.request_number }}
                             </div>
                         </div>
 
                         <!-- Vendor Details -->
-                        <div class="mb-3">
-                            <div class="flex align-items-center gap-2 mb-2">
-                                <i class="pi pi-phone text-600 text-sm"></i>
-                                <span class="text-sm text-900 font-medium">{{ estimate.vendor.phone1 || '—' }}</span>
+                        <div class="vendor-details mb-4">
+                            <div class="detail-row flex align-items-center gap-3 p-2 border-round-lg mb-2 transition-colors transition-duration-200">
+                                <div class="icon-wrapper border-circle flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
+                                    <i class="pi pi-phone text-blue-600"></i>
+                                </div>
+                                <span class="text-sm text-900 font-medium">{{ estimate.vendor.phone1 || 'غير متوفر' }}</span>
                             </div>
-                            <div class="flex align-items-center gap-2 mb-2">
-                                <i class="pi pi-envelope text-600 text-sm"></i>
-                                <span class="text-sm text-900 font-medium">{{ estimate.vendor.email || '—' }}</span>
+                            
+                            <div class="detail-row flex align-items-center gap-3 p-2 border-round-lg mb-2 transition-colors transition-duration-200">
+                                <div class="icon-wrapper border-circle flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
+                                    <i class="pi pi-envelope text-purple-600"></i>
+                                </div>
+                                <span class="text-sm text-900 font-medium">{{ estimate.vendor.email || 'غير متوفر' }}</span>
                             </div>
-                            <div class="flex align-items-start gap-2">
-                                <i class="pi pi-map-marker text-600 text-sm mt-1"></i>
-                                <span class="text-sm text-900 font-medium line-height-3">{{ estimate.vendor.address || '—' }}</span>
-                            </div>
-                        </div>
-
-                        <!-- Financial Info -->
-                        <Divider class="my-3" />
-                        <div class="flex justify-content-between align-items-center mb-3 p-3 border-round" style="background: var(--green-50);">
-                            <div>
-                                <div class="text-xs text-600 mb-1">المبلغ الإجمالي</div>
-                                <div class="text-xl font-bold text-green-700">{{ estimate.total_amount }} <span class="text-sm">د.ع</span></div>
-                            </div>
-                            <div class="border-circle bg-green-100 flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                                <i class="pi pi-dollar text-green-700"></i>
+                            
+                            <div class="detail-row flex align-items-start gap-3 p-2 border-round-lg transition-colors transition-duration-200">
+                                <div class="icon-wrapper border-circle flex align-items-center justify-content-center" style="width: 36px; height: 36px; min-width: 36px;">
+                                    <i class="pi pi-map-marker text-pink-600"></i>
+                                </div>
+                                <span class="text-sm text-900 font-medium line-height-3">{{ estimate.vendor.address || 'غير متوفر' }}</span>
                             </div>
                         </div>
 
-                        <!-- Notes -->
-                        <div v-if="estimate.notes" class="mt-3 p-3 border-round" style="background: var(--blue-50);">
-                            <div class="text-xs text-500 mb-1">ملاحظات</div>
+                        <!-- Financial Info with Animation -->
+                        <div class="price-section p-3 border-round-xl mb-3" 
+                             style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+                            <div class="flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="text-sm text-white-alpha-90 mb-1 font-medium">المبلغ الإجمالي</div>
+                                    <div class="text-3xl font-bold text-white">
+                                        {{ formatCurrency(estimate.total_amount) }}
+                                        <span class="text-base">د.ع</span>
+                                    </div>
+                                </div>
+                                <div class="border-circle bg-white-alpha-30 flex align-items-center justify-content-center" 
+                                     style="width: 50px; height: 50px; backdrop-filter: blur(10px);">
+                                    <i class="pi pi-dollar text-white text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Notes Section -->
+                        <div v-if="estimate.notes" class="notes-section p-3 border-round-xl border-1 border-orange-200"
+                             style="background: linear-gradient(135deg, rgba(255, 183, 77, 0.1) 0%, rgba(255, 138, 101, 0.1) 100%);">
+                            <div class="flex align-items-center gap-2 mb-2">
+                                <i class="pi pi-info-circle text-orange-500"></i>
+                                <span class="text-xs font-semibold text-600">ملاحظات</span>
+                            </div>
                             <p class="text-sm text-700 m-0 line-height-3">{{ estimate.notes }}</p>
                         </div>
-                    </template>
+                    </div>
 
-                    <template #footer>
-                        <div class="flex gap-2 flex-wrap">
-                            <Button label="عرض التفاصيل" icon="pi pi-eye" size="small" outlined class="flex-1" />
-                            <Button label="تعديل" icon="pi pi-check" size="small" severity="success" class="flex-1" />
-                            <Button icon="pi pi-trash" size="small" severity="danger" outlined @click="confirmDeleteEstimate(estimate)" />
+                    <!-- Card Footer -->
+                    <div class="p-4 surface-50 border-top-1 surface-border">
+                        <div class="flex gap-2">
+                            <Button 
+                                label="عرض" 
+                                icon="pi pi-eye" 
+                                size="small" 
+                                outlined 
+                                class="flex-1 border-round-lg font-semibold hover:bg-primary hover:text-white transition-colors transition-duration-300"
+                            />
+                            <Button 
+                                label="تعديل" 
+                                icon="pi pi-pencil" 
+                                size="small" 
+                                severity="success" 
+                                class="flex-1 border-round-lg font-semibold"
+                                @click="openAddEditDialog(estimate)"
+                            />
+                            <Button 
+                                icon="pi pi-trash" 
+                                size="small" 
+                                severity="danger" 
+                                outlined 
+                                class="border-round-lg hover:bg-red-500 hover:text-white transition-colors transition-duration-300"
+                                @click="confirmDeleteEstimate(estimate)" 
+                            />
                         </div>
-                    </template>
-                </Card>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <Paginator
-            :rows="pagination.per_page"
-            :totalRecords="pagination.total"
-            :first="(pagination.page - 1) * pagination.per_page"
-            @page="onPageChange"
-            class="mt-4"
-        />
-
-        <div v-if="!allEstimate || allEstimate.length === 0" class="text-center py-8">
-            <i class="pi pi-inbox text-6xl text-400 mb-4"></i>
-            <p class="text-xl text-600 m-0">لا توجد عروض أسعار</p>
+        <!-- Pagination -->
+        <div v-if="allEstimate && allEstimate.length > 0" class="mt-5">
+            <Paginator
+                :rows="pagination.per_page"
+                :totalRecords="pagination.total"
+                :first="(pagination.page - 1) * pagination.per_page"
+                @page="onPageChange"
+                class="border-round-xl shadow-2"
+            />
         </div>
+
+        <!-- Empty State -->
+        <div v-if="!isLoading && (!allEstimate || allEstimate.length === 0)" class="text-center py-8">
+            <div class="empty-state-wrapper inline-block p-6 border-round-2xl" style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);">
+                <div class="mb-4">
+                    <i class="pi pi-inbox text-6xl" style="color: #667eea;"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-900 mb-2">لا توجد عروض أسعار</h3>
+                <p class="text-600 m-0">ابدأ بإضافة عرض سعر جديد</p>
+            </div>
+        </div>
+
+        <Dialog
+            v-model:visible="addEditEstimateDialogVisible"
+            :header="isEditMode ? 'تعديل بيانات عرض السعر' : 'اضافة عرض سعر جديد'"
+            :style="{width: '30vw'}"
+            modal
+            @hide="resetForm"
+            dir="rtl"
+        >
+            <div class="flex flex-column gap-4 mt-3">
+                <div class="grid">
+                    <div class="col-10">
+                        <FloatLabel variant="on">
+                            <Select v-model="estimateForm.vendor_id" id="vendor_id" :options="allVendors" optionLabel="name" optionValue="id" fluid/>
+                            <label for="vendor_id"><i class="fas fa-store"/> اختر البائع</label>
+                        </FloatLabel>
+                    </div>
+                    
+                    <div class="col">
+                        <Button
+                            icon="fas fa-plus"
+                            v-tooltip="'اضافة بيانات بائع جديد'"
+                            @click="showAddVendorForm = !showAddVendorForm"
+                        />
+                    </div>
+                </div>
+
+                <div v-if="showAddVendorForm" class="surface-100 p-3 border-round-lg">
+                    <h4 class="mb-3 text-primary">
+                        <i class="fas fa-store ml-2"/>
+                        اضافة بائع جديد
+                    </h4>
+
+                    <div class="grid">
+                        <div class="col-12">
+                            <FloatLabel variant="on">
+                                <InputText id="vendor_name" v-model="vendorForm.name" fluid />
+                                <label for="vendor_name"><i class="fas fa-store"/> اسم البائع</label>
+                            </FloatLabel>
+                        </div>
+
+                        <div class="col-12 md:col-6">
+                            <FloatLabel variant="on">
+                                <InputText id="vendoe_phone1" v-model="vendorForm.phone1" fluid />
+                                <label for="vendoe_phone1"><i class="fas fa-phone-flip"/> رقم الهاتف</label>
+                            </FloatLabel>
+                        </div>
+
+                        <div class="col-12 md:col-6">
+                            <FloatLabel variant="on">
+                                <InputText id="vendor_phone2" v-model="vendorForm.phone2" fluid />
+                                <label for="vendoe_phone2"><i class="fas fa-phone-flip"/> رقم هاتف إضافي</label>
+                            </FloatLabel>
+                        </div>
+
+                        <div class="col-12 md:col-12">
+                            <FloatLabel variant="on">
+                                <InputText id="vendor_email" v-model="vendorForm.email" fluid />
+                                <label for="vendor_email"><i class="fas fa-envelope"/> البريد الإلكتروني</label>
+                            </FloatLabel>
+                        </div>
+
+                        <div class="col-12">
+                            <FloatLabel variant="on">
+                                <Textarea id="vendor_address" v-model="vendorForm.address" rows="2" fluid />
+                                <label for="vendor_address"><i class="fas fa-map-location-dot"/> العنوان</label>
+                            </FloatLabel>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-content-end gap-2 mt-3">
+                        <Button
+                            label="الغاء"
+                            severity="secondary"
+                            size="small"
+                            @click="showAddVendorForm = false"
+                        />
+                        <Button
+                            label="حفظ البائع"
+                            icon="fas fa-floppy-disk"
+                            size="small"
+                            :loading="isSavingVendor"
+                            @click="saveVendor"
+                        />
+                    </div>
+                </div>
+
+                <div class="grid">
+                    <div class="col">
+                        <FloatLabel variant="on">
+                            <DatePicker v-model="estimateForm.estimate_date" id="estimate_date" showIcon iconDisplay="input" fluid />
+                            <label for="estimate_date"><i class="fas fa-calendar-alt"/> تاريخ عرض السعر</label>
+                        </FloatLabel>
+                    </div>
+                    <div class="col">
+                        <FloatLabel variant="on">
+                            <Select 
+                                v-model="estimateForm.status"
+                                id="status" 
+                                :options="[
+                                    {label: 'معلق', value: 'pending'},
+                                    {label: 'مقبول', value: 'accepted'},
+                                    {label: 'مرفوض', value: 'rejected'}
+                                ]" 
+                                optionLabel="label" 
+                                optionValue="value" 
+                                fluid
+                            />
+                            <label for="status"><i class="fas fa-info-circle"/> حالة عرض السعر</label>
+                        </FloatLabel>
+                    </div>
+                </div>
+
+                <FloatLabel variant="on">
+                    <Textarea v-model="estimateForm.notes" id="notes" rows="5" cols="30" style="resize: none" fluid />
+                    <label for="notes"><i class="fa-solid fa-note-sticky"/> الملاحظات</label>
+                </FloatLabel>
+
+                <FloatLabel variant="on">
+                    <Select 
+                        id="purchase_id" 
+                        :options="allPurchase" 
+                        optionLabel="title" 
+                        optionValue="id" 
+                        filter
+                        show-clear
+                        fluid
+                    >
+                        <template #option="{option}">
+                            <div class="flex flex-column gap-1">
+                                <strong>{{ option.title }}</strong>
+                                <small class="text-gray-600">
+                                    {{ option.department?.name }} - رقم الطلب: {{ option.request_number }}
+                                </small>
+                                <small class="text-gray-500">
+                                    {{ option.description }}
+                                </small>
+                            </div>
+                        </template>
+                    </Select>
+                    <label for="purchase_id"><i class="fa-solid fa-cart-shopping"/> اختر طلب الشراء</label>
+                </FloatLabel>
+
+                <div v-if="estimateForm.items.length" class="mt-4">
+                    <h5>مواد الطلب</h5>
+                    <div v-for="(item, index) in estimateForm.items" :key="item.request_item_id" class="grid gap-3 mb-2">
+                        <div class="col-6">
+                            <InputText v-model="item.item_name" readonly />
+                        </div>
+                        <div class="col-2">
+                            <InputNumber v-model="item.quantity" :min="1" showButtons />
+                        </div>
+                        <div class="col-2">
+                            <InputNumber v-model="item.unit_price" :min="0" mode="currency" currency="USD" />
+                        </div>
+                        <div class="col-2">
+                            <InputText v-model="item.notes" placeholder="ملاحظات" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <template #footer>
+                <Button
+                    label="الغاء"
+                    icon="fas fa-times"
+                    @click="addEditEstimateDialogVisible = false"
+                    severity="secondary"
+                />
+                <Button
+                    label="حفظ"
+                    icon="fas fa-floppy-disk"
+                    @click="submitEstimate"
+                />
+            </template>
+        </Dialog>
     </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue';
-import Card from 'primevue/card';
+import { ref, computed, onMounted, watch, reactive } from 'vue';
 import Chip from 'primevue/chip';
 import Tag from 'primevue/tag';
 import Button from 'primevue/button';
-import Divider from 'primevue/divider';
-import estimateService from './estimateService';
+import estimateService, {EstimatePayload, type Estimate} from './estimateService';
 import Breadcrumb from "primevue/breadcrumb";
-import IconField from 'primevue/iconfield';
-import InputIcon from 'primevue/inputicon';
 import InputText from 'primevue/inputtext';
 import DepartmentService from '../departments/DepartmentService';
 import { useToast } from "primevue/usetoast";
 import { useConfirm } from "primevue/useconfirm";
 import Select from "primevue/select";
 import Paginator from 'primevue/paginator';
+import FloatLabel from 'primevue/floatlabel';
+import DatePicker from 'primevue/datepicker';
+import Dialog from "primevue/dialog";
+import VendorsService from '../vendors/VendorsService';
+import Textarea from 'primevue/textarea';
+import purchaseRequestsService from '../purchase-requests/purchase-requestsService';
+import InputNumber from 'primevue/inputnumber';
+
 
 const isLoading = ref(true);
+const isEditMode = ref(false);
 const toast = useToast();
 const confirm = useConfirm();
 const isConfirming = ref(false);
+const isSaving = ref(false); // Loading state for save operation
+const showAddVendorForm = ref(false);
+const isSavingVendor = ref(false);
+const allPurchase = ref<any[]>([]);
+
 
 const allEstimate = ref<any[]>([]);
 const allDepartments = ref<any[]>([]);
+const estimateId = ref<number | null>(null);
+const allVendors = ref<any[]>([]);
 
-const breadcrumbHome = ref({ icon: "pi pi-home", to: "/" });
+const addEditEstimateDialogVisible = ref(false);
+const estimateAllDetailsDialogVisible = ref(false);
+
+const breadcrumbHome = ref({ icon: "fas fa-house", to: "/" });
 const breadcrumbItems = ref([
-    { label: "الرئيسية", to: "/" },
-    { label: "عروض الاسعار", to: "/estimate" },
+    { label: "الرئيسية", to: "/", icon: "fas fa-house"},
+    { label: "عروض الاسعار", to: "/estimate", icon: "fas fa-receipt" },
+]);
+
+const statusOptions = ref([
+    { label: 'جميع الحالات', value: null },
+    { label: 'قيد الانتظار', value: 'pending' },
+    { label: 'موافق عليه', value: 'approved' },
+    { label: 'مرفوض', value: 'rejected' },
+    { label: 'مكتملة', value: 'completed' }
 ]);
 
 const filters = ref({
     vendor_name: "",
     department_id: null,
-    request_title: ""
+    request_title: "",
+    status: null,
+    date_from: null,
+    date_to: null
 });
 
 const pagination = ref({
-    page:1,
+    page: 1,
     per_page: 12,
     total: 0,
 });
 
-const fetchAllEstimates = async()=>{
+const estimateForm = reactive<EstimatePayload>({
+    vendor_id: null,
+    estimate_date: null,
+    status: "pending",
+    notes: null,
+    items: [],
+});
+
+const vendorForm = reactive({
+    name: '',
+});
+
+const fetchAllEstimates = async () => {
     isLoading.value = true;
     try {
         const params = {
@@ -227,8 +673,8 @@ const fetchAllEstimates = async()=>{
         console.log(err)
         toast.add({
             severity: "error",
-            summary: "رسالة خطاء",
-            detail: "حدث خطاء اثناء جلب بيانات عروض الاسعر",
+            summary: "رسالة خطأ",
+            detail: "حدث خطأ أثناء جلب بيانات عروض الأسعار",
             life: 3000
         })
     } finally {
@@ -236,7 +682,7 @@ const fetchAllEstimates = async()=>{
     }
 }
 
-const fetchAllDepartments = async()=>{
+const fetchAllDepartments = async () => {
     try {
         const response = await DepartmentService.getAll()
         allDepartments.value = response;
@@ -244,37 +690,58 @@ const fetchAllDepartments = async()=>{
         console.log(err)
         toast.add({
             severity: "error",
-            summary: "رسالة خطاء",
-            detail: "حدث خطاء اثناء جلب الاقسام لاستخدامهم داخل البحث",
+            summary: "رسالة خطأ",
+            detail: "حدث خطأ أثناء جلب الأقسام",
             life: 3000
         })
     }
 }
 
-const confirmDeleteEstimate = async(estimate: any) => {
+const fetchAllVendors = async()=>{
+    try {
+        const response = await VendorsService.getAll();
+        allVendors.value = response;
+    } catch (err: any) {
+        console.log(err);
+        toast.add({
+            severity: "error",
+            summary: "رسالة خطاء",
+            detail: "حدث خطاء ما اثناء جلب بيانات الباعه",
+            life: 3000,
+        });
+    }
+}
+
+const confirmDeleteEstimate = async (estimate: any) => {
     if (isConfirming.value) return;
     isConfirming.value = true;
 
     confirm.require({
         header: "تأكيد الحذف",
-        message: `هل انت متاكد من حذف بيانات عرض السعر`,
+        message: `هل أنت متأكد من حذف عرض السعر؟`,
         icon: "pi pi-exclamation-triangle text-yellow-500",
         acceptLabel: "تأكيد",
         acceptIcon: "pi pi-check",
-        acceptClass:"p-button-sm border border-red-500 bg-red-500 text-white",
+        acceptClass: "p-button-sm border border-red-500 bg-red-500 text-white",
         rejectLabel: "إلغاء",
         rejectIcon: "pi pi-times",
-        rejectClass:"p-button-sm border border-gray-400 text-gray-600 bg-transparent hover:bg-gray-200",
-        accept: async()=>{
+        rejectClass: "p-button-sm border border-gray-400 text-gray-600 bg-transparent hover:bg-gray-200",
+        accept: async () => {
             try {
                 await estimateService.delete(estimate.id);
                 fetchAllEstimates();
+                toast.add({
+                    severity: "success",
+                    summary: "تم الحذف",
+                    detail: "تم حذف عرض السعر بنجاح",
+                    life: 3000
+                });
             } catch (err: any) {
                 console.log(err)
                 toast.add({
                     severity: "error",
-                    summary: "رسالة خطاء",
-                    detail: "عذرا حدث خطاء ما اثناء حذف عرض السعر",
+                    summary: "رسالة خطأ",
+                    detail: "حدث خطأ أثناء حذف عرض السعر",
                     life: 3000
                 });
             } finally {
@@ -285,7 +752,7 @@ const confirmDeleteEstimate = async(estimate: any) => {
     })
 }
 
-const onPageChange = (e: any)=> {
+const onPageChange = (e: any) => {
     pagination.value.page = e.page + 1;
     fetchAllEstimates();
 }
@@ -299,13 +766,145 @@ watch(
     { deep: true }
 );
 
-// Stats
-const stats = computed(() => [
-    { label: 'إجمالي العروض', value: allEstimate.value.length, iconClass: 'pi pi-file text-blue-600 text-xl', bgClass: 'bg-blue-50 flex align-items-center justify-content-center' },
-    { label: 'قيد الانتظار', value: allEstimate.value.filter(e => e.status === 'pending').length, iconClass: 'pi pi-clock text-orange-600 text-xl', bgClass: 'bg-orange-50 flex align-items-center justify-content-center' },
-    { label: 'موافق عليها', value: allEstimate.value.filter(e => e.status === 'approved').length, iconClass: 'pi pi-check-circle text-green-600 text-xl', bgClass: 'bg-green-50 flex align-items-center justify-content-center' },
-    { label: 'إجمالي المبالغ', value: allEstimate.value.reduce((acc, e) => acc + parseFloat(e.total_amount || '0'), 0).toFixed(2) + ' د.ع', iconClass: 'pi pi-dollar text-purple-600 text-xl', bgClass: 'bg-purple-50 flex align-items-center justify-content-center' }
-]);
+const openAddEditDialog = async(estimate?: any | null)=> {
+    resetForm();
+
+    if (estimate && estimate.id) {
+        isEditMode.value = true;
+        estimateId.value = estimate.id;
+
+        estimateForm.vendor_id = estimate.vendor?.id ?? null;
+        estimateForm.estimate_date = estimate.estimate_date ? new Date(estimate.estimate_date) : null;
+        estimateForm.status = estimate.status;
+        estimateForm.notes = estimate.notes;
+
+        estimateForm.items = (estimate.estimate_items ?? []).map(item => ({
+            request_item_id: item.request_item_id,
+            quantity: item.quantity,
+            unit_price: item.unit_price,
+            notes: item.notes,
+        }));
+    } else {
+        resetForm();
+        isEditMode.value = false;
+        estimateId.value = null;
+    }
+    fetchAllVendors()
+    fetchAllPurchase()
+    addEditEstimateDialogVisible.value = true;
+}
+
+const submitEstimate = async()=>{
+    try {
+        isSaving.value = true;
+        if (isEditMode.value && estimateId.value) {
+            await estimateService.update(estimateId.value, estimateForm);
+            toast.add({
+                severity: "success",
+                summary: "رسالة نجاح",
+                detail: "تم حفظ بيانات عرض السعر",
+                life: 3000
+            })
+        } else {
+            await estimateService.createWithItems(PurchaseRequestId.value, estimateForm);
+            toast.add({
+                severity: "success",
+                summary: "رسالة نجاح",
+                detail: "تم اضافة عرض سعر جديد بنجاح",
+                life: 3000
+            });
+        }
+        addEditEstimateDialogVisible.value = false;
+        fetchAllEstimates();
+    } catch (err: any) {
+        console.log(err);
+        toast.add({
+            severity: "error",
+            summary: "رسالة خطاء",
+            detail: "حدث خطاء ما اثناء حفظ بيانات عرض السعر",
+            life: 3000
+        })
+    } finally {
+        isSaving.value = false;
+    }
+}
+
+const saveVendor = async()=>{
+    try {
+        isSavingVendor.value = true;
+        const response = await VendorsService.create(vendorForm)
+        fetchAllVendors()
+
+        Object.assign(vendorForm, {
+            name: '',
+            phone1: '',
+            phone2: '',
+            email: '',
+            address: ''
+        });
+        
+        showAddVendorForm.value = false;
+
+        toast.add({
+            severity: "success",
+            summary: "رسالة نجاح",
+            detail: "تم اضافة بيانات البائع بنجاح",
+            life: 3000,
+        });
+    } catch (err: any) {
+        console.log(err)
+        toast.add({
+            severity: "error",
+            summary: "رسالة خطاء",
+            detail: "فشل اضافة بيانات البائع",
+            life: 3000
+        });
+    } finally {
+        isSavingVendor.value = false
+    }
+}
+
+const fetchAllPurchase = async()=>{
+    try {
+        const response = await purchaseRequestsService.getAll();
+        allPurchase.value = response;
+    } catch (err: any) {
+        console.log(err)
+        toast.add({
+            severity: "error",
+            summary: "رسالة خطاء",
+            detail: "حدث خطاء ما اثناء جلب جميع طلبات الشراء",
+            life: 3000
+        })
+    }
+}
+
+// Status counts and percentages
+const statusCounts = computed(() => ({
+    pending: allEstimate.value.filter(e => e.status === 'pending').length,
+    approved: allEstimate.value.filter(e => e.status === 'approved').length,
+    rejected: allEstimate.value.filter(e => e.status === 'rejected').length,
+    completed: allEstimate.value.filter(e => e.status === 'completed').length,
+}));
+
+const totalEstimates = computed(() => allEstimate.value.length || 1);
+
+const statusPercentages = computed(() => ({
+    pending: totalEstimates.value > 0 ? Math.round((statusCounts.value.pending / totalEstimates.value) * 100) : 0,
+    approved: totalEstimates.value > 0 ? Math.round((statusCounts.value.approved / totalEstimates.value) * 100) : 0,
+    rejected: totalEstimates.value > 0 ? Math.round((statusCounts.value.rejected / totalEstimates.value) * 100) : 0,
+    completed: totalEstimates.value > 0 ? Math.round((statusCounts.value.completed / totalEstimates.value) * 100) : 0,
+}));
+
+const getCardGradient = (status: string): string => {
+    const gradientMap: Record<string, string> = {
+        'pending': 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+        'approved': 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+        'rejected': 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+        'completed': 'linear-gradient(135deg, #30cfd0 0%, #330867 100%)',
+    };
+    return gradientMap[status] || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+};
 
 const getStatusLabel = (status: string): string => {
     const statusMap: Record<string, string> = {
@@ -328,13 +927,203 @@ const getStatusSeverity = (status: string) => {
 };
 
 const formatDate = (dateString: string): string => {
-    if (!dateString) return '—';
+    if (!dateString) return 'غير محدد';
     const date = new Date(dateString);
     return date.toLocaleDateString('ar-IQ', { year: 'numeric', month: 'long', day: 'numeric' });
 };
 
-onMounted(()=>{
+const formatCurrency = (value: any): string => {
+    const num = parseFloat(value || '0');
+    return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+};
+
+const resetFilters = () => {
+    filters.value = {
+        vendor_name: "",
+        department_id: null,
+        request_title: "",
+        status: null,
+        date_from: null,
+        date_to: null
+    };
+};
+
+const resetForm = () => {
+    estimateForm.vendor_id = null;
+    estimateForm.estimate_date = null;
+    estimateForm.status = "pending";
+    estimateForm.notes = null;
+    estimateForm.items = [];
+}
+
+onMounted(() => {
     fetchAllEstimates();
     fetchAllDepartments();
 })
 </script>
+
+<style scoped>
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.6s ease-out;
+}
+
+.stat-card {
+    animation: fadeIn 0.6s ease-out both;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    transition: left 0.5s;
+}
+
+.stat-card:hover::before {
+    left: 100%;
+}
+
+/* Icon Containers */
+.icon-container {
+    width: 60px;
+    height: 60px;
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover .icon-container {
+    transform: scale(1.1) rotate(5deg);
+}
+
+.icon-total {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.icon-pending {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+}
+
+.icon-approved {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    color: white;
+}
+
+.icon-rejected {
+    background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    color: white;
+}
+
+.icon-completed {
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    color: white;
+}
+
+/* Progress Bars */
+.progress-bar {
+    background: var(--surface-100);
+    position: relative;
+    overflow: hidden;
+}
+
+.progress-fill-total {
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+}
+
+.progress-fill-pending {
+    background: linear-gradient(90deg, #f093fb 0%, #f5576c 100%);
+    box-shadow: 0 2px 8px rgba(240, 147, 251, 0.4);
+}
+
+.progress-fill-approved {
+    background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+    box-shadow: 0 2px 8px rgba(79, 172, 254, 0.4);
+}
+
+.progress-fill-rejected {
+    background: linear-gradient(90deg, #fa709a 0%, #fee140 100%);
+    box-shadow: 0 2px 8px rgba(250, 112, 154, 0.4);
+}
+
+.progress-fill-completed {
+    background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%);
+    box-shadow: 0 2px 8px rgba(67, 233, 123, 0.4);
+}
+
+@keyframes numberCount {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-number {
+    animation: numberCount 0.8s ease-out;
+}
+
+.estimate-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+
+
+
+@keyframes shimmer {
+    0% {
+        transform: translate(-50%, -50%) rotate(0deg);
+    }
+    100% {
+        transform: translate(-50%, -50%) rotate(360deg);
+    }
+}
+
+.price-section {
+    position: relative;
+    overflow: hidden;
+}
+
+.price-section::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    animation: slide 3s infinite;
+}
+
+@keyframes slide {
+    0% {
+        left: -100%;
+    }
+    100% {
+        left: 100%;
+    }
+}
+
+.empty-state-wrapper {
+    animation: fadeIn 0.8s ease-out;
+}
+</style>

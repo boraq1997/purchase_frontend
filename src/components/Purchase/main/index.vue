@@ -16,6 +16,7 @@ import RequestsList from './components/RequestsList.vue';
 import Pagination from './components/Pagination.vue';
 import PurchaseDetailsDialog from '../details/index.vue';
 import Button from 'primevue/button';
+import Breadcrumb from "primevue/breadcrumb";
 
 // Types
 import type { PurchaseRequest } from '../interfaces/purchase.interfaces';
@@ -33,6 +34,12 @@ function openDetails(request: PurchaseRequest) {
     selectedRequest.value = request;
     detailsDialogVisible.value = true;
 }
+
+const breadcrumbHome = ref({icon: "fas fa-house", to: '/'})
+const breadcrumbItems = ref([
+    {label: "الرئيسية", to: "/", icon: "fas fa-house"},
+    {label: "طلبات الشراء", to: "/purchase", icon: "fa-solid fa-cart-shopping"},
+])
 
 // القائمة الرئيسية للطلبات
 const requests = ref<PurchaseRequest[]>([]);
@@ -126,9 +133,9 @@ onMounted(() => {
 
 <template>
     <div class="p-4" dir="rtl">
-
-        <!-- PAGE TITLE -->
-        <h2 class="text-2xl font-bold mb-4">جميع طلبات الشراء</h2>
+        <div class="card flex justify-center mt-3 mb-3">
+            <Breadcrumb :home="breadcrumbHome" :model="breadcrumbItems"/>
+        </div>
 
         <!-- CHART -->
         <Chart :requests="requests" />
@@ -137,8 +144,7 @@ onMounted(() => {
 
             <Button
                 label="إضافة طلب جديد"
-                icon="pi pi-plus"
-                class="p-button-success"
+                icon="fas fa-plus"
                 @click="openAddDialog"
             />
         <!-- FILTER PANEL -->

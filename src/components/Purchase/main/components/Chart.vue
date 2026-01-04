@@ -46,6 +46,16 @@ const totalRequests = computed(() => {
     return props.requests.length;
 });
 
+const statusPercentages = computed(() => {
+    const total = totalRequests.value || 0;
+    return {
+        pending: total ? ((statusCounts.value.pending / total) * 100).toFixed(1): '0',
+        approved: total ? ((statusCounts.value.approved / total) * 100).toFixed(1): '0',
+        rejected: total ? ((statusCounts.value.rejected / total) * 100).toFixed(1): '0',
+        completed: total ? ((statusCounts.value.completed / total) * 100).toFixed(1): '0',
+    }
+});
+
 // ============================================================================
 // CHART DATA
 // ============================================================================
@@ -220,9 +230,12 @@ const radarOptions = computed(() => {
                             <i class="pi pi-clock text-2xl"></i>
                         </div>
                     </div>
-                    <div class="progress-bar progress-pending border-round" style="height: 5px;">
-                        <div class="progress-fill-pending border-round h-full transition-all transition-duration-500" 
-                             :style="{width: totalRequests > 0 ? (statusCounts.pending / totalRequests * 100) + '%' : '0%'}">
+                    <div class="progress-bar progress-pending border-round relative overflow-hidden" style="height: 18px;">
+                        <div
+                            class="progress-fill-pending h-full transition-all transition-duration-500 flex align-items-center justify-content-center text-white text-xs font-medium"
+                            :style="{ width: statusPercentages.pending + '%' }"
+                        >
+                            {{ statusPercentages.pending }}%
                         </div>
                     </div>
                 </div>
@@ -241,9 +254,12 @@ const radarOptions = computed(() => {
                             <i class="pi pi-check-circle text-2xl"></i>
                         </div>
                     </div>
-                    <div class="progress-bar progress-approved border-round" style="height: 5px;">
-                        <div class="progress-fill-approved border-round h-full transition-all transition-duration-500" 
-                             :style="{width: totalRequests > 0 ? (statusCounts.approved / totalRequests * 100) + '%' : '0%'}">
+                    <div class="progress-bar progress-approved border-round" style="height: 18px;">
+                        <div
+                            class="progress-fill-approved h-full transition-all transition-duration-500 flex align-items-center justify-content-center text-white text-xs font-medium"
+                            :style="{ width: statusPercentages.approved + '%' }"
+                        >
+                            {{ statusPercentages.approved }}%
                         </div>
                     </div>
                 </div>
@@ -262,9 +278,12 @@ const radarOptions = computed(() => {
                             <i class="pi pi-times-circle text-2xl"></i>
                         </div>
                     </div>
-                    <div class="progress-bar progress-rejected border-round" style="height: 5px;">
-                        <div class="progress-fill-rejected border-round h-full transition-all transition-duration-500" 
-                             :style="{width: totalRequests > 0 ? (statusCounts.rejected / totalRequests * 100) + '%' : '0%'}">
+                    <div class="progress-bar progress-rejected border-round" style="height: 18px;">
+                        <div
+                            class="progress-fill-rejected h-full transition-all transition-duration-500 flex align-items-center justify-content-center text-white text-xs font-medium"
+                            :style="{ width: statusPercentages.rejected + '%' }"
+                        >
+                            {{ statusPercentages.rejected }}%
                         </div>
                     </div>
                 </div>
@@ -283,9 +302,12 @@ const radarOptions = computed(() => {
                             <i class="pi pi-box text-2xl"></i>
                         </div>
                     </div>
-                    <div class="progress-bar progress-completed border-round" style="height: 5px;">
-                        <div class="progress-fill-completed border-round h-full transition-all transition-duration-500" 
-                             :style="{width: totalRequests > 0 ? (statusCounts.completed / totalRequests * 100) + '%' : '0%'}">
+                    <div class="progress-bar progress-completed border-round" style="height: 18px;">
+                        <div
+                            class="progress-fill-completed h-full transition-all transition-duration-500 flex align-items-center justify-content-center text-white text-xs font-medium"
+                            :style="{ width: statusPercentages.completed + '%' }"
+                        >
+                            {{ statusPercentages.completed }}%
                         </div>
                     </div>
                 </div>
@@ -309,7 +331,7 @@ const radarOptions = computed(() => {
                     <template #content>
                         <div class="chart-wrapper">
                             <Chart
-                                type="pie"
+                                type="doughnut"
                                 :data="chartData"
                                 :options="chartOptions"
                                 class="chart-canvas"
@@ -333,7 +355,7 @@ const radarOptions = computed(() => {
                     <template #content>
                         <div class="chart-wrapper">
                             <Chart
-                                type="bar"
+                                type="line"
                                 :data="chartData"
                                 :options="chartOptions"
                                 class="chart-canvas"
@@ -357,7 +379,7 @@ const radarOptions = computed(() => {
                     <template #content>
                         <div class="chart-wrapper">
                             <Chart
-                                type="radar"
+                                type="polarArea"
                                 :data="chartData"
                                 :options="radarOptions"
                                 class="chart-canvas"
@@ -604,5 +626,14 @@ const radarOptions = computed(() => {
     .chart-card {
         background: var(--surface-ground);
     }
+}
+
+
+.progress-fill-pending,
+.progress-fill-approved,
+.progress-fill-rejected,
+.progress-fill-completed {
+    min-width: 32px;
+    white-space: nowrap;
 }
 </style>

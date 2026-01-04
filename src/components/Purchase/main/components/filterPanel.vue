@@ -8,13 +8,12 @@
 // ============================================================================
 
 import { ref, reactive, watch, defineProps, defineEmits, onMounted } from 'vue';
-import IconField from 'primevue/iconfield';
-import InputIcon from 'primevue/inputicon';
 import Select from 'primevue/select';
 import DatePicker from 'primevue/datepicker';
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
 import DepartmentService from '../../../departments/DepartmentService';
+import FloatLabel from 'primevue/floatlabel';
 
 // PROPS: الفلاتر القادمة من الصفحة الرئيسية
 const props = defineProps<{
@@ -28,17 +27,13 @@ const props = defineProps<{
     };
 }>();
 
-// EMITS: لإرسال الفلاتر عند تغييرها
 const emit = defineEmits(['update:filters']);
-
-// STATE: نسخة محلية من الفلاتر
 const internalFilters = reactive({ ...props.filters });
+let searchTimeout: any = null;
 
-// مزامنة internalFilters مع الفلاتر القادمة من الصفحة الرئيسية
 watch(
     () => props.filters,
     (newFilters) => {
-        console.log("🔥 props.filters changed => syncing");
         Object.assign(internalFilters, newFilters);
     },
     { deep: true }
@@ -48,12 +43,35 @@ watch(
 // WATCHERS
 // - إعادة إرسال الفلاتر للصفحة الرئيسية عند أي تغيير
 // ============================================================================
+// watch(
+//     internalFilters,
+//     () => {
+//         emit('update:filters', internalFilters);
+//     }, 
+//     { deep: true }
+// );
+
 watch(
-    internalFilters,
+    ()=>internalFilters.search,
+    (newVal)=>{
+        if (searchTimeout) clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            emit('update:filters', {...internalFilters});
+        }, 500);
+    }
+)
+
+watch(
+    () => ({
+        department_id: internalFilters.department_id,
+        status_type: internalFilters.status_type,
+        priority: internalFilters.priority,
+        date_from: internalFilters.date_from,
+        date_to: internalFilters.date_to,
+    }),
     () => {
-        console.log("🔥 internalFilters changed => emitting to parent");
-        emit('update:filters', internalFilters);
-    }, 
+        emit('update:filters', { ...internalFilters });
+    },
     { deep: true }
 );
 
@@ -124,6 +142,7 @@ onMounted(()=>{
                 size="small"
                 @click="resetFilters"
                 class="reset-button"
+                v-tooltip="{ value: 'قم بالضغط لحذف جميع قيم الفلترة واعادة جلب جميع الطلبات', showDelay: 300, hideDelay: 300 }"
             />
         </div>
 
@@ -131,78 +150,98 @@ onMounted(()=>{
 
             <!-- قسم -->
             <div class="col">
-                <Select 
-                    v-model="internalFilters.department_id" 
-                    :options="departments" 
-                    filter 
-                    optionLabel="label" 
-                    optionValue="value" 
-                    placeholder="اختر القسم" 
-                    fluid
-                />
+                <FloatLabel variant="on">
+                    <Select 
+                        id="internal_filter_department_id"
+                        v-model="internalFilters.department_id" 
+                        :options="departments" 
+                        filter 
+                        optionLabel="label" 
+                        optionValue="value" 
+                        fluid
+                    />  
+                    <label for="internal_filter_department_id"><i class="fas fa-layer-group"/> اختر القسم</label>
+                </FloatLabel>
+                <small class="text-gray-500 text-xs">بحث وفلترة حسب القسم قم باختيار القسم المراد عرض الطلبات الخاصه به</small>
             </div>
 
             <!-- حالة الطلب -->
             <div class="col">
-                <Select 
-                    v-model="internalFilters.status_type" 
-                    :options="statuses" 
-                    filter 
-                    optionLabel="label" 
-                    optionValue="value" 
-                    placeholder="اختر حالة الطلب" 
-                    fluid 
-                />
+                <FloatLabel variant="on">
+                    <Select 
+                        id="internla_filter_status_type"
+                        v-model="internalFilters.status_type" 
+                        :options="statuses" 
+                        filter 
+                        optionLabel="label" 
+                        optionValue="value" 
+                        fluid 
+                    />
+                    <label for="internla_filter_status_type"><i class="fa-solid fa-spinner"/> حالة الطلب</label>
+                </FloatLabel>
+                <small class="text-gray-500 text-xs">بحث وفلترة حسب حالة الطلب</small>
             </div>
 
             <!-- الأولوية -->
             <div class="col">
-                <Select 
-                    v-model="internalFilters.priority" 
-                    :options="priorities" 
-                    filter 
-                    optionLabel="label" 
-                    optionValue="value" 
-                    placeholder="اختر أولوية الطلب" 
-                    fluid 
-                />
+                <FloatLabel variant="on">
+                    <Select 
+                        id="internla_filters_priority"
+                        v-model="internalFilters.priority" 
+                        :options="priorities" 
+                        filter 
+                        optionLabel="label" 
+                        optionValue="value" 
+                        fluid 
+                    />
+                    <label for="internla_filters_priority"><i class="fa-solid fa-circle-exclamation"/> الاولوية</label>
+                </FloatLabel>
+                <small class="text-gray-500 text-xs">بحث وفلترة حسب اهمية الطلب</small>
             </div>
 
             <!-- البحث -->
             <div class="col">
-                <IconField>
-                    <InputIcon class="pi pi-search"/>
+                <FloatLabel variant="on">
                     <InputText 
                         v-model="internalFilters.search" 
                         class="w-full" 
-                        placeholder="ابحث بالعنوان / رقم الطلب" 
                         fluid
                     />
-                </IconField>
+                    <label for="internal_filters_search"><i class="fas fa-search"/> بحث</label>
+                </FloatLabel>
+                <small class="text-gray-500 text-xs">بحث عام  يشمل التالي [عنوان الطلب, التاريخ, الاهمية]</small>
             </div>
         </div>
 
         <!-- التاريخ -->
         <div class="grid mt-2">
             <div class="col">
-                <DatePicker 
-                    v-model="internalFilters.date_from" 
-                    showIcon 
-                    fluid 
-                    iconDisplay="input" 
-                    placeholder="من تاريخ"
-                    dateFormat="yy/mm/dd"
-                />
+                <FloatLabel variant="on">
+                    <DatePicker 
+                        id="internal_filter_date_form"
+                        v-model="internalFilters.date_from" 
+                        showIcon 
+                        fluid 
+                        iconDisplay="input" 
+                        dateFormat="yy/mm/dd"
+                    />
+                    <label for="internal_filter_date_form"><i class="fas fa-calendar-alt"/> من تاريخ</label>
+                </FloatLabel>
+                <small class="text-gray-500 text-xs">الطلبات مابعد التاريخ اعلاه</small>
             </div>
             <div class="col">
-                <DatePicker 
-                    v-model="internalFilters.date_to" 
-                    showIcon 
-                    fluid 
-                    iconDisplay="input" 
-                    placeholder="إلى تاريخ"
-                    dateFormat="yy/mm/dd"
-                />
+                <FloatLabel variant="on">
+                    <DatePicker 
+                        id="internal_filter_date_to"
+                        v-model="internalFilters.date_to" 
+                        showIcon 
+                        fluid 
+                        iconDisplay="input" 
+                        dateFormat="yy/mm/dd"
+                    />
+                    <label for="internal_filter_date_to"><i class="fas fa-calendar-alt"/> الى تاريخ</label>
+                </FloatLabel>
+                <small class="text-gray-500 text-xs">الطلبات ماقبل التاريخ اعلاه</small>
             </div>
         </div>
 

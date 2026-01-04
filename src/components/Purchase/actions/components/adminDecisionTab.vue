@@ -40,6 +40,26 @@ watch(() => props.items, (v) => {
   }));
 }, { immediate: true });
 
+watch(
+  () => localRequest.status_type,
+  (status) => {
+    if (!status) return;
+
+    // اختيار القرار تلقائياً
+    decision.value = status === 'approved' || status === 'rejected'
+      ? status
+      : null;
+
+    // تعبئة سبب الرفض إن وجد
+    if (status === 'rejected') {
+      rejectReason.value = localRequest.rejected_reason ?? '';
+    } else {
+      rejectReason.value = '';
+    }
+  },
+  { immediate: true }
+);
+
 // Fetch latest request on mounted
 onMounted(async () => {
   if (!props.id) return;

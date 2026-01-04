@@ -11,6 +11,7 @@ import Card from 'primevue/card';
 import Divider from 'primevue/divider';
 import committeesOpinionsService from '../../services/committeesOpinions.service';
 import { useToast } from "primevue/usetoast";
+import FloatLabel from 'primevue/floatlabel';
 
 const toast = useToast();
 
@@ -226,97 +227,71 @@ onMounted(() => {
                                 
                                 <div class="grid">
                                     <div class="col-12 md:col-4">
-                                        <label class="form-label">مستوى الأهمية <span class="required">*</span></label>
-                                        <Select
-                                            v-model="form.urgency_level"
-                                            :options="[
-                                                { label: 'منخفض', value: 'low', icon: 'pi-arrow-down', color: 'info' },
-                                                { label: 'متوسط', value: 'medium', icon: 'pi-minus', color: 'warning' },
-                                                { label: 'عالٍ', value: 'high', icon: 'pi-arrow-up', color: 'danger' },
-                                                { label: 'حرج', value: 'critical', icon: 'pi-exclamation-triangle', color: 'danger' }
-                                            ]"
-                                            optionLabel="label"
-                                            optionValue="value"
-                                            placeholder="اختر مستوى الأهمية"
-                                            class="w-full"
-                                        >
-                                            <template #value="slotProps">
-                                                <div v-if="slotProps.value" class="flex align-items-center gap-2">
-                                                    <i :class="`pi ${
-                                                        slotProps.value === 'low' ? 'pi-arrow-down text-blue-500' :
-                                                        slotProps.value === 'medium' ? 'pi-minus text-orange-500' :
-                                                        slotProps.value === 'high' ? 'pi-arrow-up text-red-500' :
-                                                        'pi-exclamation-triangle text-red-600'
-                                                    }`"></i>
-                                                    <span>{{ slotProps.placeholder }}</span>
-                                                </div>
-                                                <span v-else>{{ slotProps.placeholder }}</span>
-                                            </template>
-                                            <template #option="slotProps">
-                                                <div class="flex align-items-center gap-2">
-                                                    <i :class="`pi ${slotProps.option.icon} text-${slotProps.option.color}-500`"></i>
-                                                    <span>{{ slotProps.option.label }}</span>
-                                                </div>
-                                            </template>
-                                        </Select>
+                                        <FloatLabel variant="on">
+                                            <Select
+                                                id="urgency_level"
+                                                v-model="form.urgency_level"
+                                                :options="[
+                                                    { label: 'منخفض', value: 'low', icon: 'pi-arrow-down', color: 'info' },
+                                                    { label: 'متوسط', value: 'medium', icon: 'pi-minus', color: 'warning' },
+                                                    { label: 'عالٍ', value: 'high', icon: 'pi-arrow-up', color: 'danger' },
+                                                    { label: 'حرج', value: 'critical', icon: 'pi-exclamation-triangle', color: 'danger' }
+                                                ]"
+                                                optionLabel="label"
+                                                optionValue="value"
+                                                class="w-full"
+                                            />
+                                            <label for="urgency_level">مستوى الأهمية <span class="required">*</span></label>
+                                        </FloatLabel>
+                                        
                                     </div>
                                     
                                     <div class="col-12 md:col-4">
-                                        <label class="form-label">حالة الحاجة <span class="required">*</span></label>
-                                        <Select
-                                            v-model="form.needs_status"
-                                            :options="[
-                                                { label: 'مطلوبة', value: 'needed', icon: 'pi-check' },
-                                                { label: 'غير مطلوبة', value: 'not_needed', icon: 'pi-times' },
-                                                { label: 'مواصفات معدلة', value: 'modified', icon: 'pi-pencil' }
-                                            ]"
-                                            optionLabel="label"
-                                            optionValue="value"
-                                            placeholder="اختر حالة الحاجة"
-                                            class="w-full"
-                                        >
-                                            <template #value="slotProps">
-                                                <div v-if="slotProps.value" class="flex align-items-center gap-2">
-                                                    <i :class="`pi ${
-                                                        slotProps.value === 'needed' ? 'pi-check text-green-500' :
-                                                        slotProps.value === 'not_needed' ? 'pi-times text-red-500' :
-                                                        'pi-pencil text-orange-500'
-                                                    }`"></i>
-                                                    <span>{{ slotProps.placeholder }}</span>
-                                                </div>
-                                                <span v-else>{{ slotProps.placeholder }}</span>
-                                            </template>
-                                            <template #option="slotProps">
-                                                <div class="flex align-items-center gap-2">
-                                                    <i :class="`pi ${slotProps.option.icon}`"></i>
-                                                    <span>{{ slotProps.option.label }}</span>
-                                                </div>
-                                            </template>
-                                        </Select>
+                                        <FloatLabel variant="on">
+                                            <Select
+                                                id="needs_status"
+                                                v-model="form.needs_status"
+                                                :options="[
+                                                    { label: 'مطلوبة', value: 'needed', icon: 'pi-check' },
+                                                    { label: 'غير مطلوبة', value: 'not_needed', icon: 'pi-times' },
+                                                    { label: 'مواصفات معدلة', value: 'modified', icon: 'pi-pencil' }
+                                                ]"
+                                                optionLabel="label"
+                                                optionValue="value"
+                                                class="w-full"
+                                            />
+                                            <label for="needs_status">حالة الحاجة <span class="required">*</span></label>
+                                        </FloatLabel>
+                                        
                                     </div>
 
                                     <div class="col-12 md:col-4" v-if="form.needs_status !== 'not_needed'">
-                                        <label class="form-label">الكمية المطلوبة</label>
-                                        <InputNumber 
-                                            v-model="form.quantity_needed_after_assessment" 
-                                            class="w-full" 
-                                            placeholder="أدخل الكمية"
-                                            :min="0"
-                                        />
+                                        <FloatLabel variant="on">
+                                            <InputNumber 
+                                                id="quantity_needed_after_assessment"
+                                                v-model="form.quantity_needed_after_assessment" 
+                                                class="w-full" 
+                                                :min="0"
+                                            />
+                                            <label for="quantity_needed_after_assessment">الكمية المطلوبة</label>
+                                        </FloatLabel>
+                                        
                                     </div>
                                 </div>
 
                                 <!-- المواصفات المعدلة -->
                                 <div v-if="form.needs_status === 'modified'" class="mt-3">
-                                    <label class="form-label">المواصفات المعدلة <span class="required">*</span></label>
-                                    <Textarea 
-                                        v-model="form.modified_specifications" 
-                                        rows="4" 
-                                        class="w-full" 
-                                        placeholder="اكتب المواصفات المعدلة بالتفصيل..."
-                                        :maxlength="500" 
-                                    />
-                                    <small class="text-500">{{ form.modified_specifications?.length || 0 }}/500</small>
+                                    <FloatLabel variant="on">
+                                        <Textarea 
+                                            id="modified_specifications"
+                                            v-model="form.modified_specifications" 
+                                            rows="4" 
+                                            class="w-full" 
+                                            :maxlength="500" 
+                                        />
+                                        <label for="modified_specifications">المواصفات المعدلة <span class="required">*</span></label>
+                                    </FloatLabel>
+                                    <small class="text-500">{{ form.modified_specifications?.length || 0 }}/500</small>                                    
                                 </div>
                             </div>
 
@@ -329,24 +304,28 @@ onMounted(() => {
                                     التحليل والتوصيات
                                 </h4>
                                 
-                                <label class="form-label">السبب</label>
-                                <Textarea 
-                                    v-model="form.reason" 
-                                    rows="4" 
-                                    class="w-full" 
-                                    placeholder="اكتب السبب والمبررات..."
-                                    :maxlength="500"
-                                />
+                                <FloatLabel variant="on">
+                                    <Textarea 
+                                        id="reason"
+                                        v-model="form.reason" 
+                                        rows="4" 
+                                        class="w-full" 
+                                        :maxlength="500"
+                                    />
+                                    <label for="reason">السبب</label>
+                                </FloatLabel>
                                 <small class="text-500">{{ form.reason?.length || 0 }}/500</small>
                             
-                                <label class="form-label">الإجراء المقترح</label>
-                                <Textarea 
-                                    v-model="form.recommended_action" 
-                                    rows="4" 
-                                    class="w-full" 
-                                    placeholder="اكتب الإجراء المقترح..."
-                                    :maxlength="500"
-                                />
+                                <FloatLabel variant="on">
+                                    <Textarea 
+                                        id="recommended_action"
+                                        v-model="form.recommended_action" 
+                                        rows="4" 
+                                        class="w-full" 
+                                        :maxlength="500"
+                                    />
+                                    <label for="recommended_action">الإجراء المقترح</label>
+                                </FloatLabel>
                                 <small class="text-500">{{ form.recommended_action?.length || 0 }}/500</small>
                             </div>
 
@@ -359,8 +338,9 @@ onMounted(() => {
                                     ملاحظات إضافية
                                 </h4>
 
-                                    <label class="form-label">حالة التقييم <span class="required">*</span></label>
+                                <FloatLabel variant="on" class="mb-3">
                                     <Select
+                                        id="assessment_state"
                                         v-model="form.assessment_state"
                                         :options="[
                                             { label: 'مسودة', value: 'draft', icon: 'pi-file-edit' },
@@ -368,34 +348,22 @@ onMounted(() => {
                                         ]"
                                         optionLabel="label"
                                         optionValue="value"
-                                        placeholder="اختر حالة التقييم"
                                         class="w-full"
-                                    >
-                                        <template #value="slotProps">
-                                            <div v-if="slotProps.value" class="flex align-items-center gap-2">
-                                                <i :class="`pi ${slotProps.value === 'draft' ? 'pi-file-edit text-orange-500' : 'pi-check-circle text-green-500'}`"></i>
-                                                <span>{{ slotProps.value === 'draft' ? 'مسودة' : 'نهائي' }}</span>
-                                            </div>
-                                            <span v-else>{{ slotProps.placeholder }}</span>
-                                        </template>
-                                        <template #option="slotProps">
-                                            <div class="flex align-items-center gap-2">
-                                                <i :class="`pi ${slotProps.option.icon}`"></i>
-                                                <span>{{ slotProps.option.label }}</span>
-                                            </div>
-                                        </template>
-                                    </Select>
+                                    />
+                                    <label for="assessment_state">حالة التقييم <span class="required">*</span></label>
+                                </FloatLabel>
                                 
-                                    <label class="form-label">الملاحظات</label>
+                                <FloatLabel variant="on">
                                     <Textarea 
+                                        id="notes"
                                         v-model="form.notes" 
                                         rows="4" 
                                         class="w-full" 
-                                        placeholder="أضف أي ملاحظات إضافية..."
                                         :maxlength="500"
                                     />
-                                    <small class="text-500">{{ form.notes?.length || 0 }}/500</small>
-                                    
+                                    <label for="notes">الملاحظات</label>
+                                </FloatLabel>
+                                <small class="text-500">{{ form.notes?.length || 0 }}/500</small>
                             </div>
 
                             <Divider />
@@ -407,48 +375,33 @@ onMounted(() => {
                                     قرار الإدارة
                                 </h4>
                                 
-                                    <label class="form-label">القرار</label>
-                                    <Select
-                                        v-model="form.admin_decision"
-                                        :options="[
-                                            { label: 'بانتظار القرار', value: 'pending', icon: 'pi-clock' },
-                                            { label: 'موافقة', value: 'approved', icon: 'pi-check' },
-                                            { label: 'مرفوض', value: 'rejected', icon: 'pi-times' }
-                                        ]"
-                                        optionLabel="label"
-                                        optionValue="value"
-                                        placeholder="اختر قرار الإدارة"
-                                        class="w-full"
-                                    >
-                                        <template #value="slotProps">
-                                            <div v-if="slotProps.value" class="flex align-items-center gap-2">
-                                                <i :class="`pi ${
-                                                    slotProps.value === 'pending' ? 'pi-clock text-orange-500' :
-                                                    slotProps.value === 'approved' ? 'pi-check text-green-500' :
-                                                    'pi-times text-red-500'
-                                                }`"></i>
-                                                <span>{{ slotProps.placeholder }}</span>
-                                            </div>
-                                            <span v-else>{{ slotProps.placeholder }}</span>
-                                        </template>
-                                        <template #option="slotProps">
-                                            <div class="flex align-items-center gap-2">
-                                                <i :class="`pi ${slotProps.option.icon}`"></i>
-                                                <span>{{ slotProps.option.label }}</span>
-                                            </div>
-                                        </template>
-                                    </Select>
+                                    <FloatLabel variant="on" class="mb-3">
+                                        <Select
+                                            id="admin_decision"
+                                            v-model="form.admin_decision"
+                                            :options="[
+                                                { label: 'بانتظار القرار', value: 'pending', icon: 'pi-clock' },
+                                                { label: 'موافقة', value: 'approved', icon: 'pi-check' },
+                                                { label: 'مرفوض', value: 'rejected', icon: 'pi-times' }
+                                            ]"
+                                            optionLabel="label"
+                                            optionValue="value"
+                                            class="w-full"
+                                        />
+                                        <label for="admin_decision">القرار</label>
+                                    </FloatLabel>
                                 
-                                    <label class="form-label">تعليق الإدارة <span class="required">*</span></label>
-                                    <Textarea 
-                                        v-model="form.admin_comment" 
-                                        rows="4" 
-                                        class="w-full" 
-                                        placeholder="اكتب سبب الرفض..."
-                                        :maxlength="500"
-                                    />
+                                    <FloatLabel variant="on">
+                                        <Textarea 
+                                            id="admin_comment"
+                                            v-model="form.admin_comment" 
+                                            rows="4" 
+                                            class="w-full" 
+                                            :maxlength="500"
+                                        />
+                                        <label for="admin_comment">تعليق الإدارة <span class="required">*</span></label>
+                                    </FloatLabel>
                                     <small class="text-500">{{ form.admin_comment?.length || 0 }}/500</small>
-
                                 </div>
 
                             <!-- زر الحفظ -->

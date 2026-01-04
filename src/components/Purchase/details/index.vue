@@ -108,7 +108,7 @@ const statusLabel: any = {
 const priorityColor: any = {
     high: 'danger',
     medium: 'warn',
-    low: 'success'
+    low: 'info'
 };
 
 /**

@@ -276,7 +276,7 @@ async function submit() {
         v-model:visible="internalVisible"
         modal
         maximizable
-        :style="{ width: '80vw' }"
+        :style="{ width: '60vw' }"
         :header="isEditMode ? 'تعديل طلب الشراء' : 'إضافة طلب شراء جديد'"
         dir="rtl"
     >
@@ -286,12 +286,12 @@ async function submit() {
 
                 <FloatLabel variant="on" class="mt-3">
                     <InputText v-model="form.title" fluid id="title_field"/>
-                    <label for="title_field" class="font-semibold block mb-2">عنوان الطلب</label>
+                    <label for="title_field" class="font-semibold block mb-2"><i class="fa-solid fa-heading"/>عنوان الطلب</label>
                 </FloatLabel>
 
                 <FloatLabel variant="on" class="mt-4">
                     <Textarea v-model="form.description" id="description_field" rows="3" fluid />
-                    <label for="description_field" class="font-semibold block mb-2">الوصف</label>
+                    <label for="description_field" class="font-semibold block mb-2"><i class="fa-solid fa-text-width"/>الوصف</label>
                 </FloatLabel>
 
                 <!-- القسم + الأولوية -->
@@ -306,7 +306,7 @@ async function submit() {
                                 fluid
                                 id="department_field"
                             />
-                            <label for="department_field" class="font-semibold block mb-2">القسم</label>
+                            <label for="department_field" class="font-semibold block mb-2"><i class="fa-solid fa-layer-group"/>القسم</label>
                         </FloatLabel>
                     </div>
 
@@ -320,7 +320,7 @@ async function submit() {
                                 fluid
                                 id="priority_field"
                             />
-                            <label for="priority_field" class="font-semibold block mb-2">الأولوية</label>
+                            <label for="priority_field" class="font-semibold block mb-2"><i class="fa-solid fa-circle-exclamation"/>الأولوية</label>
                         </FloatLabel>
                     </div>
                 </div>
@@ -331,9 +331,10 @@ async function submit() {
                 <h3 class="text-xl font-bold mb-3">المواد المطلوبة</h3>
 
                 <Button
-                    label="إضافة مادة"
                     icon="fas fa-plus"
-                    severity="success"
+                    v-tooltip="{ value: 'اضغط لاضافة مادة جديده', showDelay: 200, hideDelay: 300 }"
+                    outlined
+                    severity="warn"
                     class="mb-3"
                     @click="openAddItem"
                 />
@@ -367,6 +368,10 @@ async function submit() {
                         </template>
                     </Column>
                     <Column>
+                        <template #header>
+                            <i class="fas fa-cogs"/>
+                            الادارة
+                        </template>
                         <template #body="slotProps">
                             <Button icon="pi pi-pencil" text @click="editItem(slotProps.index)" />
                             <Button icon="pi pi-trash" text severity="danger" @click="deleteItem(slotProps.index)" />
@@ -377,14 +382,23 @@ async function submit() {
             </template>
 
             <template #footer>
-                <Button
-                    :label="loading
-                        ? (isEditMode ? 'جاري التحديث...' : 'جاري الإرسال...')
-                        : (isEditMode ? 'حفظ التعديلات' : 'إرسال الطلب')"
-                    icon="fas fa-check"
-                    :loading="loading"
-                    @click="submit"
-                />
+                <div class="flex justify-content-end gap-2">
+                     <Button
+                        label="إغلاق"
+                        icon="fas fa-times"
+                        outlined
+                        severity="secondary"
+                        @click="internalVisible = false"
+                    />
+                    <Button
+                        :label="loading
+                            ? (isEditMode ? 'جاري التحديث...' : 'جاري الإرسال...')
+                            : (isEditMode ? 'حفظ التعديلات' : 'إرسال الطلب')"
+                        icon="fas fa-check"
+                        :loading="loading"
+                        @click="submit"
+                    />
+                </div>
             </template>
 
         </Card>
@@ -401,26 +415,26 @@ async function submit() {
         <div class="p-fluid">
             <FloatLabel variant="on" class="mt-3">
                 <InputText v-model="itemForm.item_name" id="itemName_field" class="w-full" ref="itemNameInputRef" />
-                <label for="itemName_field" class="font-semibold mb-2 block">اسم المادة</label>
+                <label for="itemName_field" class="font-semibold mb-2 block"><i class="fas fa-box"/>اسم المادة</label>
             </FloatLabel>
 
             <FloatLabel variant="on" class="mt-5">
                 <InputNumber  v-model="itemForm.quantity" id="quantity_field" inputClass="w-full" class="w-full"/>
-                <label for="quantity_field" class="font-semibold mb-2 block">الكمية</label>
+                <label for="quantity_field" class="font-semibold mb-2 block"><i class="fas fa-hashtag"/>الكمية</label>
             </FloatLabel>
 
             <FloatLabel variant="on" class="mt-5">
                 <Select v-model="itemForm.unit" id="unit_field" :options="unitsList" optionLabel="label" optionValue="value" filter fluid/>
-                <label for="unit_field" class="font-semibold mb-2 block">اختر الوحدة</label>
+                <label for="unit_field" class="font-semibold mb-2 block"><i class="fas fa-object-group"/>اختر الوحدة</label>
             </FloatLabel>
 
             <FloatLabel variant="on" class="mt-5">
                 <Textarea v-model="itemForm.specifications" id="specifications_field" class="w-full" rows="3" auto-resize :maxlength="500" counter />
-                <label for="specifications_field" class="font-semibold mb-2 block">المواصفات</label>
+                <label for="specifications_field" class="font-semibold mb-2 block"><i class="fa-solid fa-tags"/>المواصفات</label>
             </FloatLabel>
             <div class="mt-4 flex justify-content-end gap-2">
-                <Button label="إلغاء" severity="secondary" @click="itemDialogVisible = false" />
-                <Button label="حفظ" icon="fas fa-check" severity="success" @click="saveItem" />
+                <Button label="اغلاق" icon="fas fa-times" outlined severity="secondary" @click="itemDialogVisible = false" />
+                <Button label="حفظ" icon="fas fa-check" @click="saveItem" />
             </div>
         </div>
     </Dialog>

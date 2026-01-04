@@ -196,12 +196,12 @@ const topItems = computed(() => [
   },
   {
     label: "طلبات الشراء",
-    icon: 'fas fa-home',
+    icon: 'fa-solid fa-cart-shopping',
     hasSubmenu: true,
     items: [
       {
         label: "عرض الكل",
-        icon: "fas fa-home",
+        icon: "fa-solid fa-cart-shopping",
         command: ()=>router.push('/purchase-request')
       }
     ]

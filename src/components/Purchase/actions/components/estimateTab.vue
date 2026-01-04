@@ -3,7 +3,6 @@ import { ref, computed, watch, onMounted } from 'vue';
 import { useToast } from 'primevue/usetoast';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
 import Textarea from 'primevue/textarea';
 import Button from 'primevue/button';
@@ -15,6 +14,7 @@ import EstimateService from '../../../estimate/estimateService'; // تحقق م�
 import VendorsService from '../../../vendors/VendorsService';
 import Select from 'primevue/select';
 import DatePicker from 'primevue/datepicker';
+import FloatLabel from 'primevue/floatlabel';
 
 
 
@@ -48,6 +48,12 @@ function addNewEstimateForm() {
         total_amount: 0,
     });
 }
+
+const statusMap: Record<string, { label: string; severity: string }> = {
+  pending:  { label: 'قيد الانتظار', severity: 'warn' },
+  accepted: { label: 'مقبول',        severity: 'success' },
+  rejected: { label: 'مرفوض',        severity: 'danger' },
+};
 
 function removeEstimateForm(index: number) { newEstimateForms.value.splice(index, 1); }
 
@@ -206,13 +212,17 @@ onMounted(()=>{
                   <div class="grid">
 
                     <div class="col-12 md:col-6">
-                      <label class="form-label">اسم الشركة <span class="required">*</span></label>
-                      <Select v-model="form.vendor_id" :options="allVendors" optionLabel="name" optionValue="id" placeholder="اختر اسم الشركة" fluid/>
+                      <FloatLabel variant="on">
+                        <Select id="vendor_id" v-model="form.vendor_id" :options="allVendors" optionLabel="name" optionValue="id" fluid/>
+                        <label for="vendor_id"><i class="fas fa-user"/> اسم الشركة <span class="required">*</span></label>
+                      </FloatLabel>
                     </div>
 
                     <div class="col-12 md:col-6">
-                      <label class="form-label">تاريخ عرض السعر</label>
-                      <DatePicker v-model="form.estimate_date" showIcon fluid iconDisplay="input" />
+                      <FloatLabel variant="on">
+                        <DatePicker id="estimate_date" v-model="form.estimate_date" showIcon fluid iconDisplay="input" />
+                        <label for="estimate_date"><i class="fas fa-calendar-alt"/> تاريخ عرض السعر</label>
+                      </FloatLabel>
                     </div>
 
                   </div>
@@ -221,14 +231,74 @@ onMounted(()=>{
                 <div class="form-section">
                   <h4 class="section-title"><i class="fas fa-tasks text-primary"/>تفاصيل المواد والأسعار</h4>
                   
-                  <label class="form-label">اختر المواد <span class="required">*</span></label>
+                  <FloatLabel variant="on">
+                    <MultiSelect
+                      id="items"
+                      v-model="form.items" 
+                      :options="purchaseRequest.items" 
+                      optionLabel="item_name" 
+                      optionValue="id" 
+                      placeholder="اختر المواد" 
+                      class="w-full mb-4" 
+                      display="chip"
+                    />
+                    <label for="items">اختر المواد <span class="required">*</span></label>
+                  </FloatLabel>
 
-                  <MultiSelect v-model="form.items" :options="purchaseRequest.items" optionLabel="item_name" optionValue="id" placeholder="اختر المواد" class="w-full mb-4" display="chip" />
-                  <DataTable :value="form.itemsDetails" v-if="form.itemsDetails.length > 0" class="mt-2">
-                    <Column field="item_name" header="المادة" />
-                    <Column header="الكمية" style="width: 120px;"><template #body="{ data }"><InputNumber v-model="data.quantity" :min="1" @update:modelValue="updateItemTotals(form)" class="w-full" /></template></Column>
-                    <Column header="سعر الوحدة" style="width: 150px;"><template #body="{ data }"><InputNumber v-model="data.unit_price" :min="0" @update:modelValue="updateItemTotals(form)" class="w-full" mode="decimal" :minFractionDigits="2" /></template></Column>
-                    <Column header="السعر الكلي" style="width: 150px;"><template #body="{ data }"><span class="font-bold">{{ (data.total_price || 0).toLocaleString('ar-IQ', { style: 'currency', currency: 'IQD' }) }}</span></template></Column>
+                  <DataTable 
+                    :value="form.itemsDetails" 
+                    v-if="form.itemsDetails.length > 0" 
+                    class="mt-2"
+                  >
+                    <Column field="item_name">
+                      <template #header>
+                        <i class="fas fa-box text-gray-500"/>
+                        المادة
+                      </template>
+                    </Column>
+
+                    <Column style="width: 120px;">
+                      <template #header>
+                        <i class="fas fa-hashtag text-gray-500"/>
+                        الكمية
+                      </template>
+                      <template #body="{ data }">
+                        <InputNumber 
+                          v-model="data.quantity" 
+                          :min="1" 
+                          @update:modelValue="updateItemTotals(form)" 
+                          class="w-full" 
+                        />
+                      </template>
+                    </Column>
+
+                    <Column style="width: 150px;">
+                      <template #header>
+                        <i class="fas fa-dollar-sign text-gray-500"/>
+                        سعر الوحدة
+                      </template>
+                      <template #body="{ data }">
+                        <InputNumber 
+                          v-model="data.unit_price" 
+                          :min="0" 
+                          @update:modelValue="updateItemTotals(form)" 
+                          class="w-full" 
+                          mode="decimal" 
+                          :minFractionDigits="2" 
+                        />
+                      </template>
+                    </Column>
+                    <Column  style="width: 150px;">
+                      <template #header>
+                        <i class="fa-solid fa-money-check-dollar text-gray-500"/>
+                        السعر الكلي
+                      </template>
+                      <template #body="{ data }">
+                        <span class="font-bold">
+                          {{ (data.total_price || 0).toLocaleString('ar-IQ', { style: 'currency', currency: 'IQD' }) }}
+                        </span>
+                      </template>
+                    </Column>
                   </DataTable>
                   <div class="mt-4 p-3 border-round flex justify-content-between align-items-center">
                     <h4 class="font-bold text-lg m-0">المبلغ الإجمالي للعرض:</h4>
@@ -236,7 +306,21 @@ onMounted(()=>{
                   </div>
                 </div>
                 <Divider />
-                <div class="form-section"><h4 class="section-title"><i class="fas fa-comment-dots text-primary"></i>ملاحظات إضافية</h4><Textarea v-model="form.notes" rows="4" class="w-full"/></div>
+                <div class="form-section">
+                  <h4 class="section-title">
+                    <i class="fas fa-comment-dots text-primary"/>
+                    ملاحظات إضافية
+                  </h4>
+                  <FloatLabel variant="on">
+                    <Textarea 
+                      id="notes"
+                      v-model="form.notes" 
+                      rows="4" 
+                      class="w-full"
+                    />
+                    <label for="notes"><i class="fa-solid fa-note-sticky"/> الملاحظات</label>
+                  </FloatLabel>
+                </div>
               </div>
             </template>
           </Card>
@@ -267,24 +351,74 @@ onMounted(()=>{
           responsiveLayout="scroll"
           dataKey="id"
         >
-        
-          <Column field="vendor_name" header="اسم المورد" />
-          <Column field="vendor_phone" header="رقم الهاتف"/>
-          <Column field="vendor_email" header="البريد الالكتروني"/>
-          <Column field="vendor_address" header="العنوان"/>
-          <Column field="estimate_date" header="التاريخ">
-            <template #body="{ data }">{{ new Date(data.estimate_date).toLocaleDateString() }}</template>
+          {{ console.log(purchaseRequest) }}
+          <Column field="vendor.name">
+            <template #header>
+              <i class="fas fa-user text-gray-500"/>
+              اسم المورد
+            </template>
+          </Column>
+          <Column field="vendor.phone1">
+            <template #header>
+              <i class="fas fa-phone-flip text-gray-500"/>
+              رقم الهاتف1
+            </template>
+          </Column>
+          <Column field="vendor.phone2">
+            <template #header>
+              <i class="fas fa-phone-flip text-gray-500"/>
+              رقم الهاتف2
+            </template>
+          </Column>
+          <Column field="vendor.email">
+            <template #header>
+              <i class="fas fa-envelope"/>
+              البريد الالكتروني
+            </template>
+          </Column>
+          <Column field="vendor.address">
+            <template #header>
+              <i class="fas fa-map-location-dot text-gray-500"/>
+              العنوان
+            </template>
+          </Column> 
+          <Column field="estimate_date">
+            <template #header>
+              <i class="fas fa-calendar-alt text-gray-500"/>
+              التاريخ
+            </template>
+            <template #body="{ data }">
+              {{ new Date(data.estimate_date).toLocaleDateString() }}
+            </template>
           </Column>
           
-          <Column field="total_amount" header="المبلغ الإجمالي">
+          <Column field="total_amount">
+            <template #header>
+              <i class="fas fa-dollar-sign text-gray-500"/>
+              المبلغ الاجمالي
+            </template>
             <template #body="{ data }">
               <span class="font-bold text-green-600">
                 {{ Number(data.total_amount).toLocaleString('ar-IQ', { style: 'currency', currency: 'IQD' }) }}
               </span>
             </template>
           </Column>
-          <Column field="status" header="الحالة">
-            <template #body="{ data }"><Tag :value="data.status" /></template>
+          <Column field="status">
+            <template #header>
+              <i class="fas fa-info-circle text-gray-500"/>
+              الحالة
+            </template>
+            <template #body="{ data }">
+              <Tag
+                :value="statusMap[data.status]?.label"
+                :severity="statusMap[data.status]?.severity"
+                :icon="{
+                  pending: 'pi pi-clock',
+                  accepted: 'pi pi-check',
+                  rejected: 'pi pi-times'
+                }[data.status]"
+              />
+            </template>
           </Column>
         </DataTable>
 
