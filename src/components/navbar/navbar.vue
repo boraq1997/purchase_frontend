@@ -220,6 +220,11 @@ const topItems = computed(() => [
     label: "الباعة",
     icon: "fas fa-store",
     command: ()=>router.push('./vendors')
+  },
+  {
+    label: "النظام",
+    icon: "fa-solid fa-clock-rotate-left",
+    command: ()=>router.push('/logs')
   }
 ]);
 

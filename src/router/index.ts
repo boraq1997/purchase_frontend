@@ -11,6 +11,8 @@ import warehouse from '../components/warehouse/warehouse.vue';
 import Estimate from '../components/estimate/estimate.vue';
 import Index from '../components/Purchase/main/index.vue';
 import Vendors from '../components/vendors/Vendors.vue';
+import Activity from '../components/activityLogs/activity.vue';
+
 // Import components for each route
 
 const routes = [
@@ -24,6 +26,7 @@ const routes = [
     {path: '/warehouse', name: 'warehouse', component: warehouse},
     {path: '/estimate', name: 'estimate', component: Estimate},
     {path: '/vendors', name: 'vendors', component: Vendors},
+    {path: '/logs', name: 'logs', component: Activity},
     // Server error page (500)
     {
         path: '/500',
