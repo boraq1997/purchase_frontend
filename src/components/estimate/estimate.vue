@@ -347,6 +347,7 @@
                                 size="small" 
                                 outlined 
                                 class="flex-1 border-round-lg font-semibold hover:bg-primary hover:text-white transition-colors transition-duration-300"
+                                @click="showEstimatDetails(estimate)"
                             />
                             <Button 
                                 label="تعديل" 
@@ -395,7 +396,7 @@
         <Dialog
             v-model:visible="addEditEstimateDialogVisible"
             :header="isEditMode ? 'تعديل بيانات عرض السعر' : 'اضافة عرض سعر جديد'"
-            :style="{width: '30vw'}"
+            :style="{width: '50vw'}"
             modal
             @hide="resetForm"
             dir="rtl"
@@ -511,7 +512,8 @@
 
                 <FloatLabel variant="on">
                     <Select 
-                        id="purchase_id" 
+                        id="purchase_id"
+                        v-model="selectedPurchaseId"
                         :options="allPurchase" 
                         optionLabel="title" 
                         optionValue="id" 
@@ -534,20 +536,90 @@
                     <label for="purchase_id"><i class="fa-solid fa-cart-shopping"/> اختر طلب الشراء</label>
                 </FloatLabel>
 
-                <div v-if="estimateForm.items.length" class="mt-4">
-                    <h5>مواد الطلب</h5>
-                    <div v-for="(item, index) in estimateForm.items" :key="item.request_item_id" class="grid gap-3 mb-2">
-                        <div class="col-6">
-                            <InputText v-model="item.item_name" readonly />
-                        </div>
-                        <div class="col-2">
-                            <InputNumber v-model="item.quantity" :min="1" showButtons />
-                        </div>
-                        <div class="col-2">
-                            <InputNumber v-model="item.unit_price" :min="0" mode="currency" currency="USD" />
-                        </div>
-                        <div class="col-2">
-                            <InputText v-model="item.notes" placeholder="ملاحظات" />
+                <div v-if="estimateForm.items.length" class="mt-2">
+                    <h3><i class="fa-solid fa-boxes-stacked text-primary-500 ml-2"/>مواد الطلب</h3>
+                    <DataTable :value="estimateForm.items">
+                        <!-- اسم المادة -->
+                        <Column>
+                            <template #header>
+                                <i class="fas fa-box text-gray-500"/>
+                                المادة
+                            </template>
+                            <template #body="{ data }">
+                                <span class="font-medium text-900">
+                                    {{ data.item_name }}
+                                </span>
+                            </template>
+                        </Column>
+
+                        <!-- الكمية -->
+                        <Column style="width: 120px">
+                            <template #header>
+                                <i class="fas fa-hashtag text-gray-500"/>
+                                الكمية
+                            </template>
+                            <template #body="{ data }">
+                                <Tag 
+                                    :value="data.quantity" 
+                                    severity="secondary"
+                                />
+                            </template>
+                        </Column>
+
+                        <!-- سعر الوحدة -->
+                        <Column style="width: 160px">
+                            <template #header>
+                                <i class="fas fa-dollar-sign text-gray-500"/>
+                                سعر الوحدة
+                            </template>
+                            <template #body="{ data }">
+                                <InputNumber
+                                    v-model="data.unit_price"
+                                    :min="0"
+                                    mode="decimal"
+                                    :useGrouping="true"
+                                    local="ar-IQ"
+                                    :minFractionDigits="0"
+                                    :maxFractionDigits="0"
+                                />
+                            </template>
+                        </Column>
+
+                        <!-- المجموع -->
+                        <Column style="width: 160px">
+                            <template #header>
+                                <i class="fa-solid fa-money-bill-1-wave text-gray-500"/>
+                                المجموع
+                            </template>
+                            <template #body="{ data }">
+                                <span class="font-semibold text-900">
+                                    {{
+                                        (data.unit_price && data.quantity)
+                                            ? (data.unit_price * data.quantity).toLocaleString()
+                                            : '—'
+                                    }}
+                                </span>
+                            </template>
+                        </Column>
+                    </DataTable>
+                    <div class="flex justify-end mt-4">
+                        <div class="w-4 md:w-3 lg:w-2">
+                            <FloatLabel variant="on">
+                                <InputNumber
+                                    :modelValue="totalEstimateAmount"
+                                    readonly
+                                    mode="decimal"
+                                    class="font-bold"
+                                    :useGrouping="true"
+                                    local="ar-IQ"
+                                    :minFractionDigits="0"
+                                    :maxFractionDigits="0"
+                                />
+                                <label>
+                                    <i class="fa-solid fa-sack-dollar" />
+                                    المبلغ الكلي لعرض السعر
+                                </label>
+                            </FloatLabel>
                         </div>
                     </div>
                 </div>
@@ -565,6 +637,291 @@
                     icon="fas fa-floppy-disk"
                     @click="submitEstimate"
                 />
+            </template>
+        </Dialog>
+
+        <Dialog
+            v-model:visible="estimateAllDetailsDialogVisible"
+            modal
+            header="تفاصيل عرض السعر"
+            :style="{ width: '90vw',}"
+            :breakpoints="{ '960px': '95vw' }"
+            class="estimate-details-dialog"
+            dir="rtl"
+        >
+            <!-- Header Section with Gradient -->
+            <div class="dialog-header-content mb-4 p-2 border-round-xl" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <div class="flex justify-content-between align-items-center flex-wrap gap-3">
+                    <div class="flex-1">
+                        <div class="flex align-items-center gap-3 mb-2">
+                            <Chip 
+                            :label="`#${estimateData.id}`" 
+                            class="text-lg font-bold bg-white-alpha-20 text-white px-4 py-2"
+                            style="backdrop-filter: blur(10px);"
+                            />
+                            <Tag 
+                            :value="getStatusLabel(estimateData.status)" 
+                            :severity="getStatusSeverity(estimateData.status)"
+                            class="text-base font-bold px-4 py-2"
+                            style="font-size: 1rem;"
+                            />
+                        </div>
+                        <h2 class="text-3xl font-bold text-white m-0 mb-2">
+                            {{ estimateData.vendor?.name }}
+                        </h2>
+                        <div class="flex align-items-center gap-2 text-white-alpha-90">
+                            <i class="pi pi-calendar"></i>
+                            <span class="text-lg">{{ formatDate(estimateData.estimate_date) }}</span>
+                        </div>
+                    </div>
+                        <div class="price-display p-4 border-round-xl text-center" style="background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(10px); min-width: 250px;">
+                        <div class="text-sm text-white-alpha-90 mb-2 font-semibold">المبلغ الإجمالي</div>
+                        <div class="text-5xl font-bold text-white mb-1">
+                            {{ formatCurrency(estimateData.total_amount) }}
+                        </div>
+                        <div class="text-lg text-white-alpha-90 font-medium">دينار عراقي</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dialog-body">
+            <div class="grid">
+                <!-- Right Column -->
+                <div class="col-12 lg:col-8">
+                <!-- Purchase Request Info Card -->
+                <div class="info-card mb-4 surface-card border-round-xl p-4 shadow-2">
+                    <div class="flex align-items-center gap-3 mb-4">
+                        <i class="fas fa-shopping-cart text-3xl text-white"></i>
+                    <div class="flex-1">
+                        <h3 class="text-xl font-bold text-900 m-0 mb-1">معلومات طلب الشراء</h3>
+                        <span class="text-sm text-500">تفاصيل الطلب المرتبط بهذا العرض</span>
+                    </div>
+                    </div>
+                    
+                    <div class="grid">
+                    <div class="col-12 md:col-6">
+                        <div class="info-item p-3 border-round-lg mb-3"
+                            style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);">
+                        <span class="text-600 text-sm font-semibold mb-2 block">
+                            <i class="pi pi-hashtag ml-1"></i>
+                            رقم الطلب
+                        </span>
+                        <span class="text-900 font-bold text-lg">{{ estimateData.purchase_request?.request_number }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="col-12 md:col-6">
+                        <div class="info-item p-3 border-round-lg mb-3"
+                            style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);">
+                        <span class="text-600 text-sm font-semibold mb-2 block">
+                            <i class="pi pi-flag ml-1"></i>
+                            الأولوية
+                        </span>
+                        <Tag 
+                            :value="getPriorityLabel(estimateData.purchase_request?.priority)" 
+                            :severity="getPrioritySeverity(estimateData.purchase_request?.priority)"
+                            class="text-base px-3 py-2"
+                        />
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <div class="info-item p-3 border-round-lg"
+                            style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);">
+                        <span class="text-600 text-sm font-semibold mb-2 block">
+                            <i class="pi pi-file-edit ml-1"></i>
+                            عنوان الطلب
+                        </span>
+                        <span class="text-900 font-bold text-lg">{{ estimateData.purchase_request?.title }}</span>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+
+                <!-- Items Table Card -->
+                <div class="info-card surface-card border-round-xl p-4 shadow-2">
+                    <div class="flex align-items-center gap-3 mb-4">
+                        <i class="fas fa-list text-3xl text-white"></i>
+                    <div class="flex-1">
+                        <h3 class="text-xl font-bold text-900 m-0 mb-1">المواد المطلوبة</h3>
+                        <span class="text-sm text-500">قائمة المواد والأسعار التفصيلية</span>
+                    </div>
+                    </div>
+
+                    <DataTable 
+                    :value="estimateData.estimate_items" 
+                    responsiveLayout="scroll"
+                    stripedRows
+                    class="custom-datatable"
+                    >
+                    <Column field="item_name" style="min-width: 200px">
+                        <template #header>
+                            <i class="fas fa-box text-gray-500"/>
+                            اسم المادة
+                        </template>
+                        <template #body="slotProps">
+                        <div class="flex align-items-center gap-2">
+                            <i class="pi pi-box text-primary"></i>
+                            <span class="font-semibold text-900">{{ slotProps.data.item_name }}</span>
+                        </div>
+                        </template>
+                    </Column>
+                    
+                    <Column field="quantity" style="min-width: 120px">
+                        <template #header>
+                            <i class="fas fa-hashtag text-gray-500"/>
+                            الكمية
+                        </template>
+                        <template #body="slotProps">
+                        <Chip 
+                            :label="`${slotProps.data.quantity} ${slotProps.data.request_item?.unit || ''}`"
+                            class="font-semibold"
+                            style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%); color: #667eea;"
+                        />
+                        </template>
+                    </Column>
+                    
+                    <Column field="unit_price" style="min-width: 150px">
+                        <template #header>
+                            <i class="fas fa-dollar-sign text-gray-500"/>
+                            سعر الوحدة
+                        </template>
+                        <template #body="slotProps">
+                        <div class="text-right">
+                            <span class="font-semibold text-900">{{ formatCurrency(slotProps.data.unit_price) }}</span>
+                            <span class="text-500 text-sm mr-1">د.ع</span>
+                        </div>
+                        </template>
+                    </Column>
+                    
+                    <Column field="total_price" style="min-width: 150px">
+                        <template #header>
+                            <i class="fa-solid fa-money-bill-1-wave text-gray-500"/>
+                            المجموع
+                        </template>
+                        <template #body="slotProps">
+                        <div class="text-right">
+                            <span class="font-bold text-primary text-lg">{{ formatCurrency(slotProps.data.total_price) }}</span>
+                            <span class="text-500 text-sm mr-1">د.ع</span>
+                        </div>
+                        </template>
+                    </Column>
+                    </DataTable>
+
+                    <!-- Total Amount -->
+                    <div class="mt-4 p-2 border-round-xl"
+                        style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+                    <div class="flex justify-content-between align-items-center">
+                        <span class="text-2xl font-bold text-white">المجموع الكلي:</span>
+                        <div class="text-right">
+                        <div class="text-4xl font-bold text-white">
+                            {{ formatCurrency(estimateData.total_amount) }}
+                        </div>
+                        <div class="text-lg text-white-alpha-90">دينار عراقي</div>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+                </div>
+
+                <!-- Left Column -->
+                <div class="col-12 lg:col-4">
+                <!-- Vendor Info Card -->
+                <div class="info-card mb-4 surface-card border-round-xl p-4 shadow-2">
+                    <div class="flex align-items-center gap-3 mb-4">
+                        <i class="fas fa-user text-primary-500"/>
+                    <div class="flex-1">
+                        <h3 class="text-xl font-bold text-900 m-0 mb-1">معلومات المورد</h3>
+                        <span class="text-sm text-500">تفاصيل الاتصال بالمورد</span>
+                    </div>
+                    </div>
+
+                    <div class="vendor-details">
+                    <div class="vendor-item p-3 border-round-lg mb-3 transition-all transition-duration-200 hover:surface-100">
+                        <div class="flex align-items-center gap-3">
+                            <i class="fas fa-user-tie text-primary-500"></i>
+                        <div class="flex-1">
+                            <span class="text-600 text-xs block mb-1">اسم المورد</span>
+                            <span class="text-900 font-bold block">{{ estimateData.vendor?.name }}</span>
+                        </div>
+                        </div>
+                    </div>
+
+                    <div class="vendor-item p-3 border-round-lg mb-3 transition-all transition-duration-200 hover:surface-100">
+                        <div class="flex align-items-center gap-3">
+                            <i class="fas fa-phone-flip text-primary-500"></i>
+                        <div class="flex-1">
+                            <span class="text-600 text-xs block mb-1">رقم الهاتف 1</span>
+                            <span class="text-900 font-semibold block">{{ estimateData.vendor?.phone1 || 'غير متوفر' }}</span>
+                        </div>
+                        </div>
+                    </div>
+
+                    <div class="vendor-item p-3 border-round-lg mb-3 transition-all transition-duration-200 hover:surface-100">
+                        <div class="flex align-items-center gap-3">
+                            <i class="fas fa-phone-flip text-primary-500"></i>
+                        <div class="flex-1">
+                            <span class="text-600 text-xs block mb-1">رقم الهاتف 2</span>
+                            <span class="text-900 font-semibold block">{{ estimateData.vendor?.phone2 || 'غير متوفر' }}</span>
+                        </div>
+                        </div>
+                    </div>
+
+                    <div class="vendor-item p-3 border-round-lg mb-3 transition-all transition-duration-200 hover:surface-100">
+                        <div class="flex align-items-center gap-3">
+                            <i class="fas fa-envelope text-primary-500"></i>
+                        <div class="flex-1">
+                            <span class="text-600 text-xs block mb-1">البريد الإلكتروني</span>
+                            <span class="text-900 font-semibold block text-sm">{{ estimateData.vendor?.email || 'غير متوفر' }}</span>
+                        </div>
+                        </div>
+                    </div>
+
+                    <div class="vendor-item p-3 border-round-lg transition-all transition-duration-200 hover:surface-100">
+                        <div class="flex align-items-start gap-3">
+                            <i class="fas fa-map-location-dot text-primary-500"></i>
+                        <div class="flex-1">
+                            <span class="text-600 text-xs block mb-1">العنوان</span>
+                            <span class="text-900 font-semibold block line-height-3">{{ estimateData.vendor?.address || 'غير متوفر' }}</span>
+                        </div>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+
+                <!-- Notes Card -->
+                <div v-if="estimateData.notes" class="info-card surface-card border-round-xl p-4 shadow-2">
+                    <div class="flex align-items-center gap-3 mb-3">
+                        <i class="fas fa-sticky-note text-3xl text-white"></i>
+                    <div class="flex-1">
+                        <h3 class="text-xl font-bold text-900 m-0 mb-1">الملاحظات</h3>
+                        <span class="text-sm text-500">معلومات إضافية</span>
+                    </div>
+                    </div>
+                    <div class="p-3 border-round-lg" style="background: linear-gradient(135deg, rgba(255, 216, 155, 0.1) 0%, rgba(25, 84, 123, 0.1) 100%);">
+                    <p class="text-900 m-0 line-height-3">{{ estimateData.notes }}</p>
+                    </div>
+                </div>
+                </div>
+            </div>
+            </div>
+
+            <template #footer>
+                <Button 
+                label="إغلاق" 
+                icon="fas fa-times" 
+                @click="estimateAllDetailsDialogVisible = false" 
+                severity="secondary"
+                outlined
+                class="px-5"
+                />
+                <Button 
+                    label="طباعة" 
+                    icon="pi pi-print" 
+                    class="px-5"
+                    @click="handlePrint"
+                />
+
             </template>
         </Dialog>
     </div>
@@ -590,6 +947,8 @@ import VendorsService from '../vendors/VendorsService';
 import Textarea from 'primevue/textarea';
 import purchaseRequestsService from '../purchase-requests/purchase-requestsService';
 import InputNumber from 'primevue/inputnumber';
+import DataTable from 'primevue/datatable';
+import Column from 'primevue/column';
 
 
 const isLoading = ref(true);
@@ -607,9 +966,18 @@ const allEstimate = ref<any[]>([]);
 const allDepartments = ref<any[]>([]);
 const estimateId = ref<number | null>(null);
 const allVendors = ref<any[]>([]);
+const selectedPurchaseId = ref<number | null>(null);
 
 const addEditEstimateDialogVisible = ref(false);
 const estimateAllDetailsDialogVisible = ref(false);
+const estimateData = ref([]);
+
+const totalEstimateAmount = computed(() => {
+    return estimateForm.items.reduce((total, item) => {
+        const price = Number(item.unit_price) || 0;
+        return total + (price * item.quantity);
+    }, 0);
+});
 
 const breadcrumbHome = ref({ icon: "fas fa-house", to: "/" });
 const breadcrumbItems = ref([
@@ -780,6 +1148,7 @@ const openAddEditDialog = async(estimate?: any | null)=> {
 
         estimateForm.items = (estimate.estimate_items ?? []).map(item => ({
             request_item_id: item.request_item_id,
+            item_name: item.item_name,
             quantity: item.quantity,
             unit_price: item.unit_price,
             notes: item.notes,
@@ -806,7 +1175,7 @@ const submitEstimate = async()=>{
                 life: 3000
             })
         } else {
-            await estimateService.createWithItems(PurchaseRequestId.value, estimateForm);
+            await estimateService.createWithItems(selectedPurchaseId.value, estimateForm);
             toast.add({
                 severity: "success",
                 summary: "رسالة نجاح",
@@ -879,6 +1248,43 @@ const fetchAllPurchase = async()=>{
     }
 }
 
+const showEstimatDetails = (estimate: any)=>{
+    if (!estimate) {
+        toast.add({
+            severity: "warn",
+            summary: "رسالة خطاء",
+            detail: "حدث خطاء ما اثناء عرض تفاصيل عرض السعر يرجى المحاولة مره اخرى",
+            life: 3000
+        });
+        return;
+    }
+    console.log(estimate)
+    estimateData.value = estimate;
+    estimateAllDetailsDialogVisible.value = true;
+}
+
+watch(selectedPurchaseId, (purchaseId) => {
+    if (!purchaseId) {
+        estimateForm.items = [];
+        return;
+    }
+
+    const purchase = allPurchase.value.find(p => p.id === purchaseId);
+
+    if (!purchase || !purchase.items) {
+        estimateForm.items = [];
+        return;
+    }
+
+    estimateForm.items = purchase.items.map((item: any) => ({
+        request_item_id: item.id,
+        item_name: item.item_name,
+        quantity: item.quantity,
+        unit_price: null,
+        note: ''
+    }));
+})
+
 // Status counts and percentages
 const statusCounts = computed(() => ({
     pending: allEstimate.value.filter(e => e.status === 'pending').length,
@@ -924,6 +1330,28 @@ const getStatusSeverity = (status: string) => {
         'completed': 'info'
     };
     return severityMap[status] || 'secondary';
+};
+
+const getPriorityLabel = (priority: string): string => {
+  const labels: Record<string, string> = {
+    low: 'منخفضة',
+    medium: 'متوسطة',
+    high: 'عالية'
+  };
+  return labels[priority] || priority;
+};
+
+const getPrioritySeverity = (priority: string) => {
+  const severities: Record<string, "success" | "secondary" | "info" | "warning" | "danger"> = {
+    low: 'info',
+    medium: 'warn',
+    high: 'danger'
+  };
+  return severities[priority] || 'info';
+};
+
+const handlePrint = () => {
+  window.print();
 };
 
 const formatDate = (dateString: string): string => {
