@@ -58,6 +58,20 @@
   >
     <p>هنا يمكنك وضع مكونات الإعدادات الخاصة بالتطبيق.</p>
   </Drawer>
+
+  <Dialog
+    v-model:visible="isChangePasswordVisible"
+    modal
+    header="تغيير كلمة المرور"
+    :style="{width: '450px'}"
+    :closable=true
+    dir="rtl"
+  >
+    <changPasswordForm
+      @success="isChangePasswordVisible=false"
+      @cancel="isChangePasswordVisible=false"
+    />
+  </Dialog>
 </template>
 
 <script setup lang="ts">
@@ -70,13 +84,16 @@ import Badge from 'primevue/badge';
 import Drawer from 'primevue/drawer';
 import AuthServices from '../auth/auth-service';
 import { useRoute } from 'vue-router';
-
+import Dialog from 'primevue/dialog';
+import changPasswordForm from './components/changPasswordForm.vue';
 // call services
 
 
 // === State & Services ===
 // Reference to the user menu component
 const menu = ref();
+const isChangePasswordVisible = ref(false);
+
 // Vue Router instance for navigation
 const router = useRouter();
 const route = useRoute();
@@ -231,7 +248,13 @@ const topItems = computed(() => [
 // User profile dropdown menu items
 const userOptions = computed(() => [
   { label: 'الملف الشخصي', icon: 'pi pi-user' },
-  { label: 'كلمة المرور', icon: 'pi pi-lock-open' },
+  { 
+    label: 'كلمة المرور', 
+    icon: 'pi pi-lock-open',
+    command: ()=>{
+      isChangePasswordVisible.value = true;
+    }
+  },
   {
     label: 'الإعدادات',
     icon: 'pi pi-cog',

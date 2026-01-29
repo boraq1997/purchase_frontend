@@ -12,11 +12,14 @@ import Estimate from '../components/estimate/estimate.vue';
 import Index from '../components/Purchase/main/index.vue';
 import Vendors from '../components/vendors/Vendors.vue';
 import Activity from '../components/activityLogs/activity.vue';
-
+import notFoundPage from '../components/errors/notFountPage.vue';
+import internlaServerError from '../components/errors/internlaServerError.vue';
+import forbiddenError from '../components/errors/forbiddenError.vue';
 // Import components for each route
 
 const routes = [
     {path: '/', name: 'login', component: Auth},
+    // {path: '/home', name: 'home', component: Home},
     {path: '/home', name: 'home', component: Home},
     {path: '/users', name: "users", component: Users},
     {path: '/departments', name: 'departments', component: Departments},
@@ -31,20 +34,27 @@ const routes = [
     {
         path: '/500',
         name: 'ServerError',
-        component: '',
+        component: internlaServerError,
+        meta: {
+          title: '500 - خطاء في الخادم'
+        }
     },
     // Forbidden error page (403)
     {
         path: '/403',
-        name: 'Forbidden', // Fixed typo in name ('Forbiddent' → 'Forbidden')
-        component: '',
+        name: 'Forbidden',
+        component: forbiddenError,
+
     },
     // Catch-all route for 404 Not Found errors
-    // {
-    //     path: '/:pathMatch(.*)*',
-    //     name: 'NotFound',
-    //     component: '',
-    // },
+    {
+        path: '/:pathMatch(.*)*',
+        name: 'NotFound',
+        component: notFoundPage,
+        meta: {
+          title: '404 - الصفحة غير موجودة'
+        }
+    },
 ];
 
 // Create the Vue Router instance
