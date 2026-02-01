@@ -25,6 +25,7 @@
         ============================= -->
         <div class="flex justify-between mb-3">
             <Button 
+                v-if="hasPermission('create-User')"
                 class="p-button-sm" 
                 label="اضافة" 
                 icon="fas fa-plus"
@@ -112,7 +113,7 @@
                         variant="text"
                         :href="`mailto:${slotProps.data.email}?subject=${encodeURIComponent('عنوان الرسالة')}&body=${encodeURIComponent('نص الرسالة')}`"
                         v-tooltip="{ value: 'اضغط لارسال رسالة الى المستخدم باستخدام البريد الالكتروني', showDelay: 500, hideDelay: 300 }"
-                     />
+                    />
                 </template>
             </Column>
 
@@ -194,9 +195,9 @@
                     </span>
                 </template>
                 <template #body="{data}">
-                    <Button icon="fa-solid fa-users-viewfinder" class="ml-1" severity="secondary" rounded variant="outlined" aria-label="all committees" @click="getUserCommittees(data.committees)" v-tooltip="{ value: 'عرض اللجان التي ينتمي اليها المستخدم', showDelay: 1000, hideDelay: 300 }"/>
-                    <Button icon="fas fa-user-edit" class="ml-1" severity="secondary" rounded variant="outlined" aria-label="edit" @click="openAddEditUserDialog(data)" v-tooltip="{ value: 'تعديل بيانات المستخدم', showDelay: 1000, hideDelay: 300 }" />
-                    <Button icon="fas fa-user-minus" severity="danger" rounded variant="outlined" aria-label="delete" @click.stop="confirmDeleteUser(data)" v-tooltip="{ value: 'حذف بيانات المستخدم', showDelay: 1000, hideDelay: 300 }" />
+                    <Button v-if="hasPermission('view-Committees')" icon="fa-solid fa-users-viewfinder" class="ml-1" severity="secondary" rounded variant="outlined" aria-label="all committees" @click="getUserCommittees(data.committees)" v-tooltip="{ value: 'عرض اللجان التي ينتمي اليها المستخدم', showDelay: 1000, hideDelay: 300 }"/>
+                    <Button v-if="hasPermission('edit-User')" icon="fas fa-user-edit" class="ml-1" severity="secondary" rounded variant="outlined" aria-label="edit" @click="openAddEditUserDialog(data)" v-tooltip="{ value: 'تعديل بيانات المستخدم', showDelay: 1000, hideDelay: 300 }" />
+                    <Button v-if="hasPermission('delete-User')" icon="fas fa-user-minus" severity="danger" rounded variant="outlined" aria-label="delete" @click.stop="confirmDeleteUser(data)" v-tooltip="{ value: 'حذف بيانات المستخدم', showDelay: 1000, hideDelay: 300 }" />
                 </template>
             </Column>
             
@@ -471,6 +472,7 @@ import ConfirmDialog from "primevue/confirmdialog";
 import Select from 'primevue/select';
 import Password from 'primevue/password';
 import FloatLabel from 'primevue/floatlabel';
+import { hasPermission } from "../services/permission";
 
 /**
  * =============================

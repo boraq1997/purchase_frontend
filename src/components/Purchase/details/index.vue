@@ -379,19 +379,6 @@ function handleUpdated(updatedRequest) {
             <!-- ============================================= -->
             <!-- 3) تفاصيل المادة المختارة (Placeholder حالياً) -->
             <!-- ============================================= -->
-            <!-- <section>
-                <h3 class="text-md font-bold mb-2">تفاصيل المادة المختارة</h3>
-
-                <div v-if="!selectedItem" class="surface-0 border-1 border-dashed surface-border border-round p-3 text-center text-500 text-sm">
-                    اختر مادة من الجدول لعرض تفاصيلها
-                </div>
-                <div v-else>
-                    <NeedsAssessmentCard :item="selectedItem" class="mb-5"/>
-                    <WarehouseCheckCard :item="selectedItem" class="mb-5"/>
-                    <EstimatesCard :item="selectedItem" />
-                </div>
-            </section> -->
-
             <section>
                 <h3 class="text-md font-bold mb-2">تفاصيل المادة المختارة</h3>
 
@@ -408,13 +395,13 @@ function handleUpdated(updatedRequest) {
                             class="ml-1 p-button-sm"
                             :outlined="active !== '0'"
                         />
-                        <Button 
+                        <!-- <Button 
                             @click="active = '1'" 
                             rounded 
                             icon="fa-solid fa-hand-holding-hand" 
                             class="ml-1 p-button-sm" 
                             :outlined="active !== '1'"
-                        />
+                        /> -->
                         <Button 
                             @click="active = '2'" 
                             rounded icon="fa-solid fa-receipt" 
@@ -438,24 +425,17 @@ function handleUpdated(updatedRequest) {
                             </AccordionContent>
                         </AccordionPanel>
 
-                        <AccordionPanel value="1">
+                        <!-- <AccordionPanel value="1">
                             <AccordionHeader>بيان الحاجة</AccordionHeader>
                             <AccordionContent>
                                 <NeedsAssessmentCard :item="selectedItem" class="mb-5"/>
                             </AccordionContent>
-                        </AccordionPanel>
+                        </AccordionPanel> -->
 
                         <AccordionPanel value="2">
                             <AccordionHeader>عروض الاسعار</AccordionHeader>
                             <AccordionContent>
                                 <EstimatesCard :item="selectedItem" />
-                            </AccordionContent>
-                        </AccordionPanel>
-
-                        <AccordionPanel value="3">
-                            <AccordionHeader>H1</AccordionHeader>
-                            <AccordionContent>
-                                4444444
                             </AccordionContent>
                         </AccordionPanel>
 
@@ -482,8 +462,8 @@ function handleUpdated(updatedRequest) {
     
 
 <RequestActionsDialog
-  v-model:visible="actionsDialogVisible"
-  :purchaseRequest="props.request"
+    v-model:visible="actionsDialogVisible"
+    :purchaseRequest="props.request"
 />
 </template>
 

@@ -100,6 +100,7 @@ async function loadRequests() {
 
 import AddPurchaseDialog from '../create/AddPurchaseDialog.vue';
 import PurchaseFormDialog from '../create/PurchaseFormDialog.vue';
+import { hasPermission } from '../../services/permission';
 
 const addDialogVisible = ref(false);
 
@@ -143,6 +144,7 @@ onMounted(() => {
         <!-- PAGE TITLE -->
 
             <Button
+                v-if="hasPermission('create-PurchaseRequest')"
                 label="إضافة طلب جديد"
                 icon="fas fa-plus"
                 @click="openAddDialog"

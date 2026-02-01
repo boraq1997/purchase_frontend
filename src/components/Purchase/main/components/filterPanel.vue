@@ -27,6 +27,9 @@ const props = defineProps<{
     };
 }>();
 
+const hasDepartment = ref<boolean>(false)
+const departmentId = ref<number>();
+
 const emit = defineEmits(['update:filters']);
 const internalFilters = reactive({ ...props.filters });
 let searchTimeout: any = null;
@@ -61,16 +64,22 @@ watch(
     }
 )
 
-watch(
-    () => ({
-        department_id: internalFilters.department_id,
+watch(() => ({
+        department_id: hasDepartment.value
+        ? departmentId.value
+        : internalFilters.department_id,
         status_type: internalFilters.status_type,
         priority: internalFilters.priority,
         date_from: internalFilters.date_from,
         date_to: internalFilters.date_to,
     }),
     () => {
-        emit('update:filters', { ...internalFilters });
+        emit('update:filters', {
+        ...internalFilters,
+        department_id: hasDepartment.value
+            ? departmentId.value
+            : internalFilters.department_id,
+        });
     },
     { deep: true }
 );
@@ -125,7 +134,22 @@ const resetFilters = () => {
 };
 
 onMounted(()=>{
-    loadDepartments();
+    try {
+        const row = localStorage.getItem('auth_department');
+        if (row) {
+            const authDepartment = JSON.parse(row);
+
+            if (authDepartment?.id) {
+                departmentId.value = authDepartment.id;
+                hasDepartment.value = true;
+                return;
+            }
+        }
+        loadDepartments();
+    } catch (err) {
+        console.log(err);
+        loadDepartments();
+    }
 })
 </script>
 
@@ -149,7 +173,7 @@ onMounted(()=>{
         <div class="grid gap-4">
 
             <!-- قسم -->
-            <div class="col">
+            <div class="col" v-if="!hasDepartment">
                 <FloatLabel variant="on">
                     <Select 
                         id="internal_filter_department_id"

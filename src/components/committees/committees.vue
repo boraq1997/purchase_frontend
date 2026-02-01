@@ -26,6 +26,7 @@
         <!-- ============================= -->
         <div class="flex justify-between mb-3">
             <Button 
+                v-if="hasPermission('create-Committees')"
                 class="p-button-sm bg-teal-500" 
                 label="لجنة جديدة" 
                 icon="fas fa-plus" 
@@ -124,8 +125,8 @@
                 <template #header><i class="fas fa-cogs text-gray-500"></i></template>
                 <template #body="{data}">
                     <Button icon="fas fa-users" class="ml-1" severity="secondary" rounded variant="outlined" aria-label="all users" @click="openUsersDialog(data)" />
-                    <Button icon="fas fa-edit" class="ml-1" severity="secondary" rounded variant="outlined" aria-label="edit" @click="openAddEditCommitteeDialog(data)" />
-                    <Button icon="fas fa-trash-alt" severity="danger" rounded variant="outlined" aria-label="delete" @click.stop="confirmDeleteCommittee(data)" />
+                    <Button v-if="hasPermission('edit-Committees')" icon="fas fa-edit" class="ml-1" severity="secondary" rounded variant="outlined" aria-label="edit" @click="openAddEditCommitteeDialog(data)" />
+                    <Button v-if="hasPermission('delete-Committees')" icon="fas fa-trash-alt" severity="danger" rounded variant="outlined" aria-label="delete" @click.stop="confirmDeleteCommittee(data)" />
                 </template>
             </Column>
         </DataTable>
@@ -283,6 +284,7 @@ import MultiSelect from "primevue/multiselect";
 import Select from "primevue/select";
 import Textarea from "primevue/textarea";
 import ConfirmDialog from "primevue/confirmdialog";
+import { hasPermission } from "../services/permission";
 
 /**
  * =============================

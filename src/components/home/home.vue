@@ -1,19 +1,25 @@
 <template>
-  <div class="dashboard-container">
-    <!-- Enhanced Header Section with Breadcrumb and Actions -->
-    <div class="dashboard-header mb-4">
+  <div class="dashboard-wrapper">
+    <!-- Header Section -->
+    <div class="mb-5">
       <div class="flex justify-content-between align-items-start flex-wrap gap-3">
         <div>
           <Breadcrumb :home="breadcrumbHome" :model="breadcrumbItems" class="mb-3" />
-          <h1 class="text-4xl font-bold m-0 mb-2 gradient-text">لوحة التحكم الرئيسية</h1>
-          <p class="text-600 m-0 text-lg">نظرة شاملة على أداء نظام إدارة المشتريات</p>
+          <h1 class="text-5xl font-bold m-0 mb-3 text-white">لوحة التحكم الرئيسية</h1>
+          <p class="text-400 m-0 text-xl">نظرة شاملة على أداء نظام إدارة المشتريات</p>
         </div>
         <div class="flex gap-2 flex-wrap">
-          <Button icon="pi pi-download" label="تصدير التقرير" severity="success" outlined />
-          <Button icon="pi pi-chart-line" label="تحليلات متقدمة" severity="info" outlined />
-          <Button icon="pi pi-refresh" @click="refreshData" :loading="loading" rounded severity="secondary" />
-          <Dropdown v-model="selectedPeriod" :options="periods" optionLabel="label" optionValue="value" 
-                    placeholder="اختر الفترة" class="w-12rem" @change="onPeriodChange">
+          <Button icon="pi pi-download" label="تصدير" severity="success" outlined />
+          <Button icon="pi pi-chart-line" label="تحليلات" severity="info" outlined />
+          <Button icon="pi pi-refresh" @click="refreshData" :loading="loading" rounded />
+          <Dropdown 
+            v-model="selectedPeriod" 
+            :options="periods" 
+            optionLabel="label" 
+            optionValue="value" 
+            placeholder="اختر الفترة" 
+            class="w-12rem"
+          >
             <template #value="slotProps">
               <div class="flex align-items-center gap-2" v-if="slotProps.value">
                 <i class="pi pi-calendar"></i>
@@ -25,744 +31,889 @@
       </div>
     </div>
 
-    <!-- Alert Banner for Important Notifications -->
-    <div class="mb-4" v-if="importantAlerts.length > 0">
-      <Message v-for="alert in importantAlerts" :key="alert.id" :severity="alert.severity" :closable="true">
+    <!-- Alert Banner -->
+    <div class="mb-5" v-if="importantAlerts.length > 0">
+      <Message 
+        v-for="alert in importantAlerts" 
+        :key="alert.id" 
+        :severity="alert.severity" 
+        :closable="true"
+      >
         <div class="flex align-items-center gap-3">
           <i :class="alert.icon" class="text-2xl"></i>
           <div class="flex-1">
-            <strong>{{ alert.title }}</strong>
-            <p class="m-0 mt-1">{{ alert.message }}</p>
+            <strong class="block mb-2">{{ alert.title }}</strong>
+            <p class="m-0">{{ alert.message }}</p>
           </div>
           <Button :label="alert.actionLabel" text @click="alert.action" />
         </div>
       </Message>
     </div>
 
-    <!-- Advanced Statistics Cards with Comparison -->
-    <div class="grid">
-      <!-- Total Purchase Requests Card -->
-      <div class="col-12 md:col-6 lg:col-3">
-        <div class="stat-card gradient-card-blue border-round p-4 shadow-3">
+    <!-- Main Statistics Cards -->
+    <div class="grid mb-5">
+      <!-- Total Requests -->
+      <div class="col-12 sm:col-6 lg:col-3">
+        <div class="stat-card stat-card-total surface-card border-round-lg p-4 shadow-3 transition-all transition-duration-300 hover:shadow-5">
           <div class="flex justify-content-between align-items-start mb-3">
             <div class="flex-1">
-              <div class="flex align-items-center gap-2 mb-2">
-                <span class="text-white-alpha-80 font-medium">إجمالي طلبات الشراء</span>
-                <i class="pi pi-info-circle text-white-alpha-60 cursor-pointer" v-tooltip.top="'إجمالي عدد طلبات الشراء في الفترة المحددة'"></i>
-              </div>
-              <div class="text-white font-bold text-4xl mb-2">{{ animatedStats.totalRequests }}</div>
-              <div class="flex align-items-center gap-2">
-                <Tag :value="stats.requestsGrowth >= 0 ? '+' + stats.requestsGrowth + '%' : stats.requestsGrowth + '%'" 
-                     :severity="stats.requestsGrowth >= 0 ? 'success' : 'danger'" 
-                     icon="pi pi-arrow-up" rounded />
-                <span class="text-white-alpha-80 text-sm">مقارنة بالفترة السابقة</span>
-              </div>
+              <span class="block text-600 font-medium mb-2 text-sm">إجمالي طلبات الشراء</span>
+              <div class="text-900 font-bold text-4xl mb-1">{{ animatedStats.totalRequests }}</div>
+              <span class="text-sm text-500">جميع الطلبات في النظام</span>
             </div>
-            <div class="stat-icon-wrapper bg-white-alpha-20">
-              <i class="pi pi-shopping-cart text-white text-3xl"></i>
+            <div class="icon-container icon-total border-round-lg flex align-items-center justify-content-center">
+              <i class="pi pi-shopping-cart text-2xl"></i>
             </div>
           </div>
-          <Divider class="border-white-alpha-30 my-3" />
-          <div class="flex justify-content-between align-items-center">
-            <span class="text-white-alpha-80 text-sm">الهدف الشهري: 200</span>
-            <div class="flex align-items-center gap-2">
-              <ProgressBar :value="(stats.totalRequests / 200) * 100" :showValue="false" 
-                         style="height: 6px; width: 80px" />
-              <span class="text-white text-sm font-bold">{{ Math.round((stats.totalRequests / 200) * 100) }}%</span>
+          <div class="progress-bar progress-total border-round relative overflow-hidden" style="height: 18px;">
+            <div
+              class="progress-fill-total h-full transition-all transition-duration-500 flex align-items-center justify-content-center text-white text-xs font-medium"
+              :style="{ width: Math.round((stats.totalRequests / 200) * 100) + '%' }"
+            >
+              {{ Math.round((stats.totalRequests / 200) * 100) }}%
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Pending Requests Card -->
-      <div class="col-12 md:col-6 lg:col-3">
-        <div class="stat-card gradient-card-orange border-round p-4 shadow-3">
+      <!-- Pending Requests -->
+      <div class="col-12 sm:col-6 lg:col-3">
+        <div class="stat-card stat-card-pending surface-card border-round-lg p-4 shadow-3 transition-all transition-duration-300 hover:shadow-5">
           <div class="flex justify-content-between align-items-start mb-3">
             <div class="flex-1">
-              <div class="flex align-items-center gap-2 mb-2">
-                <span class="text-white-alpha-80 font-medium">الطلبات المعلقة</span>
-                <Badge :value="stats.urgentPending" severity="danger" />
-              </div>
-              <div class="text-white font-bold text-4xl mb-2">{{ animatedStats.pendingRequests }}</div>
-              <div class="flex align-items-center gap-2">
-                <Chip :label="stats.pendingPercentage + '% من الإجمالي'" class="bg-white-alpha-20 text-white" />
-              </div>
+              <span class="block text-600 font-medium mb-2 text-sm">قيد الانتظار</span>
+              <div class="text-900 font-bold text-4xl mb-1">{{ animatedStats.pendingRequests }}</div>
+              <span class="text-sm text-500">في انتظار المراجعة</span>
             </div>
-            <div class="stat-icon-wrapper bg-white-alpha-20">
-              <i class="pi pi-clock text-white text-3xl"></i>
+            <div class="icon-container icon-pending border-round-lg flex align-items-center justify-content-center">
+              <i class="pi pi-clock text-2xl"></i>
             </div>
           </div>
-          <Divider class="border-white-alpha-30 my-3" />
-          <div class="flex justify-content-between text-white-alpha-80 text-sm">
-            <span>عاجل: {{ stats.urgentPending }}</span>
-            <span>متوسط: {{ stats.mediumPending }}</span>
-            <span>عادي: {{ stats.normalPending }}</span>
+          <div class="progress-bar progress-pending border-round relative overflow-hidden" style="height: 18px;">
+            <div
+              class="progress-fill-pending h-full transition-all transition-duration-500 flex align-items-center justify-content-center text-white text-xs font-medium"
+              :style="{ width: stats.pendingPercentage + '%' }"
+            >
+              {{ stats.pendingPercentage }}%
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- Total Spending Card -->
-      <div class="col-12 md:col-6 lg:col-3">
-        <div class="stat-card gradient-card-green border-round p-4 shadow-3">
+      <!-- Total Spending -->
+      <div class="col-12 sm:col-6 lg:col-3">
+        <div class="stat-card stat-card-approved surface-card border-round-lg p-4 shadow-3 transition-all transition-duration-300 hover:shadow-5">
           <div class="flex justify-content-between align-items-start mb-3">
             <div class="flex-1">
-              <div class="flex align-items-center gap-2 mb-2">
-                <span class="text-white-alpha-80 font-medium">إجمالي المصروفات</span>
-                <i class="pi pi-chart-line text-white-alpha-60"></i>
-              </div>
-              <div class="text-white font-bold text-3xl mb-2">{{ formatCurrency(animatedStats.totalSpending) }}</div>
-              <div class="flex align-items-center gap-2">
-                <Tag :value="stats.spendingGrowth >= 0 ? '+' + stats.spendingGrowth + '%' : stats.spendingGrowth + '%'" 
-                     :severity="stats.spendingGrowth >= 0 ? 'success' : 'warning'" 
-                     :icon="stats.spendingGrowth >= 0 ? 'pi pi-arrow-up' : 'pi pi-arrow-down'" rounded />
-                <span class="text-white-alpha-80 text-sm">{{ formatCurrency(stats.avgTransactionValue) }} متوسط القيمة</span>
-              </div>
+              <span class="block text-600 font-medium mb-2 text-sm">إجمالي المصروفات</span>
+              <div class="text-900 font-bold text-3xl mb-1">{{ formatCurrency(animatedStats.totalSpending) }}</div>
+              <span class="text-sm text-500">المصروفات الإجمالية</span>
             </div>
-            <div class="stat-icon-wrapper bg-white-alpha-20">
-              <i class="pi pi-dollar text-white text-3xl"></i>
+            <div class="icon-container icon-approved border-round-lg flex align-items-center justify-content-center">
+              <i class="pi pi-dollar text-2xl"></i>
             </div>
           </div>
-          <Divider class="border-white-alpha-30 my-3" />
-          <div class="flex justify-content-between align-items-center">
-            <span class="text-white-alpha-80 text-sm">الميزانية: {{ formatCurrency(stats.budget) }}</span>
-            <Chip :label="stats.budgetUsedPercentage + '% مستخدم'" class="bg-white-alpha-20 text-white" />
+          <div class="progress-bar progress-approved border-round relative overflow-hidden" style="height: 18px;">
+            <div
+              class="progress-fill-approved h-full transition-all transition-duration-500 flex align-items-center justify-content-center text-white text-xs font-medium"
+              :style="{ width: stats.budgetUsedPercentage + '%' }"
+            >
+              {{ stats.budgetUsedPercentage }}%
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- Active Vendors Card -->
-      <div class="col-12 md:col-6 lg:col-3">
-        <div class="stat-card gradient-card-purple border-round p-4 shadow-3">
+      <!-- Active Vendors -->
+      <div class="col-12 sm:col-6 lg:col-3">
+        <div class="stat-card stat-card-rejected surface-card border-round-lg p-4 shadow-3 transition-all transition-duration-300 hover:shadow-5">
           <div class="flex justify-content-between align-items-start mb-3">
             <div class="flex-1">
-              <div class="flex align-items-center gap-2 mb-2">
-                <span class="text-white-alpha-80 font-medium">الموردين النشطين</span>
-                <Badge :value="'+' + stats.newVendorsThisMonth" severity="success" />
-              </div>
-              <div class="text-white font-bold text-4xl mb-2">{{ animatedStats.activeVendors }}</div>
-              <div class="flex align-items-center gap-2">
-                <AvatarGroup>
-                  <Avatar v-for="i in 3" :key="i" :label="String.fromCharCode(65 + i)" shape="circle" 
-                          size="small" style="background-color: rgba(255,255,255,0.3)" />
-                  <Avatar :label="'+' + (stats.activeVendors - 3)" shape="circle" size="small" 
-                          style="background-color: rgba(255,255,255,0.3)" />
-                </AvatarGroup>
-              </div>
+              <span class="block text-600 font-medium mb-2 text-sm">الموردين النشطين</span>
+              <div class="text-900 font-bold text-4xl mb-1">{{ animatedStats.activeVendors }}</div>
+              <span class="text-sm text-500">موردين معتمدين</span>
             </div>
-            <div class="stat-icon-wrapper bg-white-alpha-20">
-              <i class="pi pi-users text-white text-3xl"></i>
+            <div class="icon-container icon-rejected border-round-lg flex align-items-center justify-content-center">
+              <i class="pi pi-users text-2xl"></i>
             </div>
           </div>
-          <Divider class="border-white-alpha-30 my-3" />
-          <div class="flex justify-content-between text-white-alpha-80 text-sm">
-            <span>إجمالي: {{ stats.totalVendors }}</span>
-            <span>تقييم متوسط: ⭐ {{ stats.avgVendorRating }}/5</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Secondary Statistics Cards -->
-    <div class="grid mt-4">
-      <div class="col-12 md:col-6 lg:col-3">
-        <div class="surface-card border-round p-4 shadow-2 stat-card-hover">
-          <div class="flex align-items-center gap-3 mb-3">
-            <div class="stat-mini-icon bg-cyan-100">
-              <i class="pi pi-box text-cyan-600 text-2xl"></i>
-            </div>
-            <div class="flex-1">
-              <span class="block text-600 text-sm mb-1">فحوصات المخزن</span>
-              <div class="text-900 font-bold text-2xl">{{ stats.warehouseChecks }}</div>
-            </div>
-            <Button icon="pi pi-arrow-left" rounded text size="small" />
-          </div>
-          <div class="grid text-sm">
-            <div class="col-6">
-              <div class="text-500">متوفر</div>
-              <div class="text-green-600 font-semibold">{{ stats.availableItems }}</div>
-            </div>
-            <div class="col-6">
-              <div class="text-500">غير متوفر</div>
-              <div class="text-red-600 font-semibold">{{ stats.unavailableItems }}</div>
-            </div>
-          </div>
-          <ProgressBar :value="(stats.availableItems / stats.warehouseChecks) * 100" 
-                     :showValue="false" style="height: 4px" class="mt-3" />
-        </div>
-      </div>
-
-      <div class="col-12 md:col-6 lg:col-3">
-        <div class="surface-card border-round p-4 shadow-2 stat-card-hover">
-          <div class="flex align-items-center gap-3 mb-3">
-            <div class="stat-mini-icon bg-indigo-100">
-              <i class="pi pi-file-edit text-indigo-600 text-2xl"></i>
-            </div>
-            <div class="flex-1">
-              <span class="block text-600 text-sm mb-1">عروض الأسعار</span>
-              <div class="text-900 font-bold text-2xl">{{ stats.estimates }}</div>
-            </div>
-            <Knob :modelValue="(stats.acceptedEstimates / stats.estimates) * 100" :size="50" 
-                  :strokeWidth="8" readonly valueColor="#6366f1" rangeColor="#e0e7ff" />
-          </div>
-          <div class="grid text-sm">
-            <div class="col-4">
-              <div class="text-500">معلقة</div>
-              <div class="text-orange-600 font-semibold">{{ stats.pendingEstimates }}</div>
-            </div>
-            <div class="col-4">
-              <div class="text-500">مقبولة</div>
-              <div class="text-green-600 font-semibold">{{ stats.acceptedEstimates }}</div>
-            </div>
-            <div class="col-4">
-              <div class="text-500">مرفوضة</div>
-              <div class="text-red-600 font-semibold">{{ stats.rejectedEstimates }}</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-12 md:col-6 lg:col-3">
-        <div class="surface-card border-round p-4 shadow-2 stat-card-hover">
-          <div class="flex align-items-center gap-3 mb-3">
-            <div class="stat-mini-icon bg-pink-100">
-              <i class="pi pi-shopping-bag text-pink-600 text-2xl"></i>
-            </div>
-            <div class="flex-1">
-              <span class="block text-600 text-sm mb-1">عمليات الشراء</span>
-              <div class="text-900 font-bold text-2xl">{{ stats.procurements }}</div>
-            </div>
-            <div class="text-right">
-              <div class="text-green-600 font-bold text-lg">{{ stats.completionRate }}%</div>
-              <div class="text-500 text-xs">نسبة الإنجاز</div>
-            </div>
-          </div>
-          <div class="flex justify-content-between text-sm mb-2">
-            <span class="text-500">قيد التنفيذ: {{ stats.inProgressProcurements }}</span>
-            <span class="text-green-600 font-semibold">مكتملة: {{ stats.completedProcurements }}</span>
-          </div>
-          <ProgressBar :value="stats.completionRate" :showValue="false" style="height: 4px" />
-        </div>
-      </div>
-
-      <div class="col-12 md:col-6 lg:col-3">
-        <div class="surface-card border-round p-4 shadow-2 stat-card-hover">
-          <div class="flex align-items-center gap-3 mb-3">
-            <div class="stat-mini-icon bg-teal-100">
-              <i class="pi pi-sitemap text-teal-600 text-2xl"></i>
-            </div>
-            <div class="flex-1">
-              <span class="block text-600 text-sm mb-1">اللجان النشطة</span>
-              <div class="text-900 font-bold text-2xl">{{ stats.activeCommittees }}</div>
-            </div>
-            <Chart type="line" :data="miniCommitteeChart" :options="miniChartOptions" 
-                   style="width: 60px; height: 40px" />
-          </div>
-          <div class="flex justify-content-between text-sm">
-            <div>
-              <div class="text-500">إجمالي</div>
-              <div class="text-blue-600 font-semibold">{{ stats.totalCommittees }}</div>
-            </div>
-            <div class="text-right">
-              <div class="text-500">أعضاء</div>
-              <div class="text-900 font-semibold">{{ stats.totalCommitteeMembers }}</div>
+          <div class="progress-bar progress-rejected border-round relative overflow-hidden" style="height: 18px;">
+            <div
+              class="progress-fill-rejected h-full transition-all transition-duration-500 flex align-items-center justify-content-center text-white text-xs font-medium"
+              :style="{ width: Math.round((stats.activeVendors / stats.totalVendors) * 100) + '%' }"
+            >
+              {{ Math.round((stats.activeVendors / stats.totalVendors) * 100) }}%
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Main Charts Section -->
-    <div class="grid mt-4">
-      <!-- Enhanced Requests Status Chart -->
+    <!-- Secondary Statistics -->
+    <div class="grid mb-5">
+      <div class="col-12 md:col-6 lg:col-3">
+        <Card class="secondary-card">
+          <template #content>
+            <div class="p-3">
+              <div class="flex align-items-center gap-3 mb-3">
+                <div class="icon-wrapper bg-cyan-500">
+                  <i class="pi pi-box text-white text-2xl"></i>
+                </div>
+                <div class="flex-1">
+                  <span class="block text-400 text-sm mb-1">فحوصات المخزن</span>
+                  <div class="text-white font-bold text-3xl">{{ stats.warehouseChecks }}</div>
+                </div>
+              </div>
+              <div class="grid text-sm mb-3">
+                <div class="col-6">
+                  <div class="text-500">متوفر</div>
+                  <div class="text-green-400 font-semibold">{{ stats.availableItems }}</div>
+                </div>
+                <div class="col-6">
+                  <div class="text-500">غير متوفر</div>
+                  <div class="text-red-400 font-semibold">{{ stats.unavailableItems }}</div>
+                </div>
+              </div>
+              <ProgressBar 
+                :value="(stats.availableItems / stats.warehouseChecks) * 100" 
+                :showValue="false" 
+                style="height: 4px"
+                class="progress-cyan"
+              />
+            </div>
+          </template>
+        </Card>
+      </div>
+
+      <div class="col-12 md:col-6 lg:col-3">
+        <Card class="secondary-card">
+          <template #content>
+            <div class="p-3">
+              <div class="flex align-items-center gap-3 mb-3">
+                <div class="icon-wrapper bg-indigo-500">
+                  <i class="pi pi-file-edit text-white text-2xl"></i>
+                </div>
+                <div class="flex-1">
+                  <span class="block text-400 text-sm mb-1">عروض الأسعار</span>
+                  <div class="text-white font-bold text-3xl">{{ stats.estimates }}</div>
+                </div>
+                <Knob 
+                  :modelValue="(stats.acceptedEstimates / stats.estimates) * 100" 
+                  :size="60" 
+                  :strokeWidth="8" 
+                  readonly 
+                  valueColor="#6366f1" 
+                  rangeColor="#312e81"
+                  textColor="#fff"
+                />
+              </div>
+              <div class="grid text-sm">
+                <div class="col-4 text-center">
+                  <div class="text-500 text-xs">معلقة</div>
+                  <div class="text-orange-400 font-semibold">{{ stats.pendingEstimates }}</div>
+                </div>
+                <div class="col-4 text-center">
+                  <div class="text-500 text-xs">مقبولة</div>
+                  <div class="text-green-400 font-semibold">{{ stats.acceptedEstimates }}</div>
+                </div>
+                <div class="col-4 text-center">
+                  <div class="text-500 text-xs">مرفوضة</div>
+                  <div class="text-red-400 font-semibold">{{ stats.rejectedEstimates }}</div>
+                </div>
+              </div>
+            </div>
+          </template>
+        </Card>
+      </div>
+
+      <div class="col-12 md:col-6 lg:col-3">
+        <Card class="secondary-card">
+          <template #content>
+            <div class="p-3">
+              <div class="flex align-items-center gap-3 mb-3">
+                <div class="icon-wrapper bg-pink-500">
+                  <i class="pi pi-shopping-bag text-white text-2xl"></i>
+                </div>
+                <div class="flex-1">
+                  <span class="block text-400 text-sm mb-1">عمليات الشراء</span>
+                  <div class="text-white font-bold text-3xl">{{ stats.procurements }}</div>
+                </div>
+                <div class="text-right">
+                  <div class="text-green-400 font-bold text-xl">{{ stats.completionRate }}%</div>
+                  <div class="text-500 text-xs">إنجاز</div>
+                </div>
+              </div>
+              <div class="flex justify-content-between text-sm mb-2">
+                <span class="text-500">قيد التنفيذ: {{ stats.inProgressProcurements }}</span>
+                <span class="text-green-400 font-semibold">مكتملة: {{ stats.completedProcurements }}</span>
+              </div>
+              <ProgressBar 
+                :value="stats.completionRate" 
+                :showValue="false" 
+                style="height: 4px"
+                class="progress-green"
+              />
+            </div>
+          </template>
+        </Card>
+      </div>
+
+      <div class="col-12 md:col-6 lg:col-3">
+        <Card class="secondary-card">
+          <template #content>
+            <div class="p-3">
+              <div class="flex align-items-center gap-3 mb-3">
+                <div class="icon-wrapper bg-teal-500">
+                  <i class="pi pi-sitemap text-white text-2xl"></i>
+                </div>
+                <div class="flex-1">
+                  <span class="block text-400 text-sm mb-1">اللجان النشطة</span>
+                  <div class="text-white font-bold text-3xl">{{ stats.activeCommittees }}</div>
+                </div>
+              </div>
+              <div class="flex justify-content-between text-sm">
+                <div>
+                  <div class="text-500 text-xs">إجمالي</div>
+                  <div class="text-blue-400 font-semibold">{{ stats.totalCommittees }}</div>
+                </div>
+                <div class="text-right">
+                  <div class="text-500 text-xs">أعضاء</div>
+                  <div class="text-white font-semibold">{{ stats.totalCommitteeMembers }}</div>
+                </div>
+              </div>
+            </div>
+          </template>
+        </Card>
+      </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="grid mb-5">
+      <!-- Requests Chart -->
       <div class="col-12 lg:col-8">
-        <div class="surface-card border-round shadow-3 chart-container">
-          <div class="chart-header p-4 border-bottom-1 surface-border">
-            <div class="flex justify-content-between align-items-center">
-              <div>
-                <h3 class="text-xl font-bold m-0 mb-2">تحليل حالة طلبات الشراء</h3>
-                <p class="text-600 m-0 text-sm">توزيع الطلبات حسب الحالة خلال الأشهر الستة الأخيرة</p>
-              </div>
-              <div class="flex gap-2">
-                <SelectButton v-model="chartViewType" :options="chartViewOptions" optionLabel="label" 
-                            optionValue="value" size="small" />
-                <Button icon="pi pi-ellipsis-v" rounded text size="small" @click="toggleChartMenu" />
+        <Card class="chart-card">
+          <template #header>
+            <div class="p-4">
+              <div class="flex justify-content-between align-items-center flex-wrap gap-3">
+                <div>
+                  <h3 class="text-2xl font-bold m-0 mb-2 text-white">تحليل طلبات الشراء</h3>
+                  <p class="text-400 m-0">توزيع الطلبات خلال الأشهر الستة الأخيرة</p>
+                </div>
+                <div class="flex gap-2">
+                  <SelectButton 
+                    v-model="chartViewType" 
+                    :options="chartViewOptions" 
+                    optionLabel="label" 
+                    optionValue="value"
+                  />
+                </div>
               </div>
             </div>
-          </div>
-          <div class="p-4">
-            <Chart :type="chartViewType" :data="requestsChartData" :options="requestsChartOptions" 
-                   :height="350" />
-          </div>
-          <div class="chart-footer p-4 border-top-1 surface-border">
-            <div class="grid">
-              <div class="col-6 md:col-3" v-for="(dataset, index) in requestsChartData.datasets" :key="index">
-                <div class="flex align-items-center gap-2">
-                  <div class="chart-legend-color" :style="{ backgroundColor: dataset.backgroundColor }"></div>
-                  <div>
-                    <div class="text-600 text-sm">{{ dataset.label }}</div>
-                    <div class="text-900 font-bold">{{ dataset.data.reduce((a, b) => a + b, 0) }}</div>
+          </template>
+          <template #content>
+            <Chart 
+              :type="chartViewType" 
+              :data="requestsChartData" 
+              :options="requestsChartOptions" 
+              :height="350" 
+            />
+          </template>
+          <template #footer>
+            <div class="p-4">
+              <div class="grid">
+                <div class="col-6 md:col-3" v-for="(dataset, index) in requestsChartData.datasets" :key="index">
+                  <div class="flex align-items-center gap-2">
+                    <div class="legend-dot" :style="{ backgroundColor: dataset.backgroundColor }"></div>
+                    <div>
+                      <div class="text-400 text-sm">{{ dataset.label }}</div>
+                      <div class="text-white font-bold">{{ dataset.data.reduce((a, b) => a + b, 0) }}</div>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
+          </template>
+        </Card>
       </div>
 
-      <!-- Enhanced Priority Distribution -->
+      <!-- Priority Chart -->
       <div class="col-12 lg:col-4">
-        <div class="surface-card border-round shadow-3 chart-container h-full">
-          <div class="chart-header p-4 border-bottom-1 surface-border">
-            <div class="flex justify-content-between align-items-center mb-2">
-              <h3 class="text-xl font-bold m-0">توزيع الأولويات</h3>
-              <Button icon="pi pi-refresh" rounded text size="small" @click="refreshPriorityData" />
+        <Card class="chart-card h-full">
+          <template #header>
+            <div class="p-4">
+              <div class="flex justify-content-between align-items-center mb-2">
+                <h3 class="text-2xl font-bold m-0 text-white">توزيع الأولويات</h3>
+                <Button icon="pi pi-refresh" rounded text @click="refreshPriorityData" />
+              </div>
+              <p class="text-400 m-0">نسب الطلبات حسب الأولوية</p>
             </div>
-            <p class="text-600 m-0 text-sm">نسب توزيع الطلبات حسب درجة الأولوية</p>
-          </div>
-          <div class="p-4">
-            <Chart type="doughnut" :data="priorityChartData" :options="priorityChartOptions" 
-                   :height="280" />
-          </div>
-          <div class="chart-footer p-4 border-top-1 surface-border">
-            <div class="flex flex-column gap-3">
-              <div v-for="(priority, index) in priorityBreakdown" :key="index" 
-                   class="flex justify-content-between align-items-center">
-                <div class="flex align-items-center gap-2">
-                  <div class="priority-indicator" :class="'priority-' + priority.level"></div>
-                  <span class="text-900 font-medium">{{ priority.label }}</span>
-                </div>
-                <div class="flex align-items-center gap-3">
-                  <span class="text-600">{{ priority.count }}</span>
-                  <Chip :label="priority.percentage + '%'" :class="'priority-chip-' + priority.level" />
+          </template>
+          <template #content>
+            <Chart 
+              type="doughnut" 
+              :data="priorityChartData" 
+              :options="priorityChartOptions" 
+              :height="280" 
+            />
+          </template>
+          <template #footer>
+            <div class="p-4">
+              <div class="flex flex-column gap-3">
+                <div 
+                  v-for="(priority, index) in priorityBreakdown" 
+                  :key="index" 
+                  class="flex justify-content-between align-items-center"
+                >
+                  <div class="flex align-items-center gap-2">
+                    <div class="priority-dot" :style="{ backgroundColor: priority.color }"></div>
+                    <span class="text-white font-medium">{{ priority.label }}</span>
+                  </div>
+                  <div class="flex align-items-center gap-3">
+                    <span class="text-400">{{ priority.count }}</span>
+                    <Chip :label="priority.percentage + '%'" class="priority-chip" />
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
+          </template>
+        </Card>
       </div>
     </div>
 
-    <!-- Department Performance & Activities Section -->
-    <div class="grid mt-4">
-      <!-- Enhanced Department Performance -->
+    <!-- Department Performance & Activities -->
+    <div class="grid mb-5">
+      <!-- Department Performance -->
       <div class="col-12 lg:col-7">
-        <div class="surface-card border-round shadow-3">
-          <div class="p-4 border-bottom-1 surface-border">
-            <div class="flex justify-content-between align-items-center">
-              <div>
-                <h3 class="text-xl font-bold m-0 mb-2">تحليل أداء الأقسام</h3>
-                <p class="text-600 m-0 text-sm">مقارنة شاملة لأداء جميع الأقسام</p>
-              </div>
-              <div class="flex gap-2">
-                <Button label="تصدير" icon="pi pi-download" text size="small" />
-                <InputText v-model="departmentSearch" placeholder="بحث..." size="small" 
-                         class="w-10rem">
+        <Card class="table-card">
+          <template #header>
+            <div class="p-4">
+              <div class="flex justify-content-between align-items-center flex-wrap gap-3">
+                <div>
+                  <h3 class="text-2xl font-bold m-0 mb-2 text-white">أداء الأقسام</h3>
+                  <p class="text-400 m-0">مقارنة شاملة لأداء الأقسام</p>
+                </div>
+                <InputText 
+                  v-model="departmentSearch" 
+                  placeholder="بحث..." 
+                  class="w-full md:w-auto"
+                >
                   <template #prefix>
                     <i class="pi pi-search"></i>
                   </template>
                 </InputText>
               </div>
             </div>
-          </div>
-          <DataTable 
-            :value="filteredDepartmentPerformance" 
-            :rows="5" 
-            :paginator="true" 
-            responsiveLayout="scroll" 
-            :rowHover="true" 
-            stripedRows
-        >
-            <Column field="name" header="القسم" sortable style="min-width: 200px">
+          </template>
+          <template #content>
+            <DataTable 
+              :value="filteredDepartmentPerformance" 
+              :rows="5" 
+              :paginator="true" 
+              responsiveLayout="scroll"
+              class="dark-table"
+            >
+              <Column field="name" header="القسم" sortable style="min-width: 200px">
                 <template #body="slotProps">
-                    <div class="flex align-items-center gap-3">
-                        <Avatar 
-                            :label="slotProps.data.name.charAt(0)" 
-                            size="large" 
-                            shape="circle" 
-                            :style="{ backgroundColor: slotProps.data.color, color: 'white' }" 
-                        />
-                        <div>
-                            <div class="font-bold text-900">{{ slotProps.data.name }}</div>
-                            <div class="text-sm text-500">{{ slotProps.data.code }}</div>
-                        </div>
+                  <div class="flex align-items-center gap-3">
+                    <Avatar 
+                      :label="slotProps.data.name.charAt(0)" 
+                      size="large" 
+                      shape="circle" 
+                      :style="{ backgroundColor: slotProps.data.color, color: 'white' }" 
+                    />
+                    <div>
+                      <div class="font-bold text-white">{{ slotProps.data.name }}</div>
+                      <div class="text-sm text-500">{{ slotProps.data.code }}</div>
                     </div>
-                </template>
-            </Column>
-            <Column field="requests" header="الطلبات" sortable>
-              <template #body="slotProps">
-                <div class="flex align-items-center gap-2">
-                  <Tag :value="slotProps.data.requests" severity="info" rounded />
-                  <i v-if="slotProps.data.requestsTrend === 'up'" 
-                     class="pi pi-arrow-up text-green-500 text-xs"></i>
-                  <i v-else class="pi pi-arrow-down text-red-500 text-xs"></i>
-                </div>
-              </template>
-            </Column>
-            <Column field="completed" header="المكتملة" sortable>
-              <template #body="slotProps">
-                <div class="text-center">
-                  <div class="text-900 font-bold">{{ slotProps.data.completed }}</div>
-                  <div class="text-xs text-500">من {{ slotProps.data.requests }}</div>
-                </div>
-              </template>
-            </Column>
-            <Column field="spending" header="المصروفات" sortable>
-              <template #body="slotProps">
-                <div>
-                  <div class="font-bold text-900">{{ formatCurrency(slotProps.data.spending) }}</div>
-                  <div class="text-xs text-green-600">{{ formatCurrency(slotProps.data.savings) }} توفير</div>
-                </div>
-              </template>
-            </Column>
-            <Column field="performance" header="الأداء" sortable>
-              <template #body="slotProps">
-                <div class="performance-cell">
-                  <div class="flex align-items-center gap-2 mb-1">
-                    <ProgressBar :value="slotProps.data.performance" :showValue="false" 
-                               :class="getPerformanceClass(slotProps.data.performance)"
-                               style="height: 8px; flex: 1" />
-                    <span class="text-sm font-bold" :class="getPerformanceTextClass(slotProps.data.performance)">
-                      {{ slotProps.data.performance }}%
-                    </span>
                   </div>
-                  <Rating :modelValue="Math.round(slotProps.data.performance / 20)" 
-                          :readonly="true" :cancel="false" :stars="5" class="text-xs" />
-                </div>
-              </template>
-            </Column>
-            <Column header="الإجراءات" style="width: 100px">
-              <template #body>
-                <Button icon="pi pi-eye" rounded text size="small" severity="info" 
-                        v-tooltip.top="'عرض التفاصيل'" />
-              </template>
-            </Column>
-          </DataTable>
-        </div>
+                </template>
+              </Column>
+              <Column field="requests" header="الطلبات" sortable>
+                <template #body="slotProps">
+                  <div class="flex align-items-center gap-2">
+                    <Tag :value="slotProps.data.requests" severity="info" rounded />
+                    <i 
+                      v-if="slotProps.data.requestsTrend === 'up'" 
+                      class="pi pi-arrow-up text-green-400 text-xs"
+                    ></i>
+                    <i 
+                      v-else 
+                      class="pi pi-arrow-down text-red-400 text-xs"
+                    ></i>
+                  </div>
+                </template>
+              </Column>
+              <Column field="completed" header="المكتملة" sortable>
+                <template #body="slotProps">
+                  <div class="text-center">
+                    <div class="text-white font-bold">{{ slotProps.data.completed }}</div>
+                    <div class="text-xs text-500">من {{ slotProps.data.requests }}</div>
+                  </div>
+                </template>
+              </Column>
+              <Column field="spending" header="المصروفات" sortable>
+                <template #body="slotProps">
+                  <div>
+                    <div class="font-bold text-white">{{ formatCurrency(slotProps.data.spending) }}</div>
+                    <div class="text-xs text-green-400">{{ formatCurrency(slotProps.data.savings) }} توفير</div>
+                  </div>
+                </template>
+              </Column>
+              <Column field="performance" header="الأداء" sortable>
+                <template #body="slotProps">
+                  <div>
+                    <div class="flex align-items-center gap-2 mb-2">
+                      <ProgressBar 
+                        :value="slotProps.data.performance" 
+                        :showValue="false" 
+                        :class="getPerformanceClass(slotProps.data.performance)"
+                        style="height: 8px; flex: 1" 
+                      />
+                      <span class="text-sm font-bold" :class="getPerformanceTextClass(slotProps.data.performance)">
+                        {{ slotProps.data.performance }}%
+                      </span>
+                    </div>
+                    <Rating 
+                      :modelValue="Math.round(slotProps.data.performance / 20)" 
+                      :readonly="true" 
+                      :cancel="false" 
+                      :stars="5"
+                    />
+                  </div>
+                </template>
+              </Column>
+              <Column header="إجراءات" style="width: 100px">
+                <template #body>
+                  <Button 
+                    icon="pi pi-eye" 
+                    rounded 
+                    text 
+                    severity="info" 
+                    v-tooltip.top="'عرض'"
+                  />
+                </template>
+              </Column>
+            </DataTable>
+          </template>
+        </Card>
       </div>
 
-      <!-- Enhanced Recent Activities -->
+      <!-- Recent Activities -->
       <div class="col-12 lg:col-5">
-        <div class="surface-card border-round shadow-3 h-full">
-          <div class="p-4 border-bottom-1 surface-border">
-            <div class="flex justify-content-between align-items-center mb-2">
-              <h3 class="text-xl font-bold m-0">الأنشطة الأخيرة</h3>
-              <div class="flex gap-2">
-                <Button label="الكل" text size="small" :severity="activityFilter === 'all' ? 'primary' : 'secondary'"
-                        @click="activityFilter = 'all'" />
-                <Button label="هام" text size="small" :severity="activityFilter === 'important' ? 'danger' : 'secondary'"
-                        @click="activityFilter = 'important'" />
-              </div>
-            </div>
-            <p class="text-600 m-0 text-sm">آخر التحديثات والأحداث في النظام</p>
-          </div>
-          <ScrollPanel style="width: 100%; height: 520px" class="custom-scrollpanel">
+        <Card class="activity-card h-full">
+          <template #header>
             <div class="p-4">
-              <Timeline :value="filteredActivities" align="left" class="custom-timeline">
-                <template #marker="slotProps">
-                  <div class="timeline-marker-wrapper">
-                    <span class="timeline-marker" :style="{ backgroundColor: slotProps.item.color }">
+              <div class="flex justify-content-between align-items-center mb-2">
+                <h3 class="text-2xl font-bold m-0 text-white">الأنشطة الأخيرة</h3>
+                <div class="flex gap-2">
+                  <Button 
+                    label="الكل" 
+                    text 
+                    size="small" 
+                    :severity="activityFilter === 'all' ? 'primary' : 'secondary'"
+                    @click="activityFilter = 'all'" 
+                  />
+                  <Button 
+                    label="هام" 
+                    text 
+                    size="small" 
+                    :severity="activityFilter === 'important' ? 'danger' : 'secondary'"
+                    @click="activityFilter = 'important'" 
+                  />
+                </div>
+              </div>
+              <p class="text-400 m-0">آخر التحديثات في النظام</p>
+            </div>
+          </template>
+          <template #content>
+            <ScrollPanel style="width: 100%; height: 500px">
+              <div class="p-4">
+                <Timeline :value="filteredActivities" align="right">
+                  <template #marker="slotProps">
+                    <div class="timeline-marker" :style="{ backgroundColor: slotProps.item.color }">
                       <i :class="slotProps.item.icon"></i>
-                    </span>
-                    <div v-if="slotProps.index !== filteredActivities.length - 1" 
-                         class="timeline-connector"></div>
-                  </div>
-                </template>
-                <template #content="slotProps">
-                  <div class="activity-card mb-4 p-3 border-round surface-border border-1">
-                    <div class="flex justify-content-between align-items-start mb-2">
-                      <div class="flex-1">
-                        <div class="flex align-items-center gap-2 mb-1">
-                          <span class="font-bold text-900">{{ slotProps.item.title }}</span>
-                          <Badge v-if="slotProps.item.priority" :value="slotProps.item.priority" 
-                                 :severity="slotProps.item.prioritySeverity" />
-                        </div>
-                        <p class="text-600 text-sm m-0 mb-2">{{ slotProps.item.description }}</p>
-                        <div class="flex align-items-center gap-3 text-xs text-500">
-                          <span><i class="pi pi-user"></i> {{ slotProps.item.user }}</span>
-                          <span><i class="pi pi-clock"></i> {{ slotProps.item.time }}</span>
+                    </div>
+                  </template>
+                  <template #content="slotProps">
+                    <div class="activity-item mb-4 p-3 border-round border-1 border-100">
+                      <div class="flex justify-content-between align-items-start mb-2">
+                        <div class="flex-1">
+                          <div class="flex align-items-center gap-2 mb-1">
+                            <span class="font-bold text-white">{{ slotProps.item.title }}</span>
+                            <Badge 
+                              v-if="slotProps.item.priority" 
+                              :value="slotProps.item.priority" 
+                              :severity="slotProps.item.prioritySeverity" 
+                            />
+                          </div>
+                          <p class="text-400 text-sm m-0 mb-2">{{ slotProps.item.description }}</p>
+                          <div class="flex align-items-center gap-3 text-xs text-500">
+                            <span><i class="pi pi-user"></i> {{ slotProps.item.user }}</span>
+                            <span><i class="pi pi-clock"></i> {{ slotProps.item.time }}</span>
+                          </div>
                         </div>
                       </div>
-                      <Button icon="pi pi-ellipsis-v" rounded text size="small" />
+                      <div v-if="slotProps.item.tags" class="flex gap-1 flex-wrap mt-2">
+                        <Chip 
+                          v-for="tag in slotProps.item.tags" 
+                          :key="tag" 
+                          :label="tag" 
+                          class="tag-chip"
+                        />
+                      </div>
                     </div>
-                    <div v-if="slotProps.item.tags" class="flex gap-1 flex-wrap mt-2">
-                      <Chip v-for="tag in slotProps.item.tags" :key="tag" :label="tag" 
-                            class="text-xs" style="padding: 0.25rem 0.5rem" />
-                    </div>
-                  </div>
-                </template>
-              </Timeline>
-            </div>
-          </ScrollPanel>
-        </div>
+                  </template>
+                </Timeline>
+              </div>
+            </ScrollPanel>
+          </template>
+        </Card>
       </div>
     </div>
 
     <!-- Spending Trend Chart -->
-    <div class="grid mt-4">
+    <div class="grid mb-5">
       <div class="col-12">
-        <div class="surface-card border-round shadow-3">
-          <div class="p-4 border-bottom-1 surface-border">
-            <div class="flex justify-content-between align-items-center flex-wrap gap-3">
-              <div>
-                <h3 class="text-xl font-bold m-0 mb-2">تحليل اتجاهات المصروفات</h3>
-                <p class="text-600 m-0 text-sm">مقارنة المصروفات الفعلية مع المخططة والميزانية المتاحة</p>
-              </div>
-              <div class="flex gap-2 align-items-center">
-                <span class="text-600 text-sm">عرض:</span>
-                <SelectButton v-model="spendingPeriod" :options="spendingPeriodOptions" 
-                            optionLabel="label" optionValue="value" />
-                <Divider layout="vertical" />
-                <Button label="تقرير مفصل" icon="pi pi-file-pdf" severity="danger" outlined size="small" />
-              </div>
-            </div>
-          </div>
-          <div class="p-4">
-            <Chart type="line" :data="spendingChartData" :options="spendingChartOptions" :height="300" />
-          </div>
-          <div class="p-4 border-top-1 surface-border">
-            <div class="grid">
-              <div class="col-12 md:col-3">
-                <div class="text-center p-3 border-round bg-blue-800">
-                  <i class="pi pi-chart-line text-blue-500 text-2xl mb-2"></i>
-                  <div class="text-600 text-sm mb-1">إجمالي المصروفات</div>
-                  <div class="text-900 font-bold text-xl">{{ formatCurrency(stats.totalSpending) }}</div>
+        <Card class="chart-card">
+          <template #header>
+            <div class="p-4">
+              <div class="flex justify-content-between align-items-center flex-wrap gap-3">
+                <div>
+                  <h3 class="text-2xl font-bold m-0 mb-2 text-white">تحليل المصروفات</h3>
+                  <p class="text-400 m-0">مقارنة المصروفات الفعلية مع المخططة</p>
                 </div>
-              </div>
-              <div class="col-12 md:col-3">
-                <div class="text-center p-3 border-round bg-green-700">
-                  <i class="pi pi-dollar text-green-500 text-2xl mb-2"></i>
-                  <div class="text-600 text-sm mb-1">الميزانية المتبقية</div>
-                  <div class="text-900 font-bold text-xl">{{ formatCurrency(stats.remainingBudget) }}</div>
-                </div>
-              </div>
-              <div class="col-12 md:col-3">
-                <div class="text-center p-3 border-round bg-orange-700">
-                  <i class="pi pi-calendar text-orange-500 text-2xl mb-2"></i>
-                  <div class="text-600 text-sm mb-1">متوسط شهري</div>
-                  <div class="text-900 font-bold text-xl">{{ formatCurrency(stats.monthlyAverage) }}</div>
-                </div>
-              </div>
-              <div class="col-12 md:col-3">
-                <div class="text-center p-3 border-round bg-purple-800">
-                  <i class="pi pi-percentage text-purple-500 text-2xl mb-2"></i>
-                  <div class="text-600 text-sm mb-1">نسبة التوفير</div>
-                  <div class="text-900 font-bold text-xl">{{ stats.savingsPercentage }}%</div>
+                <div class="flex gap-2 align-items-center">
+                  <span class="text-400 text-sm">عرض:</span>
+                  <SelectButton 
+                    v-model="spendingPeriod" 
+                    :options="spendingPeriodOptions" 
+                    optionLabel="label" 
+                    optionValue="value"
+                  />
                 </div>
               </div>
             </div>
-          </div>
-        </div>
+          </template>
+          <template #content>
+            <Chart 
+              type="line" 
+              :data="spendingChartData" 
+              :options="spendingChartOptions" 
+              :height="300" 
+            />
+          </template>
+          <template #footer>
+            <div class="p-4">
+              <div class="grid">
+                <div class="col-12 md:col-3">
+                  <div class="text-center p-3 border-round bg-blue-900">
+                    <i class="pi pi-chart-line text-blue-400 text-2xl mb-2"></i>
+                    <div class="text-400 text-sm mb-1">إجمالي المصروفات</div>
+                    <div class="text-white font-bold text-xl">{{ formatCurrency(stats.totalSpending) }}</div>
+                  </div>
+                </div>
+                <div class="col-12 md:col-3">
+                  <div class="text-center p-3 border-round bg-green-900">
+                    <i class="pi pi-dollar text-green-400 text-2xl mb-2"></i>
+                    <div class="text-400 text-sm mb-1">الميزانية المتبقية</div>
+                    <div class="text-white font-bold text-xl">{{ formatCurrency(stats.remainingBudget) }}</div>
+                  </div>
+                </div>
+                <div class="col-12 md:col-3">
+                  <div class="text-center p-3 border-round bg-orange-900">
+                    <i class="pi pi-calendar text-orange-400 text-2xl mb-2"></i>
+                    <div class="text-400 text-sm mb-1">متوسط شهري</div>
+                    <div class="text-white font-bold text-xl">{{ formatCurrency(stats.monthlyAverage) }}</div>
+                  </div>
+                </div>
+                <div class="col-12 md:col-3">
+                  <div class="text-center p-3 border-round bg-purple-900">
+                    <i class="pi pi-percentage text-purple-400 text-2xl mb-2"></i>
+                    <div class="text-400 text-sm mb-1">نسبة التوفير</div>
+                    <div class="text-white font-bold text-xl">{{ stats.savingsPercentage }}%</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </template>
+        </Card>
       </div>
     </div>
 
-    <!-- Top Performers Section -->
-    <div class="grid mt-4">
+    <!-- Top Performers -->
+    <div class="grid mb-5">
       <!-- Top Departments -->
       <div class="col-12 md:col-6">
-        <div class="surface-card border-round shadow-3 h-full">
-          <div class="p-4 border-bottom-1 surface-border">
-            <div class="flex justify-content-between align-items-center">
-              <div>
-                <h3 class="text-xl font-bold m-0 mb-1">أكثر الأقسام نشاطاً</h3>
-                <p class="text-600 m-0 text-sm">ترتيب الأقسام حسب عدد الطلبات</p>
-              </div>
-              <Button icon="pi pi-chart-bar" rounded outlined size="small" />
-            </div>
-          </div>
-          <div class="p-4">
-            <div v-for="(dept, index) in topDepartments" :key="index" 
-                 class="department-item p-3 mb-3 border-round surface-border transition-all transition-duration-200 cursor-pointer">
-              <div class="flex align-items-center gap-3">
-                <div class="rank-badge" :class="'rank-' + (index + 1)">
-                  <span class="font-bold">{{ index + 1 }}</span>
+        <Card class="rank-card h-full">
+          <template #header>
+            <div class="p-4">
+              <div class="flex justify-content-between align-items-center">
+                <div>
+                  <h3 class="text-2xl font-bold m-0 mb-1 text-white">أكثر الأقسام نشاطاً</h3>
+                  <p class="text-400 m-0">ترتيب الأقسام حسب عدد الطلبات</p>
                 </div>
-                <Avatar :label="dept.name.charAt(0)" size="xlarge" shape="circle" 
-                        :style="{ backgroundColor: dept.color, color: 'white' }" />
-                <div class="flex-1">
-                  <div class="flex justify-content-between align-items-center mb-2">
-                    <span class="font-bold text-900 text-lg">{{ dept.name }}</span>
-                    <div class="text-right">
-                      <div class="text-900 font-bold">{{ dept.requests }}</div>
-                      <div class="text-xs text-500">طلب</div>
+                <Button icon="pi pi-chart-bar" rounded outlined />
+              </div>
+            </div>
+          </template>
+          <template #content>
+            <div class="p-4">
+              <div 
+                v-for="(dept, index) in topDepartments" 
+                :key="index" 
+                class="department-item p-3 mb-3 border-round border-1 border-100"
+              >
+                <div class="flex align-items-center gap-3">
+                  <div class="rank-badge" :class="'rank-' + (index + 1)">
+                    <span class="font-bold">{{ index + 1 }}</span>
+                  </div>
+                  <Avatar 
+                    :label="dept.name.charAt(0)" 
+                    size="xlarge" 
+                    shape="circle" 
+                    :style="{ backgroundColor: dept.color, color: 'white' }" 
+                  />
+                  <div class="flex-1">
+                    <div class="flex justify-content-between align-items-center mb-2">
+                      <span class="font-bold text-white text-lg">{{ dept.name }}</span>
+                      <div class="text-right">
+                        <div class="text-white font-bold">{{ dept.requests }}</div>
+                        <div class="text-xs text-500">طلب</div>
+                      </div>
+                    </div>
+                    <div class="flex align-items-center gap-2 mb-2">
+                      <ProgressBar 
+                        :value="dept.percentage" 
+                        :showValue="false" 
+                        style="height: 6px; flex: 1"
+                        class="progress-primary"
+                      />
+                      <span class="text-sm font-semibold text-primary">{{ dept.percentage }}%</span>
+                    </div>
+                    <div class="flex gap-2">
+                      <Chip :label="'مكتمل: ' + dept.completed" size="small" class="chip-small" />
+                      <Chip :label="'تنفيذ: ' + dept.inProgress" severity="warning" size="small" class="chip-small" />
                     </div>
                   </div>
-                  <div class="flex align-items-center gap-2 mb-2">
-                    <ProgressBar :value="dept.percentage" :showValue="false" 
-                               style="height: 6px; flex: 1" class="dept-progress" />
-                    <span class="text-sm font-semibold text-primary">{{ dept.percentage }}%</span>
-                  </div>
-                  <div class="flex gap-2">
-                    <Chip :label="'مكتمل: ' + dept.completed" size="small" class="text-xs" />
-                    <Chip :label="'قيد التنفيذ: ' + dept.inProgress" severity="warning" size="small" class="text-xs" />
-                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
+          </template>
+        </Card>
       </div>
 
       <!-- Top Vendors -->
       <div class="col-12 md:col-6">
-        <div class="surface-card border-round shadow-3 h-full">
-          <div class="p-4 border-bottom-1 surface-border">
-            <div class="flex justify-content-between align-items-center">
-              <div>
-                <h3 class="text-xl font-bold m-0 mb-1">أفضل الموردين أداءً</h3>
-                <p class="text-600 m-0 text-sm">ترتيب الموردين حسب القيمة والتقييم</p>
-              </div>
-              <Button icon="pi pi-star" rounded outlined size="small" severity="warning" />
-            </div>
-          </div>
-          <div class="p-4">
-            <div v-for="(vendor, index) in topVendors" :key="index" 
-                 class="vendor-item p-3 mb-3 border-round surface-border transition-all transition-duration-200 cursor-pointer">
-              <div class="flex align-items-center gap-3">
-                <div class="vendor-badge" :style="{ backgroundColor: vendor.color }">
-                  <i class="pi pi-star-fill text-white"></i>
+        <Card class="rank-card h-full">
+          <template #header>
+            <div class="p-4">
+              <div class="flex justify-content-between align-items-center">
+                <div>
+                  <h3 class="text-2xl font-bold m-0 mb-1 text-white">أفضل الموردين</h3>
+                  <p class="text-400 m-0">ترتيب الموردين حسب الأداء</p>
                 </div>
-                <div class="flex-1">
-                  <div class="flex justify-content-between align-items-center mb-2">
-                    <div>
-                      <div class="font-bold text-900">{{ vendor.name }}</div>
-                      <div class="text-xs text-500">{{ vendor.category }}</div>
-                    </div>
-                    <div class="text-right">
-                      <div class="font-bold text-900">{{ formatCurrency(vendor.value) }}</div>
-                      <div class="text-xs text-green-600">+{{ vendor.growth }}%</div>
-                    </div>
-                  </div>
-                  <div class="flex align-items-center justify-content-between mb-2">
-                    <div class="flex align-items-center gap-2">
-                      <Rating :modelValue="vendor.rating" :readonly="true" :cancel="false" 
-                              class="text-sm" :stars="5" />
-                      <span class="text-sm text-600">({{ vendor.reviews }})</span>
-                    </div>
-                    <ProgressBar :value="vendor.percentage" :showValue="false" 
-                               style="height: 4px; width: 100px" />
-                  </div>
-                  <div class="flex gap-2 text-xs">
-                    <Tag :value="'عروض: ' + vendor.totalOffers" severity="info" rounded />
-                    <Tag :value="'مقبول: ' + vendor.acceptedOffers" severity="success" rounded />
-                    <Tag :value="'وقت التسليم: ' + vendor.deliveryTime + ' يوم'" rounded />
-                  </div>
-                </div>
+                <Button icon="pi pi-star" rounded outlined severity="warning" />
               </div>
             </div>
-          </div>
-        </div>
+          </template>
+          <template #content>
+            <div class="p-4">
+              <div 
+                v-for="(vendor, index) in topVendors" 
+                :key="index" 
+                class="vendor-item p-3 mb-3 border-round border-1 border-100"
+              >
+                <div class="flex align-items-center gap-3">
+                  <div class="vendor-badge" :style="{ backgroundColor: vendor.color }">
+                    <i class="pi pi-star-fill text-white"></i>
+                  </div>
+                  <div class="flex-1">
+                    <div class="flex justify-content-between align-items-center mb-2">
+                      <div>
+                        <div class="font-bold text-white">{{ vendor.name }}</div>
+                        <div class="text-xs text-500">{{ vendor.category }}</div>
+                      </div>
+                      <div class="text-right">
+                        <div class="font-bold text-white">{{ formatCurrency(vendor.value) }}</div>
+                        <div class="text-xs text-green-400">+{{ vendor.growth }}%</div>
+                      </div>
+                    </div>
+                    <div class="flex align-items-center justify-content-between mb-2">
+                      <Rating 
+                        :modelValue="vendor.rating" 
+                        :readonly="true" 
+                        :cancel="false" 
+                        :stars="5"
+                      />
+                      <span class="text-sm text-400">({{ vendor.reviews }})</span>
+                    </div>
+                    <div class="flex gap-2 text-xs flex-wrap">
+                      <Tag :value="'عروض: ' + vendor.totalOffers" severity="info" rounded />
+                      <Tag :value="'مقبول: ' + vendor.acceptedOffers" severity="success" rounded />
+                      <Tag :value="vendor.deliveryTime + ' يوم'" rounded />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </template>
+        </Card>
       </div>
     </div>
 
-    <!-- Additional Analytics Section -->
-    <div class="grid mt-4">
+    <!-- Additional Analytics -->
+    <div class="grid mb-5">
       <!-- Efficiency Metrics -->
       <div class="col-12 lg:col-4">
-        <div class="surface-card border-round shadow-3 h-full">
-          <div class="p-4 border-bottom-1 surface-border">
-            <h3 class="text-xl font-bold m-0 mb-1">مؤشرات الكفاءة</h3>
-            <p class="text-600 m-0 text-sm">قياس أداء العمليات الرئيسية</p>
-          </div>
-          <div class="p-4">
-            <div v-for="metric in efficiencyMetrics" :key="metric.label" 
-                 class="efficiency-metric mb-4 p-3 border-round" :class="metric.bgClass">
-              <div class="flex justify-content-between align-items-center mb-2">
-                <span class="font-semibold text-900">{{ metric.label }}</span>
-                <i :class="metric.icon" class="text-2xl" :style="{ color: metric.color }"></i>
-              </div>
-              <div class="flex align-items-end gap-2 mb-2">
-                <span class="text-4xl font-bold text-900">{{ metric.value }}</span>
-                <span class="text-600">{{ metric.unit }}</span>
-              </div>
-              <div class="flex align-items-center justify-content-between">
-                <ProgressBar :value="metric.progress" :showValue="false" 
-                           style="height: 6px; flex: 1" class="mr-2" />
-                <Tag :value="metric.status" :severity="metric.severity" />
+        <Card class="metrics-card h-full">
+          <template #header>
+            <div class="p-4">
+              <h3 class="text-2xl font-bold m-0 mb-1 text-white">مؤشرات الكفاءة</h3>
+              <p class="text-400 m-0">قياس أداء العمليات</p>
+            </div>
+          </template>
+          <template #content>
+            <div class="p-4">
+              <div 
+                v-for="metric in efficiencyMetrics" 
+                :key="metric.label" 
+                class="metric-item mb-4 p-4 border-round"
+                :class="metric.bgClass"
+              >
+                <div class="flex justify-content-between align-items-center mb-3">
+                  <span class="font-semibold text-white">{{ metric.label }}</span>
+                  <i :class="metric.icon" class="text-3xl" :style="{ color: metric.color }"></i>
+                </div>
+                <div class="flex align-items-end gap-2 mb-3">
+                  <span class="text-5xl font-bold text-white">{{ metric.value }}</span>
+                  <span class="text-400 text-lg mb-1">{{ metric.unit }}</span>
+                </div>
+                <div class="flex align-items-center justify-content-between">
+                  <ProgressBar 
+                    :value="metric.progress" 
+                    :showValue="false" 
+                    style="height: 6px; flex: 1" 
+                    class="mr-2"
+                  />
+                  <Tag :value="metric.status" :severity="metric.severity" />
+                </div>
               </div>
             </div>
-          </div>
-        </div>
+          </template>
+        </Card>
       </div>
 
       <!-- Budget Overview -->
       <div class="col-12 lg:col-4">
-        <div class="surface-card border-round shadow-3 h-full">
-          <div class="p-4 border-bottom-1 surface-border">
-            <h3 class="text-xl font-bold m-0 mb-1">نظرة عامة على الميزانية</h3>
-            <p class="text-600 m-0 text-sm">توزيع وحالة الميزانية المخصصة</p>
-          </div>
-          <div class="p-4 text-center">
-            <Knob v-model="budgetUsed" :size="180" :strokeWidth="12" 
-                  valueColor="#10b981" rangeColor="#e5e7eb" textColor="#1e293b" 
-                  :max="100" :readonly="true" />
-            <div class="mt-4">
-              <div class="text-600 mb-2">الميزانية المستخدمة</div>
-              <div class="text-3xl font-bold text-900 mb-1">{{ formatCurrency(stats.totalSpending) }}</div>
-              <div class="text-500">من {{ formatCurrency(stats.budget) }}</div>
+        <Card class="budget-card h-full">
+          <template #header>
+            <div class="p-4">
+              <h3 class="text-2xl font-bold m-0 mb-1 text-white">نظرة على الميزانية</h3>
+              <p class="text-400 m-0">توزيع الميزانية المخصصة</p>
             </div>
-          </div>
-          <Divider />
-          <div class="p-4">
-            <div v-for="item in budgetBreakdown" :key="item.category" class="mb-3">
-              <div class="flex justify-content-between align-items-center mb-1">
-                <span class="text-900 font-medium">{{ item.category }}</span>
-                <span class="text-600">{{ formatCurrency(item.amount) }}</span>
+          </template>
+          <template #content>
+            <div class="p-4">
+              <div class="text-center mb-4">
+                <Knob 
+                  v-model="budgetUsed" 
+                  :size="180" 
+                  :strokeWidth="12" 
+                  valueColor="#10b981" 
+                  rangeColor="#1f2937" 
+                  textColor="#fff" 
+                  :max="100" 
+                  :readonly="true" 
+                />
+                <div class="mt-4">
+                  <div class="text-400 mb-2">الميزانية المستخدمة</div>
+                  <div class="text-4xl font-bold text-white mb-1">{{ formatCurrency(stats.totalSpending) }}</div>
+                  <div class="text-500">من {{ formatCurrency(stats.budget) }}</div>
+                </div>
               </div>
-              <ProgressBar :value="item.percentage" :showValue="false" 
-                         :style="{ height: '6px' }" />
+              <Divider class="border-700" />
+              <div class="mt-4">
+                <div v-for="item in budgetBreakdown" :key="item.category" class="mb-3">
+                  <div class="flex justify-content-between align-items-center mb-2">
+                    <span class="text-white font-medium">{{ item.category }}</span>
+                    <span class="text-400">{{ formatCurrency(item.amount) }}</span>
+                  </div>
+                  <ProgressBar 
+                    :value="item.percentage" 
+                    :showValue="false" 
+                    style="height: 6px"
+                  />
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
+          </template>
+        </Card>
       </div>
 
-      <!-- Quick Actions & Status -->
+      <!-- Quick Actions -->
       <div class="col-12 lg:col-4">
-        <div class="surface-card border-round shadow-3 h-full">
-          <div class="p-4 border-bottom-1 surface-border">
-            <h3 class="text-xl font-bold m-0 mb-1">إجراءات سريعة</h3>
-            <p class="text-600 m-0 text-sm">الوصول السريع للعمليات الشائعة</p>
-          </div>
-          <div class="p-4">
-            <div v-for="action in quickActions" :key="action.label" 
-                 class="quick-action-item p-3 mb-3 border-round cursor-pointer"
-                 :class="action.bgClass"
-                 @click="action.action">
-              <div class="flex align-items-center gap-3">
-                <div class="action-icon" :style="{ backgroundColor: action.color }">
-                  <i :class="action.icon" class="text-white text-xl"></i>
+        <Card class="actions-card h-full">
+          <template #header>
+            <div class="p-4">
+              <h3 class="text-2xl font-bold m-0 mb-1 text-white">إجراءات سريعة</h3>
+              <p class="text-400 m-0">الوصول للعمليات الشائعة</p>
+            </div>
+          </template>
+          <template #content>
+            <div class="p-4">
+              <div 
+                v-for="action in quickActions" 
+                :key="action.label" 
+                class="action-item p-3 mb-3 border-round border-1 border-100"
+                @click="action.action"
+              >
+                <div class="flex align-items-center gap-3">
+                  <div class="action-icon-wrapper" :style="{ backgroundColor: action.color }">
+                    <i :class="action.icon" class="text-white text-xl"></i>
+                  </div>
+                  <div class="flex-1">
+                    <div class="font-bold text-white mb-1">{{ action.label }}</div>
+                    <div class="text-sm text-400">{{ action.description }}</div>
+                  </div>
+                  <i class="pi pi-angle-left text-400"></i>
                 </div>
-                <div class="flex-1">
-                  <div class="font-bold text-900 mb-1">{{ action.label }}</div>
-                  <div class="text-sm text-600">{{ action.description }}</div>
+              </div>
+              <Divider class="border-700 my-4" />
+              <div>
+                <h4 class="text-lg font-semibold mb-3 text-white">حالة النظام</h4>
+                <div class="flex flex-column gap-3">
+                  <div class="flex justify-content-between align-items-center">
+                    <span class="text-400">حالة الخادم</span>
+                    <Tag value="نشط" severity="success" icon="pi pi-check-circle" />
+                  </div>
+                  <div class="flex justify-content-between align-items-center">
+                    <span class="text-400">آخر تحديث</span>
+                    <span class="text-white font-medium">{{ lastUpdate }}</span>
+                  </div>
+                  <div class="flex justify-content-between align-items-center">
+                    <span class="text-400">مستخدمين نشطين</span>
+                    <AvatarGroup>
+                      <Avatar 
+                        v-for="i in 4" 
+                        :key="i" 
+                        :label="String.fromCharCode(65 + i)" 
+                        size="small" 
+                        shape="circle"
+                        class="avatar-small"
+                      />
+                      <Avatar 
+                        label="+12" 
+                        size="small" 
+                        shape="circle" 
+                        style="background-color: #6366f1"
+                      />
+                    </AvatarGroup>
+                  </div>
                 </div>
-                <i class="pi pi-angle-left text-600"></i>
               </div>
             </div>
-          </div>
-          <Divider />
-          <div class="p-4">
-            <h4 class="text-lg font-semibold mb-3">حالة النظام</h4>
-            <div class="flex flex-column gap-3">
-              <div class="flex justify-content-between align-items-center">
-                <span class="text-600">حالة الخادم</span>
-                <Tag value="نشط" severity="success" icon="pi pi-check-circle" />
-              </div>
-              <div class="flex justify-content-between align-items-center">
-                <span class="text-600">آخر تحديث</span>
-                <span class="text-900 font-medium">{{ lastUpdate }}</span>
-              </div>
-              <div class="flex justify-content-between align-items-center">
-                <span class="text-600">مستخدمين نشطين</span>
-                <AvatarGroup>
-                  <Avatar v-for="i in 4" :key="i" :label="String.fromCharCode(65 + i)" 
-                          size="small" shape="circle" />
-                  <Avatar label="+12" size="small" shape="circle" 
-                          style="background-color: #6366f1" />
-                </AvatarGroup>
-              </div>
-            </div>
-          </div>
-        </div>
+          </template>
+        </Card>
       </div>
     </div>
   </div>
@@ -774,6 +925,7 @@ import { useToast } from 'primevue/usetoast';
 
 // PrimeVue Components
 import Button from 'primevue/button';
+import Card from 'primevue/card';
 import Dropdown from 'primevue/dropdown';
 import Chart from 'primevue/chart';
 import DataTable from 'primevue/datatable';
@@ -804,9 +956,7 @@ const departmentSearch = ref('');
 
 // Breadcrumb
 const breadcrumbHome = ref({ icon: 'pi pi-home', to: '/' });
-const breadcrumbItems = ref([
-  { label: 'لوحة التحكم', to: '/dashboard' }
-]);
+const breadcrumbItems = ref([{ label: 'لوحة التحكم' }]);
 
 // Period Options
 const periods = ref([
@@ -840,7 +990,7 @@ const importantAlerts = ref([
   }
 ]);
 
-// Mock Statistics Data with Animation Support
+// Statistics Data
 const stats = ref({
   totalRequests: 156,
   requestsGrowth: 12.5,
@@ -885,7 +1035,7 @@ const animatedStats = ref({
   activeVendors: 0
 });
 
-// Animate numbers on mount
+// Animate numbers
 const animateValue = (key, start, end, duration) => {
   const startTime = performance.now();
   const animate = (currentTime) => {
@@ -961,22 +1111,10 @@ const departmentPerformance = ref([
     performance: 88,
     color: '#8b5cf6',
     requestsTrend: 'up'
-  },
-  {
-    name: 'قسم الصيانة',
-    code: 'MN-006',
-    requests: 19,
-    completed: 15,
-    inProgress: 4,
-    spending: 4850000,
-    savings: 485000,
-    performance: 79,
-    color: '#ec4899',
-    requestsTrend: 'down'
   }
 ]);
 
-// Recent Activities Data
+// Recent Activities
 const recentActivities = ref([
   {
     title: 'طلب شراء جديد - PR-00156',
@@ -987,16 +1125,16 @@ const recentActivities = ref([
     color: '#10b981',
     priority: 'عاجل',
     prioritySeverity: 'danger',
-    tags: ['طلب جديد', 'معدات مكتبية']
+    tags: ['طلب جديد', 'معدات']
   },
   {
     title: 'موافقة على عرض سعر',
-    description: 'تمت الموافقة على عرض السعر من شركة التقنية الحديثة',
+    description: 'تمت الموافقة على عرض السعر من شركة التقنية',
     time: 'منذ 15 دقيقة',
     user: 'فاطمة علي',
     icon: 'pi pi-check-circle',
     color: '#3b82f6',
-    tags: ['موافقة', 'عرض سعر']
+    tags: ['موافقة', 'عرض']
   },
   {
     title: 'فحص مخزون مكتمل',
@@ -1005,7 +1143,7 @@ const recentActivities = ref([
     user: 'محمود حسن',
     icon: 'pi pi-box',
     color: '#06b6d4',
-    tags: ['مخزون', 'تقنية معلومات']
+    tags: ['مخزون']
   },
   {
     title: 'رفض طلب شراء',
@@ -1016,79 +1154,17 @@ const recentActivities = ref([
     color: '#ef4444',
     priority: 'هام',
     prioritySeverity: 'warning',
-    tags: ['رفض', 'ميزانية']
-  },
-  {
-    title: 'إضافة مورد جديد',
-    description: 'تم إضافة مورد جديد: شركة الأمل للتوريدات',
-    time: 'منذ ساعتين',
-    user: 'عمر يوسف',
-    icon: 'pi pi-user-plus',
-    color: '#8b5cf6',
-    tags: ['مورد جديد']
-  },
-  {
-    title: 'تحديث تقييم مورد',
-    description: 'تم تحديث تقييم شركة النجاح إلى 4.5 نجوم',
-    time: 'منذ 3 ساعات',
-    user: 'ليلى أحمد',
-    icon: 'pi pi-star',
-    color: '#f59e0b',
-    tags: ['تقييم', 'مورد']
-  },
-  {
-    title: 'اكتمال عملية شراء',
-    description: 'تم اكتمال عملية الشراء PROC-00125 بنجاح',
-    time: 'منذ 4 ساعات',
-    user: 'كريم سعيد',
-    icon: 'pi pi-shopping-bag',
-    color: '#ec4899',
-    tags: ['اكتمال', 'عملية شراء']
+    tags: ['رفض']
   }
 ]);
 
 // Top Departments
 const topDepartments = ref([
-  {
-    name: 'قسم تقنية المعلومات',
-    requests: 45,
-    completed: 38,
-    inProgress: 7,
-    percentage: 29,
-    color: '#3b82f6'
-  },
-  {
-    name: 'قسم المشتريات',
-    requests: 38,
-    completed: 35,
-    inProgress: 3,
-    percentage: 24,
-    color: '#10b981'
-  },
-  {
-    name: 'قسم المالية',
-    requests: 32,
-    completed: 28,
-    inProgress: 4,
-    percentage: 21,
-    color: '#f59e0b'
-  },
-  {
-    name: 'قسم الموارد البشرية',
-    requests: 28,
-    completed: 22,
-    inProgress: 6,
-    percentage: 18,
-    color: '#ef4444'
-  },
-  {
-    name: 'قسم المخازن',
-    requests: 24,
-    completed: 21,
-    inProgress: 3,
-    percentage: 15,
-    color: '#8b5cf6'
-  }
+  { name: 'قسم تقنية المعلومات', requests: 45, completed: 38, inProgress: 7, percentage: 29, color: '#3b82f6' },
+  { name: 'قسم المشتريات', requests: 38, completed: 35, inProgress: 3, percentage: 24, color: '#10b981' },
+  { name: 'قسم المالية', requests: 32, completed: 28, inProgress: 4, percentage: 21, color: '#f59e0b' },
+  { name: 'قسم الموارد البشرية', requests: 28, completed: 22, inProgress: 6, percentage: 18, color: '#ef4444' },
+  { name: 'قسم المخازن', requests: 24, completed: 21, inProgress: 3, percentage: 15, color: '#8b5cf6' }
 ]);
 
 // Top Vendors
@@ -1131,32 +1207,6 @@ const topVendors = ref([
     deliveryTime: 10,
     growth: 8,
     color: '#10b981'
-  },
-  {
-    name: 'مكتب الرائد للتوريدات',
-    category: 'خدمات عامة',
-    value: 4100000,
-    percentage: 13,
-    rating: 4.6,
-    reviews: 112,
-    totalOffers: 41,
-    acceptedOffers: 35,
-    deliveryTime: 6,
-    growth: 10,
-    color: '#ef4444'
-  },
-  {
-    name: 'شركة الإبداع الرقمي',
-    category: 'برمجيات وتطبيقات',
-    value: 3600000,
-    percentage: 12,
-    rating: 4.7,
-    reviews: 87,
-    totalOffers: 28,
-    acceptedOffers: 24,
-    deliveryTime: 14,
-    growth: 18,
-    color: '#8b5cf6'
   }
 ]);
 
@@ -1178,7 +1228,7 @@ const efficiencyMetrics = ref([
     severity: 'success',
     icon: 'pi pi-clock',
     color: '#10b981',
-    bgClass: 'bg-green-700'
+    bgClass: 'bg-green-900'
   },
   {
     label: 'معدل قبول العروض',
@@ -1189,7 +1239,7 @@ const efficiencyMetrics = ref([
     severity: 'info',
     icon: 'pi pi-check-circle',
     color: '#3b82f6',
-    bgClass: 'bg-blue-700'
+    bgClass: 'bg-blue-900'
   },
   {
     label: 'رضا الموردين',
@@ -1200,7 +1250,7 @@ const efficiencyMetrics = ref([
     severity: 'success',
     icon: 'pi pi-heart',
     color: '#ec4899',
-    bgClass: 'bg-pink-700'
+    bgClass: 'bg-pink-900'
   },
   {
     label: 'الالتزام بالمواعيد',
@@ -1211,7 +1261,7 @@ const efficiencyMetrics = ref([
     severity: 'success',
     icon: 'pi pi-calendar-check',
     color: '#8b5cf6',
-    bgClass: 'bg-purple-700'
+    bgClass: 'bg-purple-900'
   }
 ]);
 
@@ -1227,35 +1277,31 @@ const budgetBreakdown = ref([
 const quickActions = ref([
   {
     label: 'طلب شراء جديد',
-    description: 'إنشاء طلب شراء جديد',
+    description: 'إنشاء طلب جديد',
     icon: 'pi pi-plus-circle',
     color: '#10b981',
-    bgClass: 'bg-green-800',
-    action: () => toast.add({ severity: 'info', summary: 'طلب جديد', detail: 'فتح نموذج طلب شراء جديد', life: 3000 })
+    action: () => toast.add({ severity: 'info', summary: 'طلب جديد', life: 3000 })
   },
   {
     label: 'مراجعة الطلبات المعلقة',
     description: '28 طلب بانتظار المراجعة',
     icon: 'pi pi-clock',
     color: '#f59e0b',
-    bgClass: 'bg-orange-800',
-    action: () => toast.add({ severity: 'warn', summary: 'طلبات معلقة', detail: 'عرض الطلبات المعلقة', life: 3000 })
+    action: () => toast.add({ severity: 'warn', summary: 'طلبات معلقة', life: 3000 })
   },
   {
     label: 'إضافة مورد جديد',
-    description: 'تسجيل مورد في النظام',
+    description: 'تسجيل مورد جديد',
     icon: 'pi pi-user-plus',
     color: '#3b82f6',
-    bgClass: 'bg-blue-800',
-    action: () => toast.add({ severity: 'info', summary: 'مورد جديد', detail: 'فتح نموذج إضافة مورد', life: 3000 })
+    action: () => toast.add({ severity: 'info', summary: 'مورد جديد', life: 3000 })
   },
   {
     label: 'تقارير شاملة',
     description: 'عرض وتصدير التقارير',
     icon: 'pi pi-file-pdf',
     color: '#ef4444',
-    bgClass: 'bg-red-800',
-    action: () => toast.add({ severity: 'success', summary: 'تقارير', detail: 'فتح صفحة التقارير', life: 3000 })
+    action: () => toast.add({ severity: 'success', summary: 'تقارير', life: 3000 })
   }
 ]);
 
@@ -1268,32 +1314,27 @@ const requestsChartData = ref({
   datasets: [
     {
       label: 'مسودة',
-      backgroundColor: '#94a3b8',
-      borderColor: '#94a3b8',
+      backgroundColor: '#64748b',
       data: [12, 15, 10, 18, 14, 16]
     },
     {
       label: 'معلق',
-      backgroundColor: '#fb923c',
-      borderColor: '#fb923c',
+      backgroundColor: '#f97316',
       data: [18, 22, 20, 25, 23, 28]
     },
     {
-      label: 'موافق عليه',
+      label: 'موافق',
       backgroundColor: '#22c55e',
-      borderColor: '#22c55e',
       data: [32, 38, 35, 42, 40, 45]
     },
     {
       label: 'مرفوض',
       backgroundColor: '#ef4444',
-      borderColor: '#ef4444',
       data: [5, 8, 6, 7, 9, 8]
     },
     {
       label: 'مكتمل',
       backgroundColor: '#3b82f6',
-      borderColor: '#3b82f6',
       data: [28, 32, 30, 35, 38, 42]
     }
   ]
@@ -1302,41 +1343,28 @@ const requestsChartData = ref({
 const requestsChartOptions = ref({
   maintainAspectRatio: false,
   responsive: true,
-  interaction: {
-    mode: 'index',
-    intersect: false
-  },
   plugins: {
     legend: {
       position: 'bottom',
       rtl: true,
       labels: {
+        color: '#94a3b8',
         font: { family: 'Cairo, sans-serif', size: 12 },
         usePointStyle: true,
-        padding: 15,
-        boxWidth: 8,
-        boxHeight: 8
+        padding: 15
       }
-    },
-    tooltip: {
-      rtl: true,
-      titleFont: { family: 'Cairo, sans-serif' },
-      bodyFont: { family: 'Cairo, sans-serif' },
-      backgroundColor: 'rgba(0, 0, 0, 0.8)',
-      padding: 12,
-      cornerRadius: 8
     }
   },
   scales: {
     x: {
       stacked: true,
-      ticks: { font: { family: 'Cairo, sans-serif' } },
+      ticks: { color: '#64748b', font: { family: 'Cairo, sans-serif' } },
       grid: { display: false }
     },
     y: {
       stacked: true,
-      ticks: { font: { family: 'Cairo, sans-serif' } },
-      grid: { color: '#f1f5f9' }
+      ticks: { color: '#64748b', font: { family: 'Cairo, sans-serif' } },
+      grid: { color: '#1e293b' }
     }
   }
 });
@@ -1346,8 +1374,7 @@ const priorityChartData = ref({
   datasets: [{
     data: [42, 78, 36],
     backgroundColor: ['#22c55e', '#fb923c', '#ef4444'],
-    borderWidth: 0,
-    hoverOffset: 10
+    borderWidth: 0
   }]
 });
 
@@ -1355,17 +1382,7 @@ const priorityChartOptions = ref({
   maintainAspectRatio: false,
   responsive: true,
   plugins: {
-    legend: {
-      display: false
-    },
-    tooltip: {
-      rtl: true,
-      titleFont: { family: 'Cairo, sans-serif' },
-      bodyFont: { family: 'Cairo, sans-serif' },
-      backgroundColor: 'rgba(0, 0, 0, 0.8)',
-      padding: 12,
-      cornerRadius: 8
-    }
+    legend: { display: false }
   }
 });
 
@@ -1379,33 +1396,16 @@ const spendingChartData = ref({
       borderColor: '#3b82f6',
       backgroundColor: 'rgba(59, 130, 246, 0.1)',
       tension: 0.4,
-      borderWidth: 3,
-      pointRadius: 5,
-      pointBackgroundColor: '#3b82f6',
-      pointBorderColor: '#fff',
-      pointBorderWidth: 2
+      borderWidth: 3
     },
     {
       label: 'المصروفات المخططة',
       data: [7000000, 7500000, 7200000, 8000000, 8500000, 8000000],
       fill: false,
       borderColor: '#10b981',
-      backgroundColor: 'rgba(16, 185, 129, 0.1)',
       tension: 0.4,
       borderWidth: 2,
-      borderDash: [5, 5],
-      pointRadius: 4,
-      pointBackgroundColor: '#10b981'
-    },
-    {
-      label: 'الميزانية المتاحة',
-      data: [10000000, 10000000, 10000000, 10000000, 10000000, 10000000],
-      fill: false,
-      borderColor: '#f59e0b',
-      tension: 0,
-      borderWidth: 2,
-      borderDash: [10, 5],
-      pointRadius: 0
+      borderDash: [5, 5]
     }
   ]
 });
@@ -1413,80 +1413,30 @@ const spendingChartData = ref({
 const spendingChartOptions = ref({
   maintainAspectRatio: false,
   responsive: true,
-  interaction: {
-    mode: 'index',
-    intersect: false
-  },
   plugins: {
     legend: {
       position: 'top',
       rtl: true,
       labels: {
+        color: '#94a3b8',
         font: { family: 'Cairo, sans-serif', size: 12 },
-        usePointStyle: true,
-        padding: 15
-      }
-    },
-    tooltip: {
-      rtl: true,
-      titleFont: { family: 'Cairo, sans-serif' },
-      bodyFont: { family: 'Cairo, sans-serif' },
-      backgroundColor: 'rgba(0, 0, 0, 0.8)',
-      padding: 12,
-      cornerRadius: 8,
-      callbacks: {
-        label: function(context) {
-          let label = context.dataset.label || '';
-          if (label) {
-            label += ': ';
-          }
-          label += new Intl.NumberFormat('ar-IQ').format(context.parsed.y) + ' IQD';
-          return label;
-        }
+        usePointStyle: true
       }
     }
   },
   scales: {
     x: {
-      ticks: { font: { family: 'Cairo, sans-serif' } },
+      ticks: { color: '#64748b', font: { family: 'Cairo, sans-serif' } },
       grid: { display: false }
     },
     y: {
       ticks: { 
+        color: '#64748b',
         font: { family: 'Cairo, sans-serif' },
-        callback: function(value) {
-          return (value / 1000000).toFixed(1) + 'M';
-        }
+        callback: (value) => (value / 1000000).toFixed(1) + 'M'
       },
-      grid: { color: '#f1f5f9' }
+      grid: { color: '#1e293b' }
     }
-  }
-});
-
-// Mini Committee Chart
-const miniCommitteeChart = ref({
-  labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-  datasets: [{
-    data: [6, 7, 8, 7, 8, 8],
-    borderColor: '#14b8a6',
-    backgroundColor: 'rgba(20, 184, 166, 0.1)',
-    fill: true,
-    tension: 0.4,
-    borderWidth: 2,
-    pointRadius: 0
-  }]
-});
-
-const miniChartOptions = ref({
-  maintainAspectRatio: false,
-  responsive: true,
-  plugins: {
-    legend: { display: false },
-    tooltip: { enabled: false }
-  },
-  scales: {
-    x: { display: false },
-    y: { display: false }
   }
 });
 
@@ -1494,8 +1444,7 @@ const miniChartOptions = ref({
 const filteredDepartmentPerformance = computed(() => {
   if (!departmentSearch.value) return departmentPerformance.value;
   return departmentPerformance.value.filter(dept => 
-    dept.name.includes(departmentSearch.value) || 
-    dept.code.includes(departmentSearch.value)
+    dept.name.includes(departmentSearch.value) || dept.code.includes(departmentSearch.value)
   );
 });
 
@@ -1507,89 +1456,43 @@ const filteredActivities = computed(() => {
 // Methods
 const refreshData = () => {
   loading.value = true;
-  toast.add({
-    severity: 'info',
-    summary: 'جاري التحديث',
-    detail: 'يتم تحديث بيانات لوحة التحكم...',
-    life: 2000
-  });
-  
   setTimeout(() => {
     loading.value = false;
-    toast.add({
-      severity: 'success',
-      summary: 'تم التحديث',
-      detail: 'تم تحديث البيانات بنجاح',
-      life: 3000
-    });
+    toast.add({ severity: 'success', summary: 'تم التحديث', life: 3000 });
   }, 1500);
 };
 
-const onPeriodChange = () => {
-  toast.add({
-    severity: 'info',
-    summary: 'تغيير الفترة',
-    detail: `تم تغيير الفترة إلى: ${periods.value.find(p => p.value === selectedPeriod.value)?.label}`,
-    life: 2000
-  });
-};
-
-const toggleChartMenu = () => {
-  toast.add({
-    severity: 'info',
-    summary: 'خيارات المخطط',
-    detail: 'فتح قائمة خيارات المخطط',
-    life: 2000
-  });
-};
-
 const refreshPriorityData = () => {
-  toast.add({
-    severity: 'success',
-    summary: 'تحديث',
-    detail: 'تم تحديث بيانات الأولويات',
-    life: 2000
-  });
+  toast.add({ severity: 'success', summary: 'تم التحديث', life: 2000 });
 };
 
 const formatCurrency = (value) => {
   if (!value) return '0 IQD';
-  return new Intl.NumberFormat('ar-IQ', {
-    style: 'decimal',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0
-  }).format(value) + ' IQD';
+  return new Intl.NumberFormat('ar-IQ').format(value) + ' IQD';
 };
 
 const getPerformanceClass = (value) => {
-  if (value >= 85) return 'performance-excellent';
-  if (value >= 70) return 'performance-good';
-  return 'performance-average';
+  if (value >= 85) return 'progress-excellent';
+  if (value >= 70) return 'progress-good';
+  return 'progress-average';
 };
 
 const getPerformanceTextClass = (value) => {
-  if (value >= 85) return 'text-green-600';
-  if (value >= 70) return 'text-blue-600';
-  return 'text-orange-600';
+  if (value >= 85) return 'text-green-400';
+  if (value >= 70) return 'text-blue-400';
+  return 'text-orange-400';
 };
 
 // Lifecycle
 onMounted(() => {
-  // Animate statistics on mount
   animateValue('totalRequests', 0, stats.value.totalRequests, 1000);
   animateValue('pendingRequests', 0, stats.value.pendingRequests, 1200);
   animateValue('totalSpending', 0, stats.value.totalSpending, 1500);
   animateValue('activeVendors', 0, stats.value.activeVendors, 1300);
   
-  toast.add({
-    severity: 'success',
-    summary: 'مرحباً بك',
-    detail: 'تم تحميل لوحة التحكم بنجاح',
-    life: 3000
-  });
+  toast.add({ severity: 'success', summary: 'مرحباً بك', life: 3000 });
 });
 
-// Watch for chart type changes
 watch(chartViewType, () => {
   requestsChartOptions.value.scales.x.stacked = chartViewType.value === 'bar';
   requestsChartOptions.value.scales.y.stacked = chartViewType.value === 'bar';
@@ -1597,122 +1500,199 @@ watch(chartViewType, () => {
 </script>
 
 <style scoped>
-.dashboard-container {
-    padding: 2rem;
-    direction: rtl;
-    min-height: 100vh;
+.dashboard-wrapper {
+  padding: 2rem;
+  direction: rtl;
+  min-height: 100vh;
 }
 
-/* Gradient Cards */
-.gradient-card-blue {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  transition: transform 0.3s, box-shadow 0.3s;
-}
-
-.gradient-card-orange {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-  color: white;
-  transition: transform 0.3s, box-shadow 0.3s;
-}
-
-.gradient-card-green {
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-  color: white;
-  transition: transform 0.3s, box-shadow 0.3s;
-}
-
-.gradient-card-purple {
-  background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
-  color: #1e293b;
-  transition: transform 0.3s, box-shadow 0.3s;
-}
-
-.stat-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15) !important;
-}
-
-.stat-icon-wrapper {
-  width: 4rem;
-  height: 4rem;
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  backdrop-filter: blur(10px);
-}
-
-.stat-card-hover {
+/* Cards */
+.stat-card {
   transition: all 0.3s ease;
+  overflow: hidden;
   cursor: pointer;
   border: 1px solid transparent;
 }
 
-.stat-card-hover:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12) !important;
-  border-color: var(--primary-color);
+/* Stat Card Variants */
+.stat-card-total {
+  border-left: 4px solid #3b82f6;
 }
 
-.stat-mini-icon {
+.stat-card-total:hover {
+  border-left-color: #2563eb;
+}
+
+.stat-card-pending {
+  border-left: 4px solid #f59e0b;
+}
+
+.stat-card-pending:hover {
+  border-left-color: #d97706;
+}
+
+.stat-card-approved {
+  border-left: 4px solid #10b981;
+}
+
+.stat-card-approved:hover {
+  border-left-color: #059669;
+}
+
+.stat-card-rejected {
+  border-left: 4px solid #ef4444;
+}
+
+.stat-card-rejected:hover {
+  border-left-color: #dc2626;
+}
+
+/* Icon Containers */
+.icon-container {
   width: 3.5rem;
   height: 3.5rem;
-  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.icon-total {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+}
+
+.icon-pending {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+}
+
+.icon-approved {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+}
+
+.icon-rejected {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+}
+
+/* Progress Bars */
+.progress-bar {
+  background: #1e293b;
+}
+
+.progress-fill-total {
+  background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%);
+}
+
+.progress-fill-pending {
+  background: linear-gradient(90deg, #f59e0b 0%, #d97706 100%);
+}
+
+.progress-fill-approved {
+  background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+}
+
+.progress-fill-rejected {
+  background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%);
+}
+
+.secondary-card,
+.chart-card,
+.table-card,
+.activity-card,
+.rank-card,
+.metrics-card,
+.budget-card,
+.actions-card {
+  border: 1px solid #334155;
+  transition: all 0.3s ease;
+}
+
+.secondary-card:hover,
+.rank-card:hover,
+.actions-card:hover {
+  border-color: #475569;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+/* Icons */
+.icon-wrapper {
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 0.75rem;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.gradient-text {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+
+/* Chips and Tags */
+.chip-small {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
 }
 
-/* Chart Containers */
-.chart-container {
-  overflow: hidden;
+.priority-chip {
+  background: rgba(100, 116, 139, 0.2);
+  color: #cbd5e1;
+  font-size: 0.75rem;
 }
 
-.chart-header {
-  background: linear-gradient(to bottom, rgba(59, 130, 246, 0.05), transparent);
+.tag-chip {
+  background: rgba(100, 116, 139, 0.2);
+  color: #cbd5e1;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
 }
 
-.chart-footer {
-  background: linear-gradient(to top, rgba(59, 130, 246, 0.05), transparent);
+/* Avatar */
+.avatar-purple {
+  background: rgba(139, 92, 246, 0.3);
+  color: #c4b5fd;
 }
 
-.chart-legend-color {
+.avatar-small {
+  background: rgba(100, 116, 139, 0.3);
+  color: #cbd5e1;
+}
+
+/* Progress Bars for other components */
+.progress-blue :deep(.p-progressbar-value) {
+  background: #3b82f6;
+}
+
+.progress-cyan :deep(.p-progressbar-value) {
+  background: #06b6d4;
+}
+
+.progress-green :deep(.p-progressbar-value) {
+  background: #22c55e;
+}
+
+.progress-primary :deep(.p-progressbar-value) {
+  background: #6366f1;
+}
+
+.progress-excellent :deep(.p-progressbar-value) {
+  background: #22c55e;
+}
+
+.progress-good :deep(.p-progressbar-value) {
+  background: #3b82f6;
+}
+
+.progress-average :deep(.p-progressbar-value) {
+  background: #f59e0b;
+}
+
+/* Chart Legend */
+.legend-dot,
+.priority-dot {
   width: 12px;
   height: 12px;
-  border-radius: 3px;
-}
-
-/* Priority Indicators */
-.priority-indicator {
-  width: 8px;
-  height: 8px;
   border-radius: 50%;
 }
 
-.priority-low { background-color: #22c55e; }
-.priority-medium { background-color: #fb923c; }
-.priority-high { background-color: #ef4444; }
-
-.priority-chip-low { background-color: rgba(34, 197, 94, 0.1); color: #22c55e; }
-.priority-chip-medium { background-color: rgba(251, 146, 60, 0.1); color: #fb923c; }
-.priority-chip-high { background-color: rgba(239, 68, 68, 0.1); color: #ef4444; }
-
-/* Timeline Styles */
-.timeline-marker-wrapper {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
+/* Timeline */
 .timeline-marker {
   width: 2.5rem;
   height: 2.5rem;
@@ -1721,225 +1701,131 @@ watch(chartViewType, () => {
   align-items: center;
   justify-content: center;
   color: white;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  z-index: 2;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
-.timeline-connector {
-  width: 2px;
-  flex: 1;
-  background: linear-gradient(to bottom, #e2e8f0, transparent);
-  margin-top: 0.5rem;
-}
-
-.activity-card {
-  background: var(--surface-card);
+/* Activity Item */
+.activity-item {
+  background: #0f172a;
   transition: all 0.2s;
 }
 
-.activity-card:hover {
-  background: var(--surface-hover);
-  border-color: var(--primary-color) !important;
+.activity-item:hover {
+  background: #1e293b;
+  border-color: #475569 !important;
 }
 
 /* Department & Vendor Items */
 .department-item,
 .vendor-item {
-  border: 1px solid transparent;
+  background: #0f172a;
   transition: all 0.2s;
+  cursor: pointer;
 }
 
 .department-item:hover,
 .vendor-item:hover {
-    border-color: var(--primary-color);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    transform: translateX(-4px);
+  background: #1e293b;
+  border-color: #283749 !important;
+  transform: translateX(-4px);
 }
 
 .rank-badge {
   width: 3rem;
   height: 3rem;
-  border-radius: 12px;
+  border-radius: 0.75rem;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1.25rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.rank-1 {
-  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
-  color: #1e293b;
-}
-
-.rank-2 {
-  background: linear-gradient(135deg, #c0c0c0 0%, #e8e8e8 100%);
-  color: #1e293b;
-}
-
-.rank-3 {
-  background: linear-gradient(135deg, #cd7f32 0%, #e5a869 100%);
-  color: white;
-}
-
+.rank-1 { background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); color: #fff; }
+.rank-2 { background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%); color: #fff; }
+.rank-3 { background: linear-gradient(135deg, #fb923c 0%, #f97316 100%); color: #fff; }
 .rank-4,
-.rank-5 {
-  background: linear-gradient(135deg, #64748b 0%, #94a3b8 100%);
-  color: white;
-}
+.rank-5 { background: linear-gradient(135deg, #475569 0%, #334155 100%); color: #fff; }
 
 .vendor-badge {
   width: 3rem;
   height: 3rem;
-  border-radius: 12px;
+  border-radius: 0.75rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-/* Performance Styles */
-.performance-excellent :deep(.p-progressbar-value) {
-  background: linear-gradient(to right, #10b981, #22c55e);
+/* Metric Item */
+.metric-item {
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.performance-good :deep(.p-progressbar-value) {
-  background: linear-gradient(to right, #3b82f6, #60a5fa);
-}
-
-.performance-average :deep(.p-progressbar-value) {
-  background: linear-gradient(to right, #f59e0b, #fbbf24);
-}
-
-.dept-progress :deep(.p-progressbar-value) {
-  background: linear-gradient(to right, #667eea, #764ba2);
-}
-
-/* Quick Actions */
-.quick-action-item {
-  border: 1px solid transparent;
+/* Action Item */
+.action-item {
+  background: #0f172a;
   transition: all 0.2s;
+  cursor: pointer;
 }
 
-.quick-action-item:hover {
-  border-color: var(--primary-color);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+.action-item:hover {
+  background: #1e293b;
+  border-color: #475569 !important;
   transform: scale(1.02);
 }
 
-.action-icon {
+.action-icon-wrapper {
   width: 3rem;
   height: 3rem;
-  border-radius: 12px;
+  border-radius: 0.75rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-/* DataTable Enhancements */
-:deep(.p-datatable .p-datatable-thead > tr > th) {
-    font-weight: 700;
-    text-transform: uppercase;
-    font-size: 0.75rem;
-    letter-spacing: 0.5px;
+/* DataTable */
+:deep(.dark-table .p-datatable-thead > tr > th) {
+  background: #0f172a;
+  color: #cbd5e1;
+  border-color: #334155;
+  font-weight: 700;
 }
 
-:deep(.p-datatable .p-datatable-tbody > tr:hover) {
-  background: rgba(59, 130, 246, 0.05) !important;
+:deep(.dark-table .p-datatable-tbody > tr) {
+  background: #1e293b;
+  color: #e2e8f0;
 }
 
-:deep(.p-datatable-striped .p-datatable-tbody > tr:nth-child(even)) {
-  background: rgba(0, 0, 0, 0.02);
+:deep(.dark-table .p-datatable-tbody > tr:hover) {
+  background: #334155 !important;
 }
 
-/* ScrollPanel */
-:deep(.custom-scrollpanel .p-scrollpanel-bar) {
-  background-color: rgba(59, 130, 246, 0.3);
-  border-radius: 4px;
+:deep(.dark-table .p-datatable-tbody > tr > td) {
+  border-color: #334155;
+}
+
+/* Alert Message */
+.alert-message {
+  background: #1e293b;
+  border-color: #f59e0b;
+  color: #e2e8f0;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.stat-card,
+.secondary-card,
+.chart-card {
+  animation: fadeIn 0.5s ease-out;
 }
 
 /* Responsive */
 @media (max-width: 992px) {
-  .dashboard-container {
+  .dashboard-wrapper {
     padding: 1rem;
-  }
-  
-  .gradient-text {
-    font-size: 2rem;
-  }
-  
-  .stat-icon-wrapper {
-    width: 3rem;
-    height: 3rem;
-  }
-}
-
-@media (max-width: 768px) {
-  .dashboard-header {
-    text-align: center;
-  }
-  
-  .stat-card {
-    margin-bottom: 1rem;
-  }
-  
-  .chart-footer .grid {
-    text-align: center;
-  }
-}
-
-/* Animations */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.stat-card,
-.surface-card {
-  animation: fadeInUp 0.6s ease-out;
-}
-
-/* Loading State */
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
-}
-
-.loading {
-  animation: pulse 1.5s ease-in-out infinite;
-}
-
-/* Print Styles */
-@media print {
-  .dashboard-container {
-    background: white;
-    padding: 0;
-  }
-  
-  .gradient-card-blue,
-  .gradient-card-orange,
-  .gradient-card-green,
-  .gradient-card-purple {
-    background: white !important;
-    color: black !important;
-    border: 1px solid #e5e7eb;
-  }
-  
-  button,
-  .p-breadcrumb,
-  .quick-action-item {
-    display: none;
   }
 }
 </style>

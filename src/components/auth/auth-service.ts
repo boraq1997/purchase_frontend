@@ -38,6 +38,7 @@ const TOKEN_KEY = 'auth_token'; // Use a constant for the localStorage key to av
 const USER_KEY = 'auth_user';
 const PERMISSIONS_KEY = 'auth_permissions';
 const ROLES_KEY = 'auth_roles';
+const DEPARTMENT_INFO = 'auth_department';
 
 const AuthServices = {
     /**
@@ -65,6 +66,9 @@ const AuthServices = {
             localStorage.setItem(ROLES_KEY, JSON.stringify(user.roles));
         }
 
+        if (user.department) {
+            localStorage.setItem(DEPARTMENT_INFO, JSON.stringify(user.department));
+        }
         return response.data;
     },
 
@@ -72,11 +76,15 @@ const AuthServices = {
      * @description Logs the user out by removing the token and redirecting to the home page.
      * This function handles all logout-related side effects.
      */
-    logout(): void {
-        localStorage.removeItem(TOKEN_KEY);
-        localStorage.removeItem(USER_KEY);
-        localStorage.removeItem(PERMISSIONS_KEY);
-        localStorage.removeItem(ROLES_KEY);
+    async logout(): Promise<any>{
+        const response = await api.post('/logout');
+        if (response.data.success) {
+            localStorage.removeItem(TOKEN_KEY);
+            localStorage.removeItem(USER_KEY);
+            localStorage.removeItem(PERMISSIONS_KEY);
+            localStorage.removeItem(ROLES_KEY);
+        }
+        return response;
     },
 
     /**

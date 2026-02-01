@@ -27,7 +27,7 @@
         <!-- ============================= -->
         <div v-else>
             <!-- Action Bar: Add New Role -->
-            <div class="flex justify-content-end mb-4">
+            <div class="flex justify-content-start mt-4">
                 <Button 
                     label="إضافة مجموعة جديدة" 
                     icon="fas fa-plus" 
@@ -96,12 +96,14 @@
                                     variant="outlined"
                                     severity="secondary"
                                     @click="openAddEditRole(role)"
+                                    v-if="hasPermission('edit-Role')"
                                 />
                                 <Button
                                     icon="fas fa-trash-alt"
                                     variant="outlined"
                                     severity="danger"
                                     @click="confirmDeleteRole(role)"
+                                    v-if="hasPermission('delete-Role')"
                                 />
                                 
                                 <!-- Role Name -->
@@ -263,6 +265,7 @@ import Dialog from "primevue/dialog";
 import ProgressSpinner from 'primevue/progressspinner';
 import Card from 'primevue/card';
 import FloatLabel from 'primevue/floatlabel';
+import { hasPermission } from '../services/permission';
 
 /* =============================
  Refs & Reactive State

@@ -72,6 +72,20 @@
       @cancel="isChangePasswordVisible=false"
     />
   </Dialog>
+
+  <Dialog
+    v-model:visible="userProfileVisible"
+    modal
+    header="الملف الشخصي"
+    :style="{width: '75%'}"
+    :closable="true"
+    dir="rtl"
+    maximizable
+  >
+    <userProfile
+      @close="userProfileVisible = false"
+      />
+  </Dialog>
 </template>
 
 <script setup lang="ts">
@@ -86,6 +100,10 @@ import AuthServices from '../auth/auth-service';
 import { useRoute } from 'vue-router';
 import Dialog from 'primevue/dialog';
 import changPasswordForm from './components/changPasswordForm.vue';
+import { resolveMessages } from "../services/messageResolver";
+import { useToast } from "primevue/usetoast";
+import userProfile from './components/userProfile/userProfile.vue';
+import { hasPermission } from '../services/permission';
 // call services
 
 
@@ -93,6 +111,8 @@ import changPasswordForm from './components/changPasswordForm.vue';
 // Reference to the user menu component
 const menu = ref();
 const isChangePasswordVisible = ref(false);
+const userProfileVisible = ref(false);
+const toast = useToast();
 
 // Vue Router instance for navigation
 const router = useRouter();
@@ -135,139 +155,147 @@ const toggleUserMenu = (event: Event) => {
 /**
  * @description Logs the user out and redirects to the login page
  */
-const handleLogout = () => {
-  AuthServices.logout();
-  router.push('/'); // Redirect to login page after logout
+const handleLogout = async() => {
+  try {
+    const response = await AuthServices.logout();
+    toast.add({
+      severity: "success",
+      summary: "رسالة نجاح",
+      detail: "تم تسجيل الخروج بنجاح",
+      life: 3000
+    });
+    router.push('/'); // Redirect to login page after logout
+  } catch (err) {
+    if (err && typeof err === 'object' && 'response' in err) {
+      const axiosError = err as any;
+      const messageKey = axiosError.response?.message;
+      const message = resolveMessages(messageKey);
+
+      toast.add({
+        severity: "error",
+        summary: "رسالة خطاء",
+        detail: message,
+        life: 3000
+      })
+    } else {
+      toast.add({
+          severity: 'error', 
+          summary: 'خطاء', 
+          detail: 'حدث خطاء ما راجع الconsole الخاص بالمتصفح', 
+          life: 3000
+      })
+      console.log(err);
+    } 
+  } finally {
+  }
 };
 
 // === Computed Properties for Menus ===
 
 // Top navigation menu items
-const topItems = computed(() => [
-  {
+const topItems = computed(() => {
+  console.log(hasPermission('view-User'))
+  
+  const items = [];
+
+  items.push({
     label: 'الرئيسية',
     icon: 'fas fa-home',
-    command: () => router.push('/home'),
-  },
-  {
-    label: 'المستخدمين',
-    icon: 'fas fa-users',
-    hasSubmenu: true, // Indicate submenu presence
-    items: [
-        {
-            label: "عرض الكل",
-            icon: "fas fa-users",
-            command: ()=> router.push('/users')
-        },
-        {
-            label: `المحذوفات (${deleteUsers.value})`,
-            icon: 'fas fa-trash-can',
-            isDanger: true,
-            // disabled: deleteUsers.value === 0,
-            command: () => {
-              // if (deleteUsers.value > 0) {
-              //     router.push('/users/deleted');
-              // }
-            },
-        },
-    ],
-  },
-  {
-    label: 'الصلاحيات',
-    icon: 'fas fa-user-shield',
-    command: ()=>router.push('/roles'),
-  },
-  {
-    label: 'الاقسام',
-    icon: 'fa-solid fa-layer-group',
-    hasSubmenu: true,
-    items: [
-      {
-        label: 'عرض الكل',
-        icon: 'fa-solid fa-layer-group',
-        command: () => router.push('/departments')
-      },
-      {
-        label: 'المحذوفات',
-        icon: 'fas fa-trash-alt',
-        isDanger: true
-      }
-    ]
-  },
-  {
-    label: "اللجان",
-    icon: "fa-solid fa-users-viewfinder",
-    hasSubmenu: true,
-    items: [
-      {
-        label: "اللجان",
-        icon: "fa-solid fa-users-viewfinder",
-        command: ()=>router.push('/committees')
-      },
-      {
-        label: 'المحذوفات',
-        icon: 'fas fa-trash-alt',
-        isDanger: true
-      }
-    ]
-  },
-  {
-    label: "طلبات الشراء",
-    icon: 'fa-solid fa-cart-shopping',
-    hasSubmenu: true,
-    items: [
-      {
-        label: "عرض الكل",
-        icon: "fa-solid fa-cart-shopping",
-        command: ()=>router.push('/purchase-request')
-      }
-    ]
-  },
-  {
-    label: "المخازن",
-    icon: "fa-solid fa-warehouse",
-    command: ()=>router.push('/warehouse'),
-  }, 
-  {
-    label: "عروض الاسعار",
-    icon: "fas fa-receipt",
-    command: ()=>router.push('/estimate')
-  }, 
-  {
-    label: "الباعة",
-    icon: "fas fa-store",
-    command: ()=>router.push('./vendors')
-  },
-  {
-    label: "النظام",
-    icon: "fa-solid fa-clock-rotate-left",
-    command: ()=>router.push('/logs')
+    command: () => router.push('/home')
+  })
+
+  if (hasPermission('view-User')) {
+    items.push({
+      label: 'المستخدمين',
+      icon: 'fas fa-users',
+      hasSubmenu: true, // Indicate submenu presence
+      items: [
+          {
+              label: "عرض الكل",
+              icon: "fas fa-users",
+              command: ()=> router.push('/users')
+          },
+          {
+              label: `المحذوفات (${deleteUsers.value})`,
+              icon: 'fas fa-trash-can',
+              isDanger: true,
+              // disabled: deleteUsers.value === 0,
+              command: () => {
+                // if (deleteUsers.value > 0) {
+                //     router.push('/users/deleted');
+                // }
+              },
+          },
+      ],
+    });
   }
-]);
+
+  if (hasPermission('view-Role')) {
+    items.push({
+      label: 'الصلاحيات',
+      icon: 'fas fa-user-shield',
+      command: ()=>router.push('/roles'),
+    });
+  }
+
+  if (hasPermission('view-Department')) {
+    items.push({
+      label: 'الاقسام',
+      icon: 'fa-solid fa-layer-group',
+      command: () => router.push('/departments')
+    });
+  }
+
+  if (hasPermission('view-Committees')) {
+    items.push({
+      label: "اللجان",
+      icon: "fa-solid fa-users-viewfinder",
+      command: ()=>router.push('/committees')
+    });
+  }
+
+  if (hasPermission('view-Estimate')) {
+    items.push({
+      label: "عروض الاسعار",
+      icon: "fas fa-receipt",
+      command: ()=>router.push('/estimate')
+    });
+  }
+
+  if (hasPermission('view-PurchaseRequest')) {
+    items.push({
+      label: "طلبات الشراء",
+      icon: 'fa-solid fa-cart-shopping',
+      command: ()=>router.push('/purchase-request')
+    });
+  }
+
+  if (hasPermission('view-Vendors')) {
+    items.push({
+      label: "الباعة",
+      icon: "fas fa-store",
+      command: ()=>router.push('./vendors')
+    });
+  }
+
+  items.push(
+    {
+      label: "النظام",
+      icon: "fa-solid fa-clock-rotate-left",
+      command: ()=>router.push('/logs')
+    }
+  )
+
+  return items;
+});
 
 // User profile dropdown menu items
 const userOptions = computed(() => [
-  { label: 'الملف الشخصي', icon: 'pi pi-user' },
-  { 
-    label: 'كلمة المرور', 
-    icon: 'pi pi-lock-open',
-    command: ()=>{
-      isChangePasswordVisible.value = true;
-    }
-  },
-  {
-    label: 'الإعدادات',
-    icon: 'pi pi-cog',
-    command: () => {
-      isSettingsDrawerVisible.value = true;
-    },
-  },
+  { label: 'الملف الشخصي', icon: 'pi pi-user',command: ()=>{userProfileVisible.value = true}},
+  { label: 'كلمة المرور', icon: 'pi pi-lock-open',command: ()=>{isChangePasswordVisible.value = true;}},
+  {label: 'الإعدادات',icon: 'pi pi-cog', command: () => {isSettingsDrawerVisible.value = true;},},
   { separator: true },
-  {
-    label: 'تسجيل الخروج',
-    icon: 'pi pi-sign-out',
-    command: handleLogout,
-  },
+  {label: 'تسجيل الخروج', icon: 'pi pi-sign-out',command: handleLogout,},
 ]);
 
 // === Lifecycle Hooks ===

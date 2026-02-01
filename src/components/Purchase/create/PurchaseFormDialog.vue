@@ -20,7 +20,8 @@ import { useToast } from 'primevue/usetoast';
 
 const toast = useToast();
 const confirm = useConfirm();
-
+const departmentId = ref<number>();
+const hasDeapartment = ref<boolean>(false);
 /* =========================
    PROPS & EMITS
 ========================= */
@@ -80,7 +81,7 @@ const form = reactive({
 /* =========================
    LOAD DEPARTMENTS
 ========================= */
-onMounted(async () => {
+const loadDepartments = async()=>{
     try {
         const res = await DepartmentService.getAll();
         departments.value = res.data ?? res;
@@ -92,6 +93,24 @@ onMounted(async () => {
             life: 2000
         });
     }
+}
+onMounted(async () => {
+    try {
+        const row = localStorage.getItem('auth_department');
+        if (row) {
+            const authDepartment = JSON.parse(row);
+            if (authDepartment?.id) {
+                departmentId.value = authDepartment.id;
+                hasDeapartment.value = true;
+                return;
+            }
+        } 
+        loadDepartments();
+    } catch (err) {
+        console.error('Invalid auth_department in localStorage', error);
+        loadDepartments();
+    }
+    
 });
 
 /* =========================

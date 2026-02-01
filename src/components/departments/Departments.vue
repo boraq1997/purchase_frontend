@@ -25,6 +25,7 @@
     <!-- ============================= -->
     <div class="flex justify-between mb-3">
       <Button 
+        v-if="hasPermission('create-Department')"
         class="p-button-sm" 
         label="قسم جديد" 
         icon="fas fa-plus" 
@@ -149,8 +150,8 @@
         </template>
         <template #body="{ data }">
           <Button icon="fas fa-users" class="ml-1" severity="secondary" rounded variant="outlined" aria-label="all users" @click="openUsersDialog(data)" v-tooltip="{ value: 'عرض جميع المستخدمين المنتمين الى القسم', showDelay: 1000, hideDelay: 300 }"/>
-          <Button icon="fas fa-edit" class="ml-1" severity="secondary" rounded variant="outlined" aria-label="edit" @click="openAddEditDepartmentDialog(data)" v-tooltip="{ value: 'تعديل بيانات القسم', showDelay: 1000, hideDelay: 300 }"/>
-          <Button icon="fas fa-trash-alt" severity="danger" rounded variant="outlined" aria-label="delete" @click.stop="confirmDeleteDepartment(data)" v-tooltip="{ value: 'حذف بيانات القسم', showDelay: 1000, hideDelay: 300 }"/>
+          <Button v-if="hasPermission('edit-Permission')" icon="fas fa-edit" class="ml-1" severity="secondary" rounded variant="outlined" aria-label="edit" @click="openAddEditDepartmentDialog(data)" v-tooltip="{ value: 'تعديل بيانات القسم', showDelay: 1000, hideDelay: 300 }"/>
+          <Button v-if="hasPermission('delete-Permission')" icon="fas fa-trash-alt" severity="danger" rounded variant="outlined" aria-label="delete" @click.stop="confirmDeleteDepartment(data)" v-tooltip="{ value: 'حذف بيانات القسم', showDelay: 1000, hideDelay: 300 }"/>
         </template>
       </Column>
     </DataTable>
@@ -330,6 +331,7 @@ import DepartmentService, { Department } from "./DepartmentService";
 // import type { Department } from "./DepartmentService";
 import usersService from "../users/usersService";
 import { FilterMatchMode } from "@primevue/core/api";
+import { hasPermission } from "../services/permission";
 
 /* =============================
    Refs & Reactive State

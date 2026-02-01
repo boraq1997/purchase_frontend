@@ -24,6 +24,7 @@
         <!-- Add Vendor Button -->
         <div class="flex justify-between mb-3">
             <Button
+                v-if="hasPermission('create-Vendors')"
                 label="بائع جديد"
                 icon="fas fa-plus"
                 @click="openAddEditVendorDialog()"
@@ -120,7 +121,8 @@
                 </template>
                 <template #body="{data}">
                     <!-- Edit Vendor Button -->
-                    <Button 
+                    <Button
+                        v-if="hasPermission('edit-Vendors')"
                         icon="fa-solid fa-pen-to-square" 
                         class="ml-1" 
                         severity="secondary" 
@@ -143,6 +145,7 @@
                     />
                     <!-- Delete Vendor Button -->
                     <Button 
+                        v-if="hasPermission('delete-Vendors')"
                         icon="fas fa-minus" 
                         class="ml-1" 
                         severity="danger" 
@@ -407,6 +410,7 @@ import { ref, reactive, onMounted } from 'vue';
 import { useToast } from "primevue/usetoast";
 import { useConfirm } from "primevue/useconfirm";
 import { FilterMatchMode } from "@primevue/core/api";
+import { hasPermission } from '../services/permission';
 
 /* =========================================================
    Services & Types

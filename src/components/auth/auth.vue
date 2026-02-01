@@ -41,6 +41,7 @@ import router from "../../router";
 import { useToast } from "primevue/usetoast";
 import IconField from "primevue/iconfield";
 import InputIcon from "primevue/inputicon";
+import { resolveMessages } from "../services/messageResolver";
 
 const isLoading = ref(false);
 const toast = useToast();
@@ -58,15 +59,32 @@ const handleLogin = async()=>{
         });
 
         if (response.token) {
-            toast.add({ severity: 'success', summary: 'نجاح', detail: 'تم تسجيل الدخول بنجاح', life: 3000 });
+            toast.add({
+                severity: 'success', 
+                summary: 'نجاح', 
+                detail: 'تم تسجيل الدخول بنجاح', 
+                life: 3000 
+            });
             router.push('/home');
         }
     } catch (err) {
         if (err && typeof err === 'object' && 'response' in err) {
             const axiosError = err as any;
-            toast.add({severity: 'error', summary: 'رسالة خطاء', detail: axiosError.response?.data?.message, life: 3000})
+            const messageKey = axiosError.response?.data?.message;
+            const message = resolveMessages(messageKey);
+
+            toast.add({
+                severity: 'error', 
+                summary: 'رسالة خطاء', 
+                detail: message, 
+                life: 3000})
         } else {
-            toast.add({severity: 'error', summary: 'خطاء', detail: 'حدث خطاء ما راجع الconsole الخاص بالمتصفح', life: 3000})
+            toast.add({
+                severity: 'error', 
+                summary: 'خطاء', 
+                detail: 'حدث خطاء ما راجع الconsole الخاص بالمتصفح', 
+                life: 3000
+            })
             console.log(err);
         } 
     } finally {

@@ -73,7 +73,7 @@ const internalVisible = computed({
             </div>
           </Tab>
           
-          <Tab value="2" class="custom-tab">
+          <!-- <Tab value="2" class="custom-tab">
             <div class="tab-content">
               <div class="tab-icon needs-icon">
                 <i class="fas fa-clipboard-list"></i>
@@ -83,7 +83,7 @@ const internalVisible = computed({
                 <span class="tab-description">تقييم الاحتياج</span>
               </div>
             </div>
-          </Tab>
+          </Tab> -->
           
           <Tab value="3" class="custom-tab">
             <div class="tab-content">
@@ -119,13 +119,13 @@ const internalVisible = computed({
           </TabPanel>
 
           <TabPanel value="2" class="custom-tab-panel">
-            <needsAssessmentTab
+            <!-- <needsAssessmentTab
               :id="purchaseRequest?.id"
               :items="purchaseRequest?.items ?? []"
               :purchaseRequest="purchaseRequest"
               :needs_assessments="purchaseRequest?.needs_assessments ?? []"
               @saved="emit('updated')"
-            />
+            /> -->
           </TabPanel>
 
           <TabPanel value="3" class="custom-tab-panel">

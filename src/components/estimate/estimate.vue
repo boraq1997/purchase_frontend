@@ -11,6 +11,7 @@
                     <Breadcrumb :home="breadcrumbHome" :model="breadcrumbItems" class="" />
                 </div>
                 <Button 
+                    v-if="hasPermission('create-Estimate')"
                     icon="fas fa-plus" 
                     label="إضافة عرض جديد" 
                     class=""
@@ -159,7 +160,7 @@
                     </div>
                 </div>
 
-                <div class="col-12 md:col-4">
+                <div class="col-12 md:col-4" v-if="!hasDepartment">
                     <FloatLabel variant="on">
                         <Select
                             id="filter_department"
@@ -350,6 +351,7 @@
                                 @click="showEstimatDetails(estimate)"
                             />
                             <Button 
+                                v-if="hasPermission('edit-Estimate')"
                                 label="تعديل" 
                                 icon="pi pi-pencil" 
                                 size="small" 
@@ -358,6 +360,7 @@
                                 @click="openAddEditDialog(estimate)"
                             />
                             <Button 
+                                v-if="hasPermission('delete-Estimate')"
                                 icon="pi pi-trash" 
                                 size="small" 
                                 severity="danger" 
@@ -949,6 +952,7 @@ import purchaseRequestsService from '../purchase-requests/purchase-requestsServi
 import InputNumber from 'primevue/inputnumber';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
+import { hasPermission } from '../services/permission';
 
 
 const isLoading = ref(true);
@@ -961,6 +965,8 @@ const showAddVendorForm = ref(false);
 const isSavingVendor = ref(false);
 const allPurchase = ref<any[]>([]);
 
+const departmentId = ref<number>();
+const hasDepartment = ref<boolean>(false);
 
 const allEstimate = ref<any[]>([]);
 const allDepartments = ref<any[]>([]);
@@ -1020,6 +1026,21 @@ const vendorForm = reactive({
     name: '',
 });
 
+const resolvedDepartmentId = computed<number | undefined>(() => {
+    const row = localStorage.getItem('auth_department');
+
+    if (row) {
+        try {
+        const authDepartment = JSON.parse(row);
+        return authDepartment?.id;
+        } catch {
+        return filters.value.department_id || undefined;
+        }
+    }
+
+    return filters.value.department_id || undefined;
+});
+
 const fetchAllEstimates = async () => {
     isLoading.value = true;
     try {
@@ -1027,7 +1048,7 @@ const fetchAllEstimates = async () => {
             page: pagination.value.page,
             per_page: pagination.value.per_page,
             vendor_name: filters.value.vendor_name || undefined,
-            department_id: filters.value.department_id || undefined,
+            department_id: resolvedDepartmentId.value,
             request_title: filters.value.request_title || undefined,
         }
         const response = await estimateService.getAll(params);
@@ -1386,8 +1407,26 @@ const resetForm = () => {
 
 onMounted(() => {
     fetchAllEstimates();
-    fetchAllDepartments();
-})
+
+    try {
+        const row = localStorage.getItem('auth_department');
+
+        if (row) {
+            const authDepartment = JSON.parse(row);
+
+            if (authDepartment?.id) {
+                departmentId.value = authDepartment.id;
+                hasDepartment.value = true;
+                return;
+            }
+        }
+
+        fetchAllDepartments();
+    } catch (error) {
+        console.error('Invalid auth_department in localStorage', error);
+        fetchAllDepartments();
+    }
+});
 </script>
 
 <style scoped>
