@@ -1031,10 +1031,10 @@ const resolvedDepartmentId = computed<number | undefined>(() => {
 
     if (row) {
         try {
-        const authDepartment = JSON.parse(row);
-        return authDepartment?.id;
+            const authDepartment = JSON.parse(row);
+            return authDepartment?.id;
         } catch {
-        return filters.value.department_id || undefined;
+            return filters.value.department_id || undefined;
         }
     }
 

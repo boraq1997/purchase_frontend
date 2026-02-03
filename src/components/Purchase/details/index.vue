@@ -35,6 +35,7 @@ import Accordion from 'primevue/accordion';
 import AccordionPanel from 'primevue/accordionpanel';
 import AccordionHeader from 'primevue/accordionheader';
 import AccordionContent from 'primevue/accordioncontent';
+import Divider from 'primevue/divider';
 
 /**
  * Local components
@@ -58,12 +59,14 @@ import purchaseRequestsService from '../services/purchaseRequests.service';
  */
 import type { PurchaseRequest } from '../interfaces/purchase.interfaces';
 import { RequestItem } from '../interfaces/item.interfaces';
+import { hasAnyPermission, hasPermission } from '../../services/permission';
 
 /**
  * Accordion active panel state
  * Controls which accordion panel is currently open
  */
 const active = ref('0');
+const actionVisiblity = ref<boolean>(false);
 
 /**
  * Component props
@@ -238,6 +241,13 @@ function handleUpdated(updatedRequest) {
         props.request.items = updatedRequest.items;
     }
 }
+
+// Tab configurations for item details
+const tabs = [
+    { value: '0', icon: 'fa-solid fa-warehouse', label: 'المخازن', tooltip: 'معلومات المخازن' },
+    { value: '2', icon: 'fa-solid fa-receipt', label: 'العروض', tooltip: 'عروض الأسعار' },
+    { value: '3', icon: 'fas fa-print', label: 'التقارير', tooltip: 'طباعة التقارير' }
+];
 </script>
 
 <template>
@@ -250,222 +260,341 @@ function handleUpdated(updatedRequest) {
         :closable="true"
         :breakpoints="{ '960px': '95vw', '640px': '100vw' }"
         :style="{ width: '85vw' }"
-        header="تفاصيل طلب الشراء"
         dir="rtl"
+        :pt="{
+            header: { class: 'border-bottom-1 surface-border pb-3' },
+            content: { class: 'pt-3' }
+        }"
     >
+        <template #header>
+            <div class="flex align-items-center gap-2">
+                <i class="pi pi-file-edit text-2xl text-primary"></i>
+                <span class="text-xl font-semibold">تفاصيل طلب الشراء</span>
+            </div>
+        </template>
+
         <!-- في حالة لا يوجد طلب محدد -->
-        <div v-if="!hasRequest" class="p-4 text-center text-500">
-            لا يوجد طلب محدد لعرض تفاصيله.
+        <div v-if="!hasRequest" class="text-center py-6">
+            <i class="pi pi-inbox text-6xl text-400 mb-3 block"></i>
+            <p class="text-600 text-lg">لا يوجد طلب محدد لعرض تفاصيله</p>
         </div>
 
         <!-- في حالة وجود طلب -->
-        <div v-else class="p-2">
+        <div v-else>
 
             <!-- ============================= -->
             <!-- SECTION: Basic Request Info  -->
             <!-- ============================= -->
             <section class="mb-4">
+                <div class="surface-card border-1 surface-border border-round-lg p-4">
 
-                <div class="surface-card shadow-1 border-round-xl p-4 mb-4">
-
-                    <!-- HEADER (Request number + status + priority) -->
-                    <div class="flex justify-content-between align-items-center mb-3">
+                    <!-- HEADER (Request number + status + priority + actions) -->
+                    <div class="flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
 
                         <!-- Request Number -->
                         <div class="flex align-items-center gap-2">
-                            <i class="pi pi-hashtag text-primary text-lg"></i>
-                            <span class="text-xl font-bold text-900">
+                            <div class="bg-primary-100 text-primary-700 border-circle w-2rem h-2rem flex align-items-center justify-content-center">
+                                <i class="pi pi-hashtag text-sm"></i>
+                            </div>
+                            <span class="text-xl font-semibold text-900">
                                 {{ props.request?.request_number }}
                             </span>
                         </div>
 
-                        <!-- Status + Priority -->
-                        <div class="flex align-items-center gap-2">
+                        <!-- Status + Priority + Actions -->
+                        <div class="flex align-items-center gap-2 flex-wrap">
 
                             <!-- STATUS TAG -->
                             <Tag
                                 :value="statusLabel[props.request?.status_type]"
                                 :severity="statusColor[props.request?.status_type]"
-                                icon="pi pi-flag-fill"
                                 rounded
-                                class="px-3 py-2 text-xs"
-                            />
+                            >
+                                <template #default>
+                                    <div class="flex align-items-center gap-2 px-2">
+                                        <i class="pi pi-flag-fill text-xs"></i>
+                                        <span class="font-medium">{{ statusLabel[props.request?.status_type] }}</span>
+                                    </div>
+                                </template>
+                            </Tag>
 
                             <!-- PRIORITY TAG -->
                             <Tag
                                 :value="priorityLabel[props.request?.priority]"
                                 :severity="priorityColor[props.request?.priority]"
                                 rounded
-                                class="px-3 py-2 text-xs"
-                            />
-                            <Button
-                                label="تعديل"
-                                icon="fas fa-pen"
-                                severity="info"
-                                class="ml-2"
-                                @click="openEdit"
-                                rounded
-                                variant="outlined"
-                            />
+                            >
+                                <template #default>
+                                    <div class="flex align-items-center gap-2 px-2">
+                                        <i class="pi pi-exclamation-circle text-xs"></i>
+                                        <span class="font-medium">{{ priorityLabel[props.request?.priority] }}</span>
+                                    </div>
+                                </template>
+                            </Tag>
 
-                            <Button
-                                label="إجراءات"
-                                icon="fas fa-cog"
-                                severity="warn"
-                                class="ml-2"
-                                rounded
-                                variant="outlined"
-                                @click="actionsDialogVisible = true"
-                            />
+                            <!-- ACTIONS -->
+                            <div class="flex gap-2">
+                                <Button
+                                    v-if="hasPermission('edit-Procurement')"
+                                    label="تعديل"
+                                    icon="fas fa-pen"
+                                    severity="info"
+                                    size="small"
+                                    @click="openEdit"
+                                    outlined
+                                    v-tooltip.top="'تعديل الطلب'"
+                                />
+
+                                <Button
+                                    v-if="hasAnyPermission([
+                                        'finalize-procurement',
+                                        'approve-purchase-request',
+                                        'generate-report',
+                                        'create-WarehouseCheck',
+                                        'edit-WarehouseCheck',
+                                        'delete-WarehouseCheck',
+                                        'view-Report',
+                                        'create-Report',
+                                        'edit-Report',
+                                        'delete-Report'
+                                    ])"
+                                    label="إجراءات"
+                                    icon="fas fa-cog"
+                                    severity="warn"
+                                    size="small"
+                                    outlined
+                                    @click="actionsDialogVisible = true"
+                                    v-tooltip.top="'إجراءات الطلب'"
+                                />
+                            </div>
                         </div>
 
                     </div>
 
-                    <!-- TITLE -->
-                    <div class="text-900 font-bold text-lg mb-1">
-                        {{ props.request?.title }}
+                    <Divider class="my-3" />
+
+                    <!-- TITLE & DESCRIPTION -->
+                    <div class="mb-4">
+                        <h3 class="text-900 font-semibold text-xl mb-2 m-0">
+                            {{ props.request?.title }}
+                        </h3>
+                        <p class="text-600 line-height-3 m-0" v-if="props.request?.description">
+                            {{ props.request?.description }}
+                        </p>
+                        <p class="text-400 text-sm m-0" v-else>
+                            لا يوجد وصف
+                        </p>
                     </div>
 
-                    <!-- DESCRIPTION -->
-                    <p class="text-sm text-600 mb-3">
-                        {{ props.request?.description }}
-                    </p>
-
-                    <!-- SOFT DIVIDER -->
-                    <div class="w-full h-1 surface-200 border-round my-3"></div>
-
                     <!-- GRID INFO -->
-                    <div class="grid text-sm text-700 mt-2">
+                    <div class="grid text-sm">
 
                         <!-- Department -->
-                        <div class="col-12 md:col-4 flex align-items-center gap-2">
-                            <i class="pi pi-building text-blue-500"></i>
-                            <span class="font-medium text-700">القسم:</span>
-                            <span class="font-semibold text-900">
-                                {{ props.request?.department?.name ?? '—' }}
-                            </span>
+                        <div class="col-12 md:col-4 mb-3">
+                            <div class="flex align-items-start gap-3 p-3 surface-50 border-round">
+                                <div class="bg-blue-100 text-blue-600 border-circle w-2rem h-2rem flex align-items-center justify-content-center flex-shrink-0">
+                                    <i class="pi pi-building text-sm"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="text-500 text-xs mb-1">القسم</div>
+                                    <div class="text-900 font-medium">
+                                        {{ props.request?.department?.name ?? '—' }}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Creator -->
-                        <div class="col-12 md:col-4 flex align-items-center gap-2">
-                            <i class="pi pi-user text-teal-600"></i>
-                            <span class="font-medium text-700">مقدم الطلب:</span>
-                            <span class="font-semibold text-900">
-                                {{ props.request?.creator?.name ?? '—' }}
-                            </span>
+                        <div class="col-12 md:col-4 mb-3">
+                            <div class="flex align-items-start gap-3 p-3 surface-50 border-round">
+                                <div class="bg-teal-100 text-teal-600 border-circle w-2rem h-2rem flex align-items-center justify-content-center flex-shrink-0">
+                                    <i class="pi pi-user text-sm"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="text-500 text-xs mb-1">مقدم الطلب</div>
+                                    <div class="text-900 font-medium">
+                                        {{ props.request?.creator?.name ?? '—' }}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Date -->
-                        <div class="col-12 md:col-4 flex align-items-center gap-2">
-                            <i class="pi pi-clock text-orange-600"></i>
-                            <span class="font-medium text-700">تاريخ الطلب:</span>
-                            <span class="font-semibold text-900">
-                                {{ new Date(props.request?.created_at).toLocaleString('ar-IQ') ?? '—' }}
-                            </span>
+                        <div class="col-12 md:col-4 mb-3">
+                            <div class="flex align-items-start gap-3 p-3 surface-50 border-round">
+                                <div class="bg-orange-100 text-orange-600 border-circle w-2rem h-2rem flex align-items-center justify-content-center flex-shrink-0">
+                                    <i class="pi pi-calendar text-sm"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="text-500 text-xs mb-1">تاريخ الإنشاء</div>
+                                    <div class="text-900 font-medium">
+                                        {{ new Date(props.request?.created_at).toLocaleDateString('ar-IQ', {
+                                            year: 'numeric',
+                                            month: 'long',
+                                            day: 'numeric'
+                                        }) ?? '—' }}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                     </div>
                 </div>
-
             </section>
 
             <!-- ============================= -->
-            <!-- 2) جدول المواد (Placeholder حالياً) -->
+            <!-- SECTION: Items Table -->
             <!-- ============================= -->
             <section class="mb-4">
-                <ItemsTable :items="props.request?.items ?? []" @select-item="handleSelectItem" />
+                <div class="surface-card border-1 surface-border border-round-lg p-4">
+                    <div class="flex align-items-center gap-2 mb-3">
+                        <i class="pi pi-list text-primary text-xl"></i>
+                        <h3 class="text-lg font-semibold m-0">المواد المطلوبة</h3>
+                        <Tag :value="`${props.request?.items?.length ?? 0} مادة`" severity="secondary" rounded />
+                    </div>
+                    <ItemsTable :items="props.request?.items ?? []" @select-item="handleSelectItem" />
+                </div>
             </section>
 
             <!-- ============================================= -->
-            <!-- 3) تفاصيل المادة المختارة (Placeholder حالياً) -->
+            <!-- SECTION: Selected Item Details -->
             <!-- ============================================= -->
             <section>
-                <h3 class="text-md font-bold mb-2">تفاصيل المادة المختارة</h3>
-
-                <div v-if="!selectedItem" class="surface-0 border-1 border-dashed surface-border border-round p-3 text-center text-500 text-sm">
-                    اختر مادة من الجدول لعرض تفاصيلها
-                </div>
-
-                <div class="card" v-else>
-                    <div class="flex mb-4 gap-2 justify-end mt-4">
-                        <Button 
-                            @click="active = '0'" 
-                            rounded 
-                            icon="fa-solid fa-warehouse" 
-                            class="ml-1 p-button-sm"
-                            :outlined="active !== '0'"
-                        />
-                        <!-- <Button 
-                            @click="active = '1'" 
-                            rounded 
-                            icon="fa-solid fa-hand-holding-hand" 
-                            class="ml-1 p-button-sm" 
-                            :outlined="active !== '1'"
-                        /> -->
-                        <Button 
-                            @click="active = '2'" 
-                            rounded icon="fa-solid fa-receipt" 
-                            class="ml-1 p-button-sm" 
-                            :outlined="active !== '2'"
-                        />
-                        <Button 
-                            @click="active = '3'" 
-                            rounded 
-                            icon="fas fa-print" 
-                            class="ml-1 p-button-sm" 
-                            :outlined="active !== '3'"
-                        />
+                <div class="surface-card border-1 surface-border border-round-lg p-4">
+                    
+                    <div class="flex align-items-center gap-2 mb-3">
+                        <i class="pi pi-info-circle text-primary text-xl"></i>
+                        <h3 class="text-lg font-semibold m-0">تفاصيل المادة المختارة</h3>
                     </div>
 
-                    <Accordion v-model:value="active">
-                        <AccordionPanel value="0">
-                            <AccordionHeader>المخازن</AccordionHeader>
-                            <AccordionContent>
-                                <WarehouseCheckCard :item="selectedItem" class="mb-5"/>
-                            </AccordionContent>
-                        </AccordionPanel>
+                    <!-- No Item Selected State -->
+                    <div v-if="!selectedItem" class="text-center py-6">
+                        <div class="inline-flex align-items-center justify-content-center bg-gray-100 border-circle mb-3" style="width: 4rem; height: 4rem;">
+                            <i class="pi pi-arrow-up text-3xl text-400"></i>
+                        </div>
+                        <p class="text-600 m-0">اختر مادة من الجدول أعلاه لعرض تفاصيلها</p>
+                    </div>
 
-                        <!-- <AccordionPanel value="1">
-                            <AccordionHeader>بيان الحاجة</AccordionHeader>
-                            <AccordionContent>
-                                <NeedsAssessmentCard :item="selectedItem" class="mb-5"/>
-                            </AccordionContent>
-                        </AccordionPanel> -->
+                    <!-- Item Selected - Show Tabs -->
+                    <div v-else>
+                        
+                        <!-- Tab Navigation -->
+                        <div class="flex gap-2 mb-4 border-bottom-1 surface-border pb-2 overflow-x-auto">
+                            <Button
+                                v-for="tab in tabs"
+                                :key="tab.value"
+                                @click="active = tab.value"
+                                :outlined="active !== tab.value"
+                                size="small"
+                                class="flex-shrink-0"
+                                v-tooltip.top="tab.tooltip"
+                            >
+                                <template #default>
+                                    <i :class="tab.icon" class="mr-2"></i>
+                                    <span>{{ tab.label }}</span>
+                                </template>
+                            </Button>
+                        </div>
 
-                        <AccordionPanel value="2">
-                            <AccordionHeader>عروض الاسعار</AccordionHeader>
-                            <AccordionContent>
-                                <EstimatesCard :item="selectedItem" />
-                            </AccordionContent>
-                        </AccordionPanel>
+                        <!-- Accordion Content -->
+                        <Accordion v-model:value="active">
+                            
+                            <!-- Warehouse Check -->
+                            <AccordionPanel value="0">
+                                <AccordionHeader>
+                                    <div class="flex align-items-center gap-2">
+                                        <i class="fa-solid fa-warehouse text-primary"></i>
+                                        <span>معلومات المخازن</span>
+                                    </div>
+                                </AccordionHeader>
+                                <AccordionContent>
+                                    <WarehouseCheckCard :item="selectedItem" />
+                                </AccordionContent>
+                            </AccordionPanel>
 
-                        <AccordionPanel value="4">
-                            <AccordionHeader>H1</AccordionHeader>
-                            <AccordionContent>
-                                5555555
-                            </AccordionContent>
-                        </AccordionPanel>
-                    </Accordion>
+                            <!-- Estimates -->
+                            <AccordionPanel value="2">
+                                <AccordionHeader>
+                                    <div class="flex align-items-center gap-2">
+                                        <i class="fa-solid fa-receipt text-primary"></i>
+                                        <span>عروض الأسعار</span>
+                                    </div>
+                                </AccordionHeader>
+                                <AccordionContent>
+                                    <EstimatesCard :item="selectedItem" />
+                                </AccordionContent>
+                            </AccordionPanel>
 
+                            <!-- Reports -->
+                            <AccordionPanel value="3">
+                                <AccordionHeader>
+                                    <div class="flex align-items-center gap-2">
+                                        <i class="fas fa-print text-primary"></i>
+                                        <span>التقارير</span>
+                                    </div>
+                                </AccordionHeader>
+                                <AccordionContent>
+                                    <div class="text-center py-4 text-500">
+                                        <i class="pi pi-file-pdf text-4xl mb-3 block"></i>
+                                        <p>قريباً: سيتم إضافة خاصية طباعة التقارير</p>
+                                    </div>
+                                </AccordionContent>
+                            </AccordionPanel>
+
+                        </Accordion>
+
+                    </div>
                 </div>
             </section>
 
         </div>
     </Dialog>
 
+    <!-- Edit Purchase Dialog -->
     <PurchaseFormDialog
         v-model:visible="editDialogVisible"
         :request="props.request"
         @updated="handleUpdated"
     />
 
-    
-
-<RequestActionsDialog
-    v-model:visible="actionsDialogVisible"
-    :purchaseRequest="props.request"
-/>
+    <!-- Request Actions Dialog -->
+    <RequestActionsDialog
+        v-model:visible="actionsDialogVisible"
+        :purchaseRequest="props.request"
+    />
 </template>
 
 <style scoped>
+/* Smooth transitions for better UX */
+.p-accordion-content {
+    transition: all 0.3s ease;
+}
+
+/* Improve button group appearance */
+.flex.gap-2 > .p-button {
+    transition: all 0.2s ease;
+}
+
+.flex.gap-2 > .p-button:hover {
+    transform: translateY(-1px);
+}
+
+/* Better scrollbar for tab navigation on mobile */
+.overflow-x-auto::-webkit-scrollbar {
+    height: 6px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-track {
+    background: var(--surface-ground);
+    border-radius: 10px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+    border-radius: 10px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-700);
+}
 </style>

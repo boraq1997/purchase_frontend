@@ -25,6 +25,9 @@
             dataKey="id"
             paginator
             :rows="50"
+            :totalRecords="meta.total"
+            :lazy="true"
+            @page="onPage"
             filterDisplay="menu"
             :globalFilterFields="['actor.name','actor.role','action','action_label','subject.identifier','module','route']"
             responsiveLayout="scroll"
@@ -252,7 +255,7 @@
             <section class="glass-section action-theme">
                 <div class="flex align-items-center gap-2 mb-3">
                     <div class="section-badge bg-purple-600"><i class="fas fa-tasks text-white text-xs"></i></div>
-                    <h4 class="m-0 font-bold">معلومات الإجراء</h4>
+                    <h4 class="m-0 font-bold section-title">معلومات الإجراء</h4>
                 </div>
                 <div class="grid">
                     <div class="col-12 md:col-6 lg:col-4"><div class="data-item"><span class="label text-purple-600">الإجراء</span><p class="value">{{ selectedLog.action_label }}</p></div></div>
@@ -264,7 +267,7 @@
             <section class="glass-section user-theme">
                 <div class="flex align-items-center gap-2 mb-3">
                     <div class="section-badge bg-blue-600"><i class="fas fa-user text-white text-xs"></i></div>
-                    <h4 class="m-0 font-bold">المستخدم</h4>
+                    <h4 class="m-0 font-bold section-title">المستخدم</h4>
                 </div>
                 <div class="grid">
                     <div class="col-12 md:col-6 lg:col-3"><div class="data-item"><span class="label text-blue-600">الاسم</span><p class="value">{{ selectedLog.actor?.name }}</p></div></div>
@@ -277,7 +280,7 @@
             <section class="glass-section subject-theme">
                 <div class="flex align-items-center gap-2 mb-3">
                     <div class="section-badge bg-green-600"><i class="fas fa-bullseye text-white text-xs"></i></div>
-                    <h4 class="m-0 font-bold">الهدف</h4>
+                    <h4 class="m-0 font-bold section-title">الهدف</h4>
                 </div>
                 <div class="grid">
                     <div class="col-12 md:col-4"><div class="data-item"><span class="label text-green-600">النوع</span><p class="value">{{ selectedLog.subject?.type }}</p></div></div>
@@ -289,7 +292,7 @@
             <section class="glass-section request-theme">
                 <div class="flex align-items-center gap-2 mb-3">
                     <div class="section-badge bg-orange-600"><i class="fas fa-globe text-white text-xs"></i></div>
-                    <h4 class="m-0 font-bold ">الطلب</h4>
+                    <h4 class="m-0 font-bold section-title">الطلب</h4>
                 </div>
                 <div class="grid">
                     <div class="col-12 md:col-8"><div class="data-item"><span class="label text-orange-600">Route</span><p class="value font-mono text-xs break-all">{{ selectedLog.route }}</p></div></div>
@@ -300,7 +303,7 @@
             <section v-if="selectedLog.metadata" class="glass-section meta-theme">
                 <div class="flex align-items-center gap-2 mb-3">
                     <div class="section-badge bg-indigo-600"><i class="fas fa-box text-white text-xs"></i></div>
-                    <h4 class="m-0 font-bold">بيانات إضافية</h4>
+                    <h4 class="m-0 font-bold section-title">بيانات إضافية</h4>
                 </div>
                 <div class="json-code-box indigo-box">
                     <pre class="m-0 text-xs">{{ selectedLog.metadata }}</pre>
@@ -310,7 +313,7 @@
             <section v-if="selectedLog.old_values || selectedLog.new_values" class="glass-section changes-theme">
                 <div class="flex align-items-center gap-2 mb-4">
                     <div class="section-badge bg-pink-600"><i class="fas fa-exchange-alt text-white text-xs"></i></div>
-                    <h4 class="m-0 font-bold">التغييرات</h4>
+                    <h4 class="m-0 font-bold section-title">التغييرات</h4>
                 </div>
 
                 <div class="grid">
@@ -367,18 +370,15 @@ import Message from "primevue/message";
 import Tag from 'primevue/tag';
 import Dialog from "primevue/dialog";
 import FloatLabel from 'primevue/floatlabel';
-import Chip from 'primevue/chip';
-import Avatar from 'primevue/avatar';
-import TabView from 'primevue/tabview';
-import TabPanel from 'primevue/tabpanel';
 
 const toast = useToast();
 const isLoading = ref(true);
 
 const allLogs = ref<ActivityLog[]>([]);
-const meta = ref<any>({});
+const meta = ref<any>({ total: 0, current_page: 1, per_page: 50 });
 const selectedLog = ref<ActivityLog | null>(null);
 const showDetailsDialog = ref(false);
+const currentPage = ref(1);
 
 const globalFilters = reactive({
     global: { value: null, matchMode: FilterMatchMode.CONTAINS },
@@ -392,7 +392,7 @@ const breadcrumbItems = ref([
 ]);
 
 const getStatusStyles = (status) => ({
-    bg: status === 'success' ? 'bg-green-200' : status === 'failed' ? 'bg-red-100' : 'bg-yellow-100',
+    bg: status === 'success' ? 'bg-green-100' : status === 'failed' ? 'bg-red-100' : 'bg-yellow-100',
     text: status === 'success' ? 'text-green-600' : status === 'failed' ? 'text-red-600' : 'text-yellow-600'
 });
 
@@ -547,6 +547,11 @@ const openDetailsDialog = (log: ActivityLog) => {
     showDetailsDialog.value = true;
 };
 
+const onPage = (event: any) => {
+    currentPage.value = event.page + 1; // PrimeVue uses 0-based index
+    fetchAllLogs();
+};
+
 const fetchAllLogs = async () => {
     isLoading.value = true;
     const filters: ActivityLogFilters = {
@@ -556,8 +561,8 @@ const fetchAllLogs = async () => {
         severity: '',
         from_date: '',
         to_date: '',
-        per_page: 20,
-        page: 1,
+        per_page: 50,
+        page: currentPage.value,
         q: '',
     };
     
@@ -775,21 +780,20 @@ pre {
 
 /* حاوية الـ JSON */
 .json-wrapper {
-    background-color: #525252; /* خلفية رمادية فاتحة جداً مريحة للعين */
+    background-color: #f8fafc;
     padding: 1rem;
     flex-grow: 1;
 }
 
 .json-container {
     margin: 0;
-    font-family: 'Fira Code', 'Courier New', monospace; /* خطوط برمجية واضحة */
+    font-family: 'Fira Code', 'Courier New', monospace;
     font-size: 13px;
     line-height: 1.6;
     max-height: 350px;
     overflow-y: auto;
-    direction: ltr; /* مهم جداً لعرض الـ JSON بشكل صحيح */
-    color: #FFF;
-    white-space: pre-wrap; /* لضمان عدم خروج النص عن الحاوية */
+    direction: ltr;
+    white-space: pre-wrap;
     word-break: break-all;
 }
 
@@ -953,63 +957,86 @@ pre {
 /* Close Button */
 .close-modal-btn {
     width: 2.5rem; height: 2.5rem; border-radius: 0.8rem; border: none;
-    background: #f3f4f6; color: #6b7280; cursor: pointer; transition: 0.3s;
+    background: rgba(255, 255, 255, 0.2); 
+    color: white; 
+    cursor: pointer; 
+    transition: 0.3s;
+    backdrop-filter: blur(10px);
 }
-.close-modal-btn:hover { background: #fee2e2; color: #ef4444; transform: rotate(90deg); }
+.close-modal-btn:hover { 
+    background: rgba(255, 255, 255, 0.3); 
+    transform: rotate(90deg); 
+}
 
-/* Section Logic */
-.glass-section {
-    padding: 1.5rem; border-radius: 1.25rem; border: 1px solid;
+/* Light Mode - Dialog Sections */
+html:not(.dark-mode) .glass-section {
+    padding: 1.5rem; 
+    border-radius: 1.25rem; 
+    border: 1px solid;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
-.action-theme { 
-    background: linear-gradient(276deg, #a05be514, #0034633b); 
-    border-color: rgba(147 51 234); 
+
+html:not(.dark-mode) .action-theme { 
+    background: linear-gradient(135deg, #faf5ff 0%, #ede9fe 100%); 
+    border-color: #d8b4fe;
 }
 
-.user-theme { 
-    background: linear-gradient(276deg, #a05be514, #0034633b); 
-    border-color: rgba(147 51 234);
+html:not(.dark-mode) .user-theme { 
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); 
+    border-color: #93c5fd;
 }
 
-.subject-theme { 
-    background: linear-gradient(276deg, #a05be514, #0034633b); 
-        border-color: rgba(147 51 234);
+html:not(.dark-mode) .subject-theme { 
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); 
+    border-color: #86efac;
 }
 
-.request-theme { 
-    background: linear-gradient(276deg, #ff8d0014, #d570003b);
-    border-color: rgb(234 147 51 / 62%);
+html:not(.dark-mode) .request-theme { 
+    background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+    border-color: #fdba74;
 }
 
-.meta-theme { 
-    background: linear-gradient(276deg, #a05be514, #0034633b); 
-    border-color: rgba(147 51 234);
+html:not(.dark-mode) .meta-theme { 
+    background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%); 
+    border-color: #a5b4fc;
 }
 
-.changes-theme { 
-    background: linear-gradient(276deg, #a05be514, #0034633b); 
-    border-color: rgba(147 51 234);
+html:not(.dark-mode) .changes-theme { 
+    background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%); 
+    border-color: #f9a8d4;
 }
 
-/* Inner Data Items */
-.data-item {
-    background: rgb(7 10 26 / 80%);
+/* Light Mode - Section Titles */
+html:not(.dark-mode) .section-title {
+    color: #1f2937;
+}
+
+/* Light Mode - Data Items */
+html:not(.dark-mode) .data-item {
+    background: rgba(255, 255, 255, 0.9);
     backdrop-filter: blur(4px);
     padding: 0.85rem;
     border-radius: 0.75rem;
-    border: 1px solid rgb(99 99 99 / 50%);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-.data-item .label { display: block; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; margin-bottom: 0.25rem; }
-.data-item .value { 
+html:not(.dark-mode) .data-item .label { 
+    display: block; 
+    font-size: 0.65rem; 
+    font-weight: 800; 
+    text-transform: uppercase; 
+    margin-bottom: 0.25rem; 
+}
+
+html:not(.dark-mode) .data-item .value { 
     font-weight: 700; 
-    color: #FFFFFF;
+    color: #111827;
     font-size: 0.95rem; 
 }
 
-/* JSON Code Boxes */
-.json-code-box { 
+/* Light Mode - JSON Code Boxes */
+html:not(.dark-mode) .json-code-box { 
     padding: 1rem; 
     border-radius: 0.8rem; 
     border: 1px solid; 
@@ -1017,19 +1044,109 @@ pre {
     line-height: 1.5; 
 }
 
-.indigo-box { 
+html:not(.dark-mode) .indigo-box { 
+    background: #eef2ff;
+    border-color: #c7d2fe;
+    color: #3730a3;
+}
+
+html:not(.dark-mode) .red-box { 
+    background: #fef2f2;
+    border-color: #fecaca;
+    color: #991b1b; 
+}
+
+html:not(.dark-mode) .green-box { 
+    background: #f0fdf4;
+    border-color: #bbf7d0;
+    color: #166534;
+}
+
+/* Dark Mode - Keep existing styles */
+html.dark-mode .glass-section {
+    padding: 1.5rem; 
+    border-radius: 1.25rem; 
+    border: 1px solid;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+html.dark-mode .action-theme { 
+    background: linear-gradient(276deg, #a05be514, #0034633b); 
+    border-color: rgba(147 51 234); 
+}
+
+html.dark-mode .user-theme { 
+    background: linear-gradient(276deg, #a05be514, #0034633b); 
+    border-color: rgba(147 51 234);
+}
+
+html.dark-mode .subject-theme { 
+    background: linear-gradient(276deg, #a05be514, #0034633b); 
+    border-color: rgba(147 51 234);
+}
+
+html.dark-mode .request-theme { 
+    background: linear-gradient(276deg, #ff8d0014, #d570003b);
+    border-color: rgb(234 147 51 / 62%);
+}
+
+html.dark-mode .meta-theme { 
+    background: linear-gradient(276deg, #a05be514, #0034633b); 
+    border-color: rgba(147 51 234);
+}
+
+html.dark-mode .changes-theme { 
+    background: linear-gradient(276deg, #a05be514, #0034633b); 
+    border-color: rgba(147 51 234);
+}
+
+html.dark-mode .section-title {
+    color: #f9fafb;
+}
+
+html.dark-mode .data-item {
+    background: rgb(7 10 26 / 80%);
+    backdrop-filter: blur(4px);
+    padding: 0.85rem;
+    border-radius: 0.75rem;
+    border: 1px solid rgb(99 99 99 / 50%);
+}
+
+html.dark-mode .data-item .label { 
+    display: block; 
+    font-size: 0.65rem; 
+    font-weight: 800; 
+    text-transform: uppercase; 
+    margin-bottom: 0.25rem; 
+}
+
+html.dark-mode .data-item .value { 
+    font-weight: 700; 
+    color: #FFFFFF;
+    font-size: 0.95rem; 
+}
+
+html.dark-mode .json-code-box { 
+    padding: 1rem; 
+    border-radius: 0.8rem; 
+    border: 1px solid; 
+    overflow-x: auto; 
+    line-height: 1.5; 
+}
+
+html.dark-mode .indigo-box { 
     background: rgb(43 45 32 / 24%);
     border-color: #c7d2fe;
     color: #00ff6e;
 }
 
-.red-box { 
+html.dark-mode .red-box { 
     background: rgb(98 0 0 / 9%);
     border-color: #ab000075;
     color: #ffffff; 
 }
 
-.green-box { 
+html.dark-mode .green-box { 
     background: rgb(0 87 49 / 21%);
     border-color: #006323a1;
     color: #ffffff;
@@ -1046,4 +1163,4 @@ pre {
 /* Icon Badges */
 .section-badge { width: 1.75rem; height: 1.75rem; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center; }
 .stat-icon-box { width: 3rem; height: 3rem; border-radius: 0.8rem; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
-</style>q
+</style>

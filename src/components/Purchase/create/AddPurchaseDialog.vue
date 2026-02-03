@@ -1,4 +1,4 @@
-<!-- FILE: purchase/create/AddPurchaseDialog.vue -->
+FILE: purchase/create/AddPurchaseDialog.vue
 <script setup lang="ts">
 import Dialog from 'primevue/dialog';
 import Card from 'primevue/card';

@@ -17,11 +17,13 @@ import { useConfirm } from "primevue/useconfirm";
 import purchaseRequestsService from '../services/purchaseRequests.service';
 import DepartmentService from '../../departments/DepartmentService';
 import { useToast } from 'primevue/usetoast';
+import { hasPermission } from '../../services/permission';
 
 const toast = useToast();
 const confirm = useConfirm();
 const departmentId = ref<number>();
 const hasDeapartment = ref<boolean>(false);
+
 /* =========================
    PROPS & EMITS
 ========================= */
@@ -79,21 +81,223 @@ const form = reactive({
 });
 
 /* =========================
+   VALIDATION ERRORS
+========================= */
+const formErrors = reactive({
+    title: '',
+    description: '',
+    department_id: '',
+    items: ''
+});
+
+const itemErrors = reactive({
+    item_name: '',
+    quantity: '',
+    unit: '',
+    specifications: ''
+});
+
+// دالة لإعادة تعيين أخطاء النموذج الرئيسي
+function resetFormErrors() {
+    formErrors.title = '';
+    formErrors.description = '';
+    formErrors.department_id = '';
+    formErrors.items = '';
+}
+
+// دالة لإعادة تعيين أخطاء المادة
+function resetItemErrors() {
+    itemErrors.item_name = '';
+    itemErrors.quantity = '';
+    itemErrors.unit = '';
+    itemErrors.specifications = '';
+}
+
+// دالة للتحقق من صحة النموذج الرئيسي
+function validateForm(): boolean {
+    resetFormErrors();
+    let isValid = true;
+
+    // التحقق من العنوان
+    if (!form.title || form.title.trim() === '') {
+        formErrors.title = 'عنوان الطلب مطلوب';
+        isValid = false;
+        toast.add({
+            severity: 'error',
+            summary: 'خطأ في التحقق',
+            detail: 'يرجى إدخال عنوان الطلب',
+            life: 3000
+        });
+    } else if (form.title.length < 3) {
+        formErrors.title = 'العنوان يجب أن يكون 3 أحرف على الأقل';
+        isValid = false;
+        toast.add({
+            severity: 'error',
+            summary: 'خطأ في التحقق',
+            detail: 'عنوان الطلب قصير جداً (3 أحرف على الأقل)',
+            life: 3000
+        });
+    } else if (form.title.length > 200) {
+        formErrors.title = 'العنوان طويل جداً (200 حرف كحد أقصى)';
+        isValid = false;
+        toast.add({
+            severity: 'error',
+            summary: 'خطأ في التحقق',
+            detail: 'عنوان الطلب طويل جداً',
+            life: 3000
+        });
+    }
+
+    // التحقق من القسم
+    const finalDepartmentId = departmentId.value ?? form.department_id;
+    if (!finalDepartmentId) {
+        formErrors.department_id = 'القسم مطلوب';
+        isValid = false;
+        toast.add({
+            severity: 'error',
+            summary: 'خطأ في التحقق',
+            detail: 'يرجى اختيار القسم',
+            life: 3000
+        });
+    }
+
+    // التحقق من المواد
+    if (!form.items || form.items.length === 0) {
+        formErrors.items = 'يجب إضافة مادة واحدة على الأقل';
+        isValid = false;
+        toast.add({
+            severity: 'error',
+            summary: 'خطأ في التحقق',
+            detail: 'يجب إضافة مادة واحدة على الأقل للطلب',
+            life: 3000
+        });
+    }
+
+    return isValid;
+}
+
+// دالة للتحقق من صحة بيانات المادة
+function validateItem(): boolean {
+    resetItemErrors();
+    let isValid = true;
+
+    // التحقق من اسم المادة
+    if (!itemForm.item_name || itemForm.item_name.trim() === '') {
+        itemErrors.item_name = 'اسم المادة مطلوب';
+        isValid = false;
+        toast.add({
+            severity: 'error',
+            summary: 'خطأ في التحقق',
+            detail: 'يرجى إدخال اسم المادة',
+            life: 3000
+        });
+    } else if (itemForm.item_name.length < 2) {
+        itemErrors.item_name = 'اسم المادة قصير جداً';
+        isValid = false;
+        toast.add({
+            severity: 'error',
+            summary: 'خطأ في التحقق',
+            detail: 'اسم المادة يجب أن يكون حرفين على الأقل',
+            life: 3000
+        });
+    }
+
+    // التحقق من الكمية
+    if (!itemForm.quantity || itemForm.quantity <= 0) {
+        itemErrors.quantity = 'الكمية مطلوبة ويجب أن تكون أكبر من صفر';
+        isValid = false;
+        toast.add({
+            severity: 'error',
+            summary: 'خطأ في التحقق',
+            detail: 'يرجى إدخال كمية صحيحة (أكبر من صفر)',
+            life: 3000
+        });
+    } else if (itemForm.quantity > 1000000) {
+        itemErrors.quantity = 'الكمية كبيرة جداً';
+        isValid = false;
+        toast.add({
+            severity: 'error',
+            summary: 'خطأ في التحقق',
+            detail: 'الكمية المدخلة كبيرة جداً',
+            life: 3000
+        });
+    }
+
+    // التحقق من الوحدة
+    if (!itemForm.unit || itemForm.unit.trim() === '') {
+        itemErrors.unit = 'الوحدة مطلوبة';
+        isValid = false;
+        toast.add({
+            severity: 'error',
+            summary: 'خطأ في التحقق',
+            detail: 'يرجى اختيار وحدة القياس',
+            life: 3000
+        });
+    }
+
+    // التحقق من السعر التقديري (اختياري لكن إذا تم إدخاله يجب أن يكون صحيحاً)
+    if (itemForm.estimated_unit_price !== null && itemForm.estimated_unit_price !== undefined) {
+        if (itemForm.estimated_unit_price < 0) {
+            toast.add({
+                severity: 'error',
+                summary: 'خطأ في التحقق',
+                detail: 'السعر لا يمكن أن يكون سالباً',
+                life: 3000
+            });
+            isValid = false;
+        } else if (itemForm.estimated_unit_price > 100000000) {
+            toast.add({
+                severity: 'error',
+                summary: 'خطأ في التحقق',
+                detail: 'السعر كبير جداً',
+                life: 3000
+            });
+            isValid = false;
+        }
+    }
+
+    // التحقق من طول المواصفات
+    if (itemForm.specifications && itemForm.specifications.length > 500) {
+        itemErrors.specifications = 'المواصفات طويلة جداً (500 حرف كحد أقصى)';
+        isValid = false;
+        toast.add({
+            severity: 'error',
+            summary: 'خطأ في التحقق',
+            detail: 'المواصفات طويلة جداً',
+            life: 3000
+        });
+    }
+
+    return isValid;
+}
+
+/* =========================
    LOAD DEPARTMENTS
 ========================= */
 const loadDepartments = async()=>{
     try {
         const res = await DepartmentService.getAll();
         departments.value = res.data ?? res;
-    } catch {
+        
+        if (!departments.value || departments.value.length === 0) {
+            toast.add({
+                severity: 'warn',
+                summary: 'تنبيه',
+                detail: 'لا توجد أقسام متاحة',
+                life: 3000
+            });
+        }
+    } catch (error: any) {
+        console.error('Error loading departments:', error);
         toast.add({
             severity: 'error',
-            summary: 'خطأ',
-            detail: 'تعذر جلب الأقسام',
-            life: 2000
+            summary: 'خطأ في تحميل البيانات',
+            detail: error?.response?.data?.message || 'تعذر جلب الأقسام، يرجى المحاولة مرة أخرى',
+            life: 4000
         });
     }
 }
+
 onMounted(async () => {
     try {
         const row = localStorage.getItem('auth_department');
@@ -107,36 +311,70 @@ onMounted(async () => {
         } 
         loadDepartments();
     } catch (err) {
-        console.error('Invalid auth_department in localStorage', error);
+        console.error('Invalid auth_department in localStorage', err);
+        toast.add({
+            severity: 'error',
+            summary: 'خطأ',
+            detail: 'حدث خطأ في قراءة بيانات القسم',
+            life: 3000
+        });
         loadDepartments();
     }
-    
 });
 
 /* =========================
    WATCH OPEN DIALOG
 ========================= */
+const resolvedDepartmentId = computed<number | undefined>(() => {
+    const row = localStorage.getItem('auth_department');
+
+    if (row) {
+        try {
+            const authDepartment = JSON.parse(row);
+            return authDepartment?.id;
+        } catch (err) {
+            console.error('Error parsing auth_department:', err);
+        }
+    }
+})
+
 watch(
     () => props.visible,
     v => {
-        if (!v) return;
+        if (!v) {
+            resetFormErrors();
+            return;
+        }
 
         if (isEditMode.value && props.request) {
-            form.title = props.request.title;
-            form.description = props.request.description;
-            form.department_id = props.request.department.id;
-            form.priority = props.request.priority;
+            try {
+                form.title = props.request.title || '';
+                form.description = props.request.description || '';
+                form.department_id = props.request.department?.id || null;
+                form.priority = props.request.priority || 'medium';
 
-            form.items = props.request.items.map((it: any) => ({
-                id: it.id,
-                item_name: it.item_name,
-                specifications: it.specifications ?? it.specs ?? '',
-                quantity: it.quantity,
-                unit: it.unit,
-                estimated_unit_price: it.estimated_unit_price,
-            }));
+                form.items = props.request.items?.map((it: any) => ({
+                    id: it.id,
+                    item_name: it.item_name || '',
+                    specifications: it.specifications ?? it.specs ?? '',
+                    quantity: it.quantity || 0,
+                    unit: it.unit || '',
+                    estimated_unit_price: it.estimated_unit_price || null,
+                })) || [];
+
+                resetFormErrors();
+            } catch (error) {
+                console.error('Error loading request data:', error);
+                toast.add({
+                    severity: 'error',
+                    summary: 'خطأ',
+                    detail: 'حدث خطأ في تحميل بيانات الطلب',
+                    life: 3000
+                });
+            }
         } else {
             resetForm();
+            resetFormErrors();
         }
     }
 );
@@ -150,6 +388,7 @@ function resetForm() {
     form.department_id = null;
     form.priority = 'medium';
     form.items = [];
+    resetFormErrors();
 }
 
 /* =========================
@@ -158,6 +397,7 @@ function resetForm() {
 const itemDialogVisible = ref(false);
 const isEditingItem = ref(false);
 const currentItemIndex = ref<number | null>(null);
+const itemNameInputRef = ref();
 
 const itemForm = reactive({
     item_name: '',
@@ -173,50 +413,107 @@ function resetItemForm() {
     itemForm.quantity = null;
     itemForm.unit = '';
     itemForm.estimated_unit_price = null;
+    resetItemErrors();
 }
 
 function openAddItem() {
+    if (form.items.length >= 100) {
+        toast.add({
+            severity: 'warn',
+            summary: 'تحذير',
+            detail: 'لا يمكن إضافة أكثر من 100 مادة في الطلب الواحد',
+            life: 3000
+        });
+        return;
+    }
+
     isEditingItem.value = false;
     currentItemIndex.value = null;
     resetItemForm();
     itemDialogVisible.value = true;
+    
+    // التركيز على حقل اسم المادة
+    nextTick(() => {
+        itemNameInputRef.value?.$el?.focus();
+    });
 }
 
 function editItem(index: number) {
+    if (index < 0 || index >= form.items.length) {
+        toast.add({
+            severity: 'error',
+            summary: 'خطأ',
+            detail: 'المادة المحددة غير موجودة',
+            life: 3000
+        });
+        return;
+    }
+
     const item = form.items[index];
     isEditingItem.value = true;
     currentItemIndex.value = index;
 
     Object.assign(itemForm, item);
+    resetItemErrors();
     itemDialogVisible.value = true;
 }
 
 function saveItem() {
-    if (!itemForm.item_name || !itemForm.quantity) return;
+    // التحقق من صحة البيانات
+    if (!validateItem()) {
+        return;
+    }
 
     const payload = { ...itemForm };
 
-    if (isEditingItem.value && currentItemIndex.value !== null) {
-        form.items[currentItemIndex.value] = payload;
-    } else {
-        form.items.push(payload);
-    }
+    try {
+        if (isEditingItem.value && currentItemIndex.value !== null) {
+            form.items[currentItemIndex.value] = payload;
+            toast.add({
+                severity: "success",
+                summary: "تم التحديث",
+                detail: "تم تحديث المادة بنجاح",
+                life: 3000
+            });
+        } else {
+            form.items.push(payload);
+            toast.add({
+                severity: "success",
+                summary: "تمت الإضافة",
+                detail: "تم إضافة المادة بنجاح",
+                life: 3000
+            });
+        }
 
-    toast.add({
-        severity: "success",
-        summary: "رسالة نجاح",
-        detail: "تم اضافة مادة جديده بنجاح",
-        life: 3000
-    })
-    resetItemForm();
-    isEditingItem.value = false;
-    currentItemIndex.value = null;
+        itemDialogVisible.value = false;
+        resetItemForm();
+        isEditingItem.value = false;
+        currentItemIndex.value = null;
+    } catch (error) {
+        console.error('Error saving item:', error);
+        toast.add({
+            severity: 'error',
+            summary: 'خطأ',
+            detail: 'حدث خطأ أثناء حفظ المادة',
+            life: 3000
+        });
+    }
 }
 
 function deleteItem(index: number) {
+    if (index < 0 || index >= form.items.length) {
+        toast.add({
+            severity: 'error',
+            summary: 'خطأ',
+            detail: 'المادة المحددة غير موجودة',
+            life: 3000
+        });
+        return;
+    }
+
     confirm.require({
-        header: "تاكيد حذف المادة",
-        message: "هل انت متاكد من حذف المادة من الطلب؟",
+        header: "تأكيد حذف المادة",
+        message: "هل أنت متأكد من حذف المادة من الطلب؟",
         icon: "pi pi-exclamation-triangle text-yellow-500",
         acceptLabel: "تأكيد",
         acceptIcon: "pi pi-check",
@@ -225,39 +522,52 @@ function deleteItem(index: number) {
         rejectIcon: "pi pi-times",
         rejectClass:"p-button-sm border border-gray-400 text-gray-600 bg-transparent hover:bg-gray-200",
         accept: ()=>{
-            form.items.splice(index, 1);
+            try {
+                form.items.splice(index, 1);
+                toast.add({
+                    severity: 'success',
+                    summary: 'تم الحذف',
+                    detail: 'تم حذف المادة بنجاح',
+                    life: 2500
+                });
+            } catch (error) {
+                console.error('Error deleting item:', error);
+                toast.add({
+                    severity: 'error',
+                    summary: 'خطأ',
+                    detail: 'حدث خطأ أثناء حذف المادة',
+                    life: 3000
+                });
+            }
         }
-    })
+    });
 }
 
 /* =========================
    SUBMIT
 ========================= */
 async function submit() {
-    if (!form.title || !form.department_id || !form.items.length) {
-        toast.add({
-            severity: 'warn',
-            summary: 'تنبيه',
-            detail: 'يرجى تعبئة جميع الحقول المطلوبة',
-            life: 2000
-        });
+    // التحقق من صحة النموذج
+    if (!validateForm()) {
         return;
     }
+
+    const finalDepartmentId = departmentId.value ?? form.department_id;
 
     try {
         loading.value = true;
 
         const payload = {
-            title: form.title,
-            description: form.description,
-            department_id: form.department_id,
+            title: form.title.trim(),
+            description: form.description.trim(),
+            department_id: finalDepartmentId,
             priority: form.priority,
             items: form.items.map(it => ({
                 id: isEditMode.value ? it.id : undefined,
-                item_name: it.item_name,
+                item_name: it.item_name.trim(),
                 quantity: it.quantity,
                 unit: it.unit,
-                specs: it.specifications,
+                specs: it.specifications?.trim() || '',
                 estimated_unit_price: it.estimated_unit_price,
             }))
         };
@@ -277,19 +587,67 @@ async function submit() {
 
         emit(isEditMode.value ? 'updated' : 'submitted', res.data);
         emit('update:visible', false);
+        resetForm();
 
     } catch (err: any) {
+        console.error('Submit error:', err);
+        
+        let errorMessage = 'حدث خطأ غير متوقع';
+        
+        if (err?.response?.status === 401) {
+            errorMessage = 'انتهت صلاحية الجلسة، يرجى تسجيل الدخول مرة أخرى';
+        } else if (err?.response?.status === 403) {
+            errorMessage = 'ليس لديك صلاحية لتنفيذ هذا الإجراء';
+        } else if (err?.response?.status === 404) {
+            errorMessage = 'الطلب غير موجود';
+        } else if (err?.response?.status === 422) {
+            errorMessage = err?.response?.data?.message || 'البيانات المدخلة غير صحيحة';
+        } else if (err?.response?.status === 500) {
+            errorMessage = 'خطأ في الخادم، يرجى المحاولة لاحقاً';
+        } else if (err?.message === 'Network Error') {
+            errorMessage = 'خطأ في الاتصال بالشبكة، يرجى التحقق من اتصال الإنترنت';
+        } else if (err?.response?.data?.message) {
+            errorMessage = err.response.data.message;
+        }
+
         toast.add({
             severity: 'error',
             summary: 'خطأ',
-            detail: err?.response?.data?.message ?? 'حدث خطأ غير متوقع',
-            life: 3000
+            detail: errorMessage,
+            life: 4000
         });
     } finally {
         loading.value = false;
     }
 }
+
+// إغلاق نافذة المادة مع تأكيد إذا كانت هناك بيانات
+function closeItemDialog() {
+    const hasData = itemForm.item_name || itemForm.quantity || itemForm.unit || itemForm.specifications;
+    
+    if (hasData && !isEditingItem.value) {
+        confirm.require({
+            header: "تأكيد الإغلاق",
+            message: "هل أنت متأكد من إغلاق النافذة؟ سيتم فقدان البيانات المدخلة.",
+            icon: "pi pi-exclamation-triangle text-yellow-500",
+            acceptLabel: "نعم، أغلق",
+            acceptIcon: "pi pi-check",
+            acceptClass: "p-button-sm border border-red-500 bg-red-500 text-white",
+            rejectLabel: "إلغاء",
+            rejectIcon: "pi pi-times",
+            rejectClass: "p-button-sm border border-gray-400 text-gray-600 bg-transparent hover:bg-gray-200",
+            accept: () => {
+                itemDialogVisible.value = false;
+                resetItemForm();
+            }
+        });
+    } else {
+        itemDialogVisible.value = false;
+        resetItemForm();
+    }
+}
 </script>
+
 <template>
     <Dialog
         v-model:visible="internalVisible"
@@ -300,22 +658,40 @@ async function submit() {
         dir="rtl"
     >
         <Card>
-
             <template #content>
-
                 <FloatLabel variant="on" class="mt-3">
-                    <InputText v-model="form.title" fluid id="title_field"/>
-                    <label for="title_field" class="font-semibold block mb-2"><i class="fa-solid fa-heading"/>عنوان الطلب</label>
+                    <InputText 
+                        v-model="form.title" 
+                        fluid 
+                        id="title_field"
+                        :class="{ 'p-invalid': formErrors.title }"
+                        maxlength="200"
+                    />
+                    <label for="title_field" class="font-semibold block mb-2">
+                        <i class="fa-solid fa-heading"/>
+                        عنوان الطلب
+                        <span class="text-red-500">*</span>
+                    </label>
                 </FloatLabel>
+                <small v-if="formErrors.title" class="p-error block mt-1">{{ formErrors.title }}</small>
 
                 <FloatLabel variant="on" class="mt-4">
-                    <Textarea v-model="form.description" id="description_field" rows="3" fluid />
-                    <label for="description_field" class="font-semibold block mb-2"><i class="fa-solid fa-text-width"/>الوصف</label>
+                    <Textarea 
+                        v-model="form.description" 
+                        id="description_field" 
+                        rows="3" 
+                        fluid
+                        maxlength="1000"
+                    />
+                    <label for="description_field" class="font-semibold block mb-2">
+                        <i class="fa-solid fa-text-width"/>
+                        الوصف
+                    </label>
                 </FloatLabel>
 
                 <!-- القسم + الأولوية -->
                 <div class="grid mt-4">
-                    <div class="col-12 md:col-6">
+                    <div class="col-12 md:col-6" v-if="!hasDeapartment">
                         <FloatLabel variant="on">
                             <Select
                                 v-model="form.department_id"
@@ -324,9 +700,15 @@ async function submit() {
                                 optionValue="id"
                                 fluid
                                 id="department_field"
+                                :class="{ 'p-invalid': formErrors.department_id }"
                             />
-                            <label for="department_field" class="font-semibold block mb-2"><i class="fa-solid fa-layer-group"/>القسم</label>
+                            <label for="department_field" class="font-semibold block mb-2">
+                                <i class="fa-solid fa-layer-group"/>
+                                القسم
+                                <span class="text-red-500">*</span>
+                            </label>
                         </FloatLabel>
+                        <small v-if="formErrors.department_id" class="p-error block mt-1">{{ formErrors.department_id }}</small>
                     </div>
 
                     <div class="col-12 md:col-6">
@@ -339,7 +721,10 @@ async function submit() {
                                 fluid
                                 id="priority_field"
                             />
-                            <label for="priority_field" class="font-semibold block mb-2"><i class="fa-solid fa-circle-exclamation"/>الأولوية</label>
+                            <label for="priority_field" class="font-semibold block mb-2">
+                                <i class="fa-solid fa-circle-exclamation"/>
+                                الأولوية
+                            </label>
                         </FloatLabel>
                     </div>
                 </div>
@@ -347,18 +732,33 @@ async function submit() {
                 <Divider />
 
                 <!-- المواد -->
-                <h3 class="text-xl font-bold mb-3">المواد المطلوبة</h3>
+                <div class="flex justify-content-between align-items-center mb-3">
+                    <h3 class="text-xl font-bold m-0">
+                        المواد المطلوبة
+                        <span class="text-red-500">*</span>
+                    </h3>
+                    <span class="text-sm text-gray-500">
+                        ({{ form.items.length }} مادة)
+                    </span>
+                </div>
 
                 <Button
                     icon="fas fa-plus"
-                    v-tooltip="{ value: 'اضغط لاضافة مادة جديده', showDelay: 200, hideDelay: 300 }"
+                    label="إضافة مادة"
+                    v-tooltip="{ value: 'اضغط لإضافة مادة جديدة', showDelay: 200, hideDelay: 300 }"
                     outlined
                     severity="warn"
                     class="mb-3"
                     @click="openAddItem"
                 />
+                <small v-if="formErrors.items" class="p-error block mt-1 mb-2">{{ formErrors.items }}</small>
 
-                <DataTable v-if="form.items.length" :value="form.items">
+                <DataTable 
+                    v-if="form.items.length" 
+                    :value="form.items"
+                    class="mt-3"
+                    stripedRows
+                >
                     <Column field="item_name">
                         <template #header>
                             <i class="fas fa-box text-gray-500"/>
@@ -378,36 +778,67 @@ async function submit() {
                             <i class="fas fa-object-group text-gray-500"/>
                             الوحدة  
                         </template>
+                        <template #body="slotProps">
+                            {{ unitsList.find(u => u.value === slotProps.data.unit)?.label || slotProps.data.unit }}
+                        </template>
                     </Column>
 
                     <Column field="specifications">
                         <template #header>
-                            <i class="fas fa-star-half-stroke text-gray-500"/>
-                            الاهمية
+                            <i class="fas fa-tags text-gray-500"/>
+                            المواصفات
+                        </template>
+                        <template #body="slotProps">
+                            <span v-if="slotProps.data.specifications" class="text-sm">
+                                {{ slotProps.data.specifications.substring(0, 50) }}
+                                {{ slotProps.data.specifications.length > 50 ? '...' : '' }}
+                            </span>
+                            <span v-else class="text-gray-400 text-sm">-</span>
                         </template>
                     </Column>
+
                     <Column>
                         <template #header>
                             <i class="fas fa-cogs"/>
-                            الادارة
+                            الإدارة
                         </template>
                         <template #body="slotProps">
-                            <Button icon="pi pi-pencil" text @click="editItem(slotProps.index)" />
-                            <Button icon="pi pi-trash" text severity="danger" @click="deleteItem(slotProps.index)" />
+                            <Button 
+                                icon="pi pi-pencil" 
+                                text 
+                                severity="info"
+                                v-tooltip.top="'تعديل'"
+                                @click="editItem(slotProps.index)" 
+                            />
+                            <Button 
+                                icon="pi pi-trash" 
+                                text 
+                                severity="danger"
+                                v-tooltip.top="'حذف'"
+                                @click="deleteItem(slotProps.index)" 
+                            />
                         </template>
                     </Column>
                 </DataTable>
 
+                <Card v-else class="card text-center p-4 border-round">
+                    <template #content>
+                        <i class="fas fa-inbox text-4xl mb-3 text-gray-400 dark:text-gray-300"></i>
+                        <p class="font-medium">لا توجد مواد مضافة بعد</p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">اضغط على زر "إضافة مادة" لبدء إضافة المواد</p>
+                    </template>
+                </Card>
             </template>
 
             <template #footer>
                 <div class="flex justify-content-end gap-2">
-                     <Button
+                    <Button
                         label="إغلاق"
                         icon="fas fa-times"
                         outlined
                         severity="secondary"
                         @click="internalVisible = false"
+                        :disabled="loading"
                     />
                     <Button
                         :label="loading
@@ -419,7 +850,6 @@ async function submit() {
                     />
                 </div>
             </template>
-
         </Card>
     </Dialog>
 
@@ -430,34 +860,126 @@ async function submit() {
         :style="{ width: '35vw' }"
         :header="isEditingItem ? 'تعديل مادة' : 'إضافة مادة'"
         dir="rtl"
+        :closable="true"
     >
         <div class="p-fluid">
             <FloatLabel variant="on" class="mt-3">
-                <InputText v-model="itemForm.item_name" id="itemName_field" class="w-full" ref="itemNameInputRef" />
-                <label for="itemName_field" class="font-semibold mb-2 block"><i class="fas fa-box"/>اسم المادة</label>
+                <InputText 
+                    v-model="itemForm.item_name" 
+                    id="itemName_field" 
+                    class="w-full" 
+                    ref="itemNameInputRef"
+                    :class="{ 'p-invalid': itemErrors.item_name }"
+                    maxlength="200"
+                />
+                <label for="itemName_field" class="font-semibold mb-2 block">
+                    <i class="fas fa-box"/>
+                    اسم المادة
+                    <span class="text-red-500">*</span>
+                </label>
+            </FloatLabel>
+            <small v-if="itemErrors.item_name" class="p-error block mt-1">{{ itemErrors.item_name }}</small>
+
+            <FloatLabel variant="on" class="mt-5">
+                <InputNumber  
+                    v-model="itemForm.quantity" 
+                    id="quantity_field" 
+                    inputClass="w-full" 
+                    class="w-full "
+                    :invalid="itemErrors.quantity != '' "
+                    :min="0"
+                    :max="1000000"
+                />
+                <label for="quantity_field" class="font-semibold mb-2 block">
+                    <i class="fas fa-hashtag"/>
+                    الكمية
+                    <span class="text-red-500">*</span>
+                </label>
+            </FloatLabel>
+            <small v-if="itemErrors.quantity" class="p-error block mt-1">{{ itemErrors.quantity }}</small>
+
+            <FloatLabel variant="on" class="mt-5">
+                <Select 
+                    v-model="itemForm.unit" 
+                    id="unit_field" 
+                    :options="unitsList" 
+                    optionLabel="label" 
+                    optionValue="value" 
+                    filter 
+                    fluid
+                    :invalid="itemErrors.unit != ''"
+                />
+                <label for="unit_field" class="font-semibold mb-2 block">
+                    <i class="fas fa-object-group"/>
+                    اختر الوحدة
+                    <span class="text-red-500">*</span>
+                </label>
+            </FloatLabel>
+            <small v-if="itemErrors.unit" class="p-error block mt-1">{{ itemErrors.unit }}</small>
+
+            <FloatLabel variant="on" class="mt-5">
+                <InputNumber  
+                    v-model="itemForm.estimated_unit_price" 
+                    id="price_field" 
+                    inputClass="w-full" 
+                    class="w-full"
+                    :min="0"
+                    :max="100000000"
+                    mode="currency"
+                    currency="IQD"
+                    locale="ar-IQ"
+                />
+                <label for="price_field" class="font-semibold mb-2 block">
+                    <i class="fas fa-dollar-sign"/>
+                    السعر التقديري للوحدة (اختياري)
+                </label>
             </FloatLabel>
 
             <FloatLabel variant="on" class="mt-5">
-                <InputNumber  v-model="itemForm.quantity" id="quantity_field" inputClass="w-full" class="w-full"/>
-                <label for="quantity_field" class="font-semibold mb-2 block"><i class="fas fa-hashtag"/>الكمية</label>
+                <Textarea 
+                    v-model="itemForm.specifications" 
+                    id="specifications_field" 
+                    class="w-full" 
+                    rows="3" 
+                    auto-resize 
+                    :maxlength="500"
+                    :class="{ 'p-invalid': itemErrors.specifications }"
+                />
+                <label for="specifications_field" class="font-semibold mb-2 block">
+                    <i class="fa-solid fa-tags"/>
+                    المواصفات
+                </label>
             </FloatLabel>
+            <small v-if="itemErrors.specifications" class="p-error block mt-1">{{ itemErrors.specifications }}</small>
+            <small v-else-if="itemForm.specifications" class="text-gray-500 block mt-1">
+                {{ itemForm.specifications.length }} / 500 حرف
+            </small>
 
-            <FloatLabel variant="on" class="mt-5">
-                <Select v-model="itemForm.unit" id="unit_field" :options="unitsList" optionLabel="label" optionValue="value" filter fluid/>
-                <label for="unit_field" class="font-semibold mb-2 block"><i class="fas fa-object-group"/>اختر الوحدة</label>
-            </FloatLabel>
-
-            <FloatLabel variant="on" class="mt-5">
-                <Textarea v-model="itemForm.specifications" id="specifications_field" class="w-full" rows="3" auto-resize :maxlength="500" counter />
-                <label for="specifications_field" class="font-semibold mb-2 block"><i class="fa-solid fa-tags"/>المواصفات</label>
-            </FloatLabel>
             <div class="mt-4 flex justify-content-end gap-2">
-                <Button label="اغلاق" icon="fas fa-times" outlined severity="secondary" @click="itemDialogVisible = false" />
-                <Button label="حفظ" icon="fas fa-check" @click="saveItem" />
+                <Button 
+                    label="إلغاء" 
+                    icon="fas fa-times" 
+                    outlined 
+                    severity="secondary" 
+                    @click="closeItemDialog" 
+                />
+                <Button 
+                    :label="isEditingItem ? 'تحديث' : 'إضافة'" 
+                    icon="fas fa-check" 
+                    @click="saveItem" 
+                />
             </div>
         </div>
     </Dialog>
 </template>
-<style scoped>
 
+<style scoped>
+.p-invalid {
+    border-color: #ef4444 !important;
+}
+
+.p-error {
+    color: #ef4444;
+    font-size: 0.875rem;
+}
 </style>
