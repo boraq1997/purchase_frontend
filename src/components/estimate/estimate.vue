@@ -22,7 +22,7 @@
 
         <!-- Loading Overlay -->
         <div v-if="isLoading" class="fixed top-0 left-0 w-screen h-screen flex align-items-center justify-content-center z-5" 
-             style="background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(8px);">
+            style="background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(8px);">
             <div class="text-center">
                 <div class="mb-4">
                     <i class="pi pi-spin pi-spinner text-6xl" style="color: #667eea;"></i>
@@ -87,7 +87,7 @@
                     <div class="flex justify-content-between align-items-start mb-3">
                         <div class="flex-1">
                             <span class="block text-600 font-medium mb-2 text-sm">الطلبات المقبولة</span>
-                            <div class="text-900 font-bold text-3xl mb-1">{{ statusCounts.approved }}</div>
+                            <div class="text-900 font-bold text-3xl mb-1">{{ statusCounts.accepted }}</div>
                             <span class="text-sm text-500">تمت الموافقة عليها</span>
                         </div>
                         <div class="icon-container icon-approved border-round-lg flex align-items-center justify-content-center">
@@ -97,9 +97,9 @@
                     <div class="progress-bar progress-approved border-round relative overflow-hidden" style="height: 18px;">
                         <div
                             class="progress-fill-approved h-full transition-all transition-duration-500 flex align-items-center justify-content-center text-white text-xs font-medium"
-                            :style="{ width: statusPercentages.approved + '%' }"
+                            :style="{ width: statusPercentages.accepted + '%' }"
                         >
-                            {{ statusPercentages.approved }}%
+                            {{ statusPercentages.accepted }}%
                         </div>
                     </div>
                 </div>
@@ -259,7 +259,7 @@
                                     />
                                 </div>
                                 <h3 class="text-2xl font-bold text-white m-0 mb-2 line-height-3">
-                                    {{ estimate.vendor.name }}
+                                    {{ estimate.vendor?.name || 'غير متوفر' }}
                                 </h3>
                                 <div class="flex align-items-center gap-2 text-sm text-white-alpha-90">
                                     <i class="pi pi-calendar"></i>
@@ -273,16 +273,16 @@
                     <div class="p-4">
                         <!-- Purchase Request Badge -->
                         <div class="request-badge p-3 border-round-xl mb-4 border-1 border-primary-100"
-                             style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);">
+                            style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);">
                             <div class="flex align-items-center gap-2 mb-2">
                                 <i class="pi pi-shopping-cart text-primary"></i>
                                 <span class="text-xs text-500 font-semibold">طلب الشراء</span>
                             </div>
                             <div class="text-base font-bold text-900 mb-1">
-                                {{ estimate.purchase_request.title }}
+                                {{ estimate.purchase_request?.[0]?.title || 'غير محدد' }}
                             </div>
                             <div class="text-sm text-600 font-medium">
-                                {{ estimate.purchase_request.request_number }}
+                                {{ estimate.purchase_request?.[0]?.request_number || 'غير متوفر' }}
                             </div>
                         </div>
 
@@ -292,27 +292,27 @@
                                 <div class="icon-wrapper border-circle flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
                                     <i class="pi pi-phone text-blue-600"></i>
                                 </div>
-                                <span class="text-sm text-900 font-medium">{{ estimate.vendor.phone1 || 'غير متوفر' }}</span>
+                                <span class="text-sm text-900 font-medium">{{ estimate.vendor?.phone1 || 'غير متوفر' }}</span>
                             </div>
                             
                             <div class="detail-row flex align-items-center gap-3 p-2 border-round-lg mb-2 transition-colors transition-duration-200">
                                 <div class="icon-wrapper border-circle flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
                                     <i class="pi pi-envelope text-purple-600"></i>
                                 </div>
-                                <span class="text-sm text-900 font-medium">{{ estimate.vendor.email || 'غير متوفر' }}</span>
+                                <span class="text-sm text-900 font-medium">{{ estimate.vendor?.email || 'غير متوفر' }}</span>
                             </div>
                             
                             <div class="detail-row flex align-items-start gap-3 p-2 border-round-lg transition-colors transition-duration-200">
                                 <div class="icon-wrapper border-circle flex align-items-center justify-content-center" style="width: 36px; height: 36px; min-width: 36px;">
                                     <i class="pi pi-map-marker text-pink-600"></i>
                                 </div>
-                                <span class="text-sm text-900 font-medium line-height-3">{{ estimate.vendor.address || 'غير متوفر' }}</span>
+                                <span class="text-sm text-900 font-medium line-height-3">{{ estimate.vendor?.address || 'غير متوفر' }}</span>
                             </div>
                         </div>
 
                         <!-- Financial Info with Animation -->
                         <div class="price-section p-3 border-round-xl mb-3" 
-                             style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+                            style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
                             <div class="flex justify-content-between align-items-center">
                                 <div>
                                     <div class="text-sm text-white-alpha-90 mb-1 font-medium">المبلغ الإجمالي</div>
@@ -322,7 +322,7 @@
                                     </div>
                                 </div>
                                 <div class="border-circle bg-white-alpha-30 flex align-items-center justify-content-center" 
-                                     style="width: 50px; height: 50px; backdrop-filter: blur(10px);">
+                                    style="width: 50px; height: 50px; backdrop-filter: blur(10px);">
                                     <i class="pi pi-dollar text-white text-xl"></i>
                                 </div>
                             </div>
@@ -330,7 +330,7 @@
 
                         <!-- Notes Section -->
                         <div v-if="estimate.notes" class="notes-section p-3 border-round-xl border-1 border-orange-200"
-                             style="background: linear-gradient(135deg, rgba(255, 183, 77, 0.1) 0%, rgba(255, 138, 101, 0.1) 100%);">
+                            style="background: linear-gradient(135deg, rgba(255, 183, 77, 0.1) 0%, rgba(255, 138, 101, 0.1) 100%);">
                             <div class="flex align-items-center gap-2 mb-2">
                                 <i class="pi pi-info-circle text-orange-500"></i>
                                 <span class="text-xs font-semibold text-600">ملاحظات</span>
@@ -539,7 +539,7 @@
                     <label for="purchase_id"><i class="fa-solid fa-cart-shopping"/> اختر طلب الشراء</label>
                 </FloatLabel>
 
-                <div v-if="estimateForm.items.length" class="mt-2">
+                <div v-if="estimateForm.items?.length" class="mt-2">
                     <h3><i class="fa-solid fa-boxes-stacked text-primary-500 ml-2"/>مواد الطلب</h3>
                     <DataTable :value="estimateForm.items">
                         <!-- اسم المادة -->
@@ -658,29 +658,29 @@
                     <div class="flex-1">
                         <div class="flex align-items-center gap-3 mb-2">
                             <Chip 
-                            :label="`#${estimateData.id}`" 
+                            :label="`#${estimateData?.id}`" 
                             class="text-lg font-bold bg-white-alpha-20 text-white px-4 py-2"
                             style="backdrop-filter: blur(10px);"
                             />
                             <Tag 
-                            :value="getStatusLabel(estimateData.status)" 
-                            :severity="getStatusSeverity(estimateData.status)"
+                            :value="getStatusLabel(estimateData?.status ?? '')" 
+                            :severity="getStatusSeverity(estimateData?.status ?? '')"
                             class="text-base font-bold px-4 py-2"
                             style="font-size: 1rem;"
                             />
                         </div>
                         <h2 class="text-3xl font-bold text-white m-0 mb-2">
-                            {{ estimateData.vendor?.name }}
+                            {{ estimateData?.vendor?.name }}
                         </h2>
                         <div class="flex align-items-center gap-2 text-white-alpha-90">
                             <i class="pi pi-calendar"></i>
-                            <span class="text-lg">{{ formatDate(estimateData.estimate_date) }}</span>
+                            <span class="text-lg">{{ formatDate(estimateData?.estimate_date) }}</span>
                         </div>
                     </div>
                         <div class="price-display p-4 border-round-xl text-center" style="background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(10px); min-width: 250px;">
                         <div class="text-sm text-white-alpha-90 mb-2 font-semibold">المبلغ الإجمالي</div>
                         <div class="text-5xl font-bold text-white mb-1">
-                            {{ formatCurrency(estimateData.total_amount) }}
+                            {{ formatCurrency(estimateData?.total_amount) }}
                         </div>
                         <div class="text-lg text-white-alpha-90 font-medium">دينار عراقي</div>
                     </div>
@@ -709,7 +709,7 @@
                             <i class="pi pi-hashtag ml-1"></i>
                             رقم الطلب
                         </span>
-                        <span class="text-900 font-bold text-lg">{{ estimateData.purchase_request?.request_number }}</span>
+                        <span class="text-900 font-bold text-lg">{{ estimateData?.purchase_request?.[0]?.request_number }}</span>
                         </div>
                     </div>
                     
@@ -721,8 +721,8 @@
                             الأولوية
                         </span>
                         <Tag 
-                            :value="getPriorityLabel(estimateData.purchase_request?.priority)" 
-                            :severity="getPrioritySeverity(estimateData.purchase_request?.priority)"
+                            :value="getPriorityLabel(estimateData?.purchase_request?.[0]?.priority ?? 'low')" 
+                            :severity="getPrioritySeverity(estimateData?.purchase_request?.[0]?.priority ?? 'low')"
                             class="text-base px-3 py-2"
                         />
                         </div>
@@ -735,7 +735,7 @@
                             <i class="pi pi-file-edit ml-1"></i>
                             عنوان الطلب
                         </span>
-                        <span class="text-900 font-bold text-lg">{{ estimateData.purchase_request?.title }}</span>
+                        <span class="text-900 font-bold text-lg">{{ estimateData?.purchase_request?.[0]?.title }}</span>
                         </div>
                     </div>
                     </div>
@@ -752,7 +752,7 @@
                     </div>
 
                     <DataTable 
-                    :value="estimateData.estimate_items" 
+                    :value="estimateData?.estimate_items" 
                     responsiveLayout="scroll"
                     stripedRows
                     class="custom-datatable"
@@ -818,7 +818,7 @@
                         <span class="text-2xl font-bold text-white">المجموع الكلي:</span>
                         <div class="text-right">
                         <div class="text-4xl font-bold text-white">
-                            {{ formatCurrency(estimateData.total_amount) }}
+                            {{ formatCurrency(estimateData?.total_amount) }}
                         </div>
                         <div class="text-lg text-white-alpha-90">دينار عراقي</div>
                         </div>
@@ -845,7 +845,7 @@
                             <i class="fas fa-user-tie text-primary-500"></i>
                         <div class="flex-1">
                             <span class="text-600 text-xs block mb-1">اسم المورد</span>
-                            <span class="text-900 font-bold block">{{ estimateData.vendor?.name }}</span>
+                            <span class="text-900 font-bold block">{{ estimateData?.vendor?.name }}</span>
                         </div>
                         </div>
                     </div>
@@ -855,7 +855,7 @@
                             <i class="fas fa-phone-flip text-primary-500"></i>
                         <div class="flex-1">
                             <span class="text-600 text-xs block mb-1">رقم الهاتف 1</span>
-                            <span class="text-900 font-semibold block">{{ estimateData.vendor?.phone1 || 'غير متوفر' }}</span>
+                            <span class="text-900 font-semibold block">{{ estimateData?.vendor?.phone1 || 'غير متوفر' }}</span>
                         </div>
                         </div>
                     </div>
@@ -865,7 +865,7 @@
                             <i class="fas fa-phone-flip text-primary-500"></i>
                         <div class="flex-1">
                             <span class="text-600 text-xs block mb-1">رقم الهاتف 2</span>
-                            <span class="text-900 font-semibold block">{{ estimateData.vendor?.phone2 || 'غير متوفر' }}</span>
+                            <span class="text-900 font-semibold block">{{ estimateData?.vendor?.phone2 || 'غير متوفر' }}</span>
                         </div>
                         </div>
                     </div>
@@ -875,7 +875,7 @@
                             <i class="fas fa-envelope text-primary-500"></i>
                         <div class="flex-1">
                             <span class="text-600 text-xs block mb-1">البريد الإلكتروني</span>
-                            <span class="text-900 font-semibold block text-sm">{{ estimateData.vendor?.email || 'غير متوفر' }}</span>
+                            <span class="text-900 font-semibold block text-sm">{{ estimateData?.vendor?.email || 'غير متوفر' }}</span>
                         </div>
                         </div>
                     </div>
@@ -885,7 +885,7 @@
                             <i class="fas fa-map-location-dot text-primary-500"></i>
                         <div class="flex-1">
                             <span class="text-600 text-xs block mb-1">العنوان</span>
-                            <span class="text-900 font-semibold block line-height-3">{{ estimateData.vendor?.address || 'غير متوفر' }}</span>
+                            <span class="text-900 font-semibold block line-height-3">{{ estimateData?.vendor?.address || 'غير متوفر' }}</span>
                         </div>
                         </div>
                     </div>
@@ -893,7 +893,7 @@
                 </div>
 
                 <!-- Notes Card -->
-                <div v-if="estimateData.notes" class="info-card surface-card border-round-xl p-4 shadow-2">
+                <div v-if="estimateData?.notes" class="info-card surface-card border-round-xl p-4 shadow-2">
                     <div class="flex align-items-center gap-3 mb-3">
                         <i class="fas fa-sticky-note text-3xl text-white"></i>
                     <div class="flex-1">
@@ -935,7 +935,7 @@ import { ref, computed, onMounted, watch, reactive } from 'vue';
 import Chip from 'primevue/chip';
 import Tag from 'primevue/tag';
 import Button from 'primevue/button';
-import estimateService, {EstimatePayload, type Estimate} from './estimateService';
+import estimateService, { type EstimatePayload, type Vendor, type Estimate, type EstimateItem} from './estimateService';
 import Breadcrumb from "primevue/breadcrumb";
 import InputText from 'primevue/inputtext';
 import DepartmentService from '../departments/DepartmentService';
@@ -948,7 +948,7 @@ import DatePicker from 'primevue/datepicker';
 import Dialog from "primevue/dialog";
 import VendorsService from '../vendors/VendorsService';
 import Textarea from 'primevue/textarea';
-import purchaseRequestsService from '../purchase-requests/purchase-requestsService';
+import purchaseRequestsService from '../Purchase/services/purchase-requestsService';
 import InputNumber from 'primevue/inputnumber';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
@@ -968,20 +968,21 @@ const allPurchase = ref<any[]>([]);
 const departmentId = ref<number>();
 const hasDepartment = ref<boolean>(false);
 
-const allEstimate = ref<any[]>([]);
+const allEstimate = ref<Estimate[]>([]);
 const allDepartments = ref<any[]>([]);
 const estimateId = ref<number | null>(null);
-const allVendors = ref<any[]>([]);
+const allVendors = ref<Vendor[]>([]);
 const selectedPurchaseId = ref<number | null>(null);
 
 const addEditEstimateDialogVisible = ref(false);
 const estimateAllDetailsDialogVisible = ref(false);
-const estimateData = ref([]);
+const estimateData = ref<Estimate | null>(null);
 
 const totalEstimateAmount = computed(() => {
-    return estimateForm.items.reduce((total, item) => {
+    return (estimateForm.items ?? []).reduce((total, item) => {
         const price = Number(item.unit_price) || 0;
-        return total + (price * item.quantity);
+        const qty = item.quantity || 0;
+        return total + (price * qty);
     }, 0);
 });
 
@@ -994,9 +995,8 @@ const breadcrumbItems = ref([
 const statusOptions = ref([
     { label: 'جميع الحالات', value: null },
     { label: 'قيد الانتظار', value: 'pending' },
-    { label: 'موافق عليه', value: 'approved' },
+    { label: 'موافق عليه', value: 'accepted' },
     { label: 'مرفوض', value: 'rejected' },
-    { label: 'مكتملة', value: 'completed' }
 ]);
 
 const filters = ref({
@@ -1014,16 +1014,26 @@ const pagination = ref({
     total: 0,
 });
 
-const estimateForm = reactive<EstimatePayload>({
-    vendor_id: null,
+const estimateForm = reactive<EstimatePayload & {estimate_date: Date | null}>({
+    vendor_id: undefined,
     estimate_date: null,
     status: "pending",
     notes: null,
     items: [],
 });
 
-const vendorForm = reactive({
+interface VendorForm extends Partial<Vendor> {
+    phone2?: string | null;
+    email?: string | null;
+    address?: string | null;
+}
+
+const vendorForm = reactive<VendorForm>({
     name: '',
+    phone1: '',
+    phone2: undefined,
+    email: undefined,
+    address: undefined,
 });
 
 const resolvedDepartmentId = computed<number | undefined>(() => {
@@ -1086,10 +1096,21 @@ const fetchAllDepartments = async () => {
     }
 }
 
-const fetchAllVendors = async()=>{
+const fetchAllVendors = async () => {
     try {
         const response = await VendorsService.getAll();
-        allVendors.value = response;
+        if ('data' in response) {
+            allVendors.value = response.data.map(v => ({
+                ...v,
+                id: v.id ?? 0,
+            }));
+        } else {
+            allVendors.value = response.map(v => ({
+                ...v,
+                id: v.id ?? 0,
+            }));
+        }
+
     } catch (err: any) {
         console.log(err);
         toast.add({
@@ -1155,19 +1176,19 @@ watch(
     { deep: true }
 );
 
-const openAddEditDialog = async(estimate?: any | null)=> {
+const openAddEditDialog = async(estimate?: Estimate | null)=> {
     resetForm();
 
     if (estimate && estimate.id) {
         isEditMode.value = true;
         estimateId.value = estimate.id;
 
-        estimateForm.vendor_id = estimate.vendor?.id ?? null;
+        estimateForm.vendor_id = estimate.vendor?.id ?? undefined;
         estimateForm.estimate_date = estimate.estimate_date ? new Date(estimate.estimate_date) : null;
         estimateForm.status = estimate.status;
         estimateForm.notes = estimate.notes;
 
-        estimateForm.items = (estimate.estimate_items ?? []).map(item => ({
+        estimateForm.items = (estimate.estimate_items ?? []).map((item: EstimateItem) => ({
             request_item_id: item.request_item_id,
             item_name: item.item_name,
             quantity: item.quantity,
@@ -1188,7 +1209,13 @@ const submitEstimate = async()=>{
     try {
         isSaving.value = true;
         if (isEditMode.value && estimateId.value) {
-            await estimateService.update(estimateId.value, estimateForm);
+            const payload: EstimatePayload = {
+                ...estimateForm,
+                estimate_date: estimateForm.estimate_date 
+                    ? estimateForm.estimate_date.toISOString()
+                    : null
+            }
+            await estimateService.update(estimateId.value, payload);
             toast.add({
                 severity: "success",
                 summary: "رسالة نجاح",
@@ -1196,6 +1223,15 @@ const submitEstimate = async()=>{
                 life: 3000
             })
         } else {
+            if (selectedPurchaseId.value === null) {
+                toast.add({
+                    severity: 'error',
+                    summary: 'خطأ',
+                    detail: 'يرجى اختيار طلب شراء قبل إنشاء عرض السعر',
+                    life: 3000
+                });
+                return;
+            }
             await estimateService.createWithItems(selectedPurchaseId.value, estimateForm);
             toast.add({
                 severity: "success",
@@ -1222,15 +1258,21 @@ const submitEstimate = async()=>{
 const saveVendor = async()=>{
     try {
         isSavingVendor.value = true;
-        const response = await VendorsService.create(vendorForm)
+        const payload = {
+            ...vendorForm,
+            phone2: vendorForm.phone2 ?? undefined,
+            email: vendorForm.email ?? undefined,
+            address: vendorForm.address ?? undefined,
+        };
+        await VendorsService.create(payload)
         fetchAllVendors()
 
         Object.assign(vendorForm, {
             name: '',
             phone1: '',
-            phone2: '',
-            email: '',
-            address: ''
+            phone2: undefined,
+            email: undefined,
+            address: undefined
         });
         
         showAddVendorForm.value = false;
@@ -1272,14 +1314,13 @@ const fetchAllPurchase = async()=>{
 const showEstimatDetails = (estimate: any)=>{
     if (!estimate) {
         toast.add({
-            severity: "warn",
+            severity: "warning",
             summary: "رسالة خطاء",
             detail: "حدث خطاء ما اثناء عرض تفاصيل عرض السعر يرجى المحاولة مره اخرى",
             life: 3000
         });
         return;
     }
-    console.log(estimate)
     estimateData.value = estimate;
     estimateAllDetailsDialogVisible.value = true;
 }
@@ -1309,36 +1350,23 @@ watch(selectedPurchaseId, (purchaseId) => {
 // Status counts and percentages
 const statusCounts = computed(() => ({
     pending: allEstimate.value.filter(e => e.status === 'pending').length,
-    approved: allEstimate.value.filter(e => e.status === 'approved').length,
+    accepted: allEstimate.value.filter(e => e.status === 'accepted').length,
     rejected: allEstimate.value.filter(e => e.status === 'rejected').length,
-    completed: allEstimate.value.filter(e => e.status === 'completed').length,
 }));
 
 const totalEstimates = computed(() => allEstimate.value.length || 1);
 
 const statusPercentages = computed(() => ({
     pending: totalEstimates.value > 0 ? Math.round((statusCounts.value.pending / totalEstimates.value) * 100) : 0,
-    approved: totalEstimates.value > 0 ? Math.round((statusCounts.value.approved / totalEstimates.value) * 100) : 0,
+    accepted: totalEstimates.value > 0 ? Math.round((statusCounts.value.accepted / totalEstimates.value) * 100) : 0,
     rejected: totalEstimates.value > 0 ? Math.round((statusCounts.value.rejected / totalEstimates.value) * 100) : 0,
-    completed: totalEstimates.value > 0 ? Math.round((statusCounts.value.completed / totalEstimates.value) * 100) : 0,
 }));
 
-const getCardGradient = (status: string): string => {
-    const gradientMap: Record<string, string> = {
-        'pending': 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-        'approved': 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-        'rejected': 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
-        'completed': 'linear-gradient(135deg, #30cfd0 0%, #330867 100%)',
-    };
-    return gradientMap[status] || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
-};
-
-const getStatusLabel = (status: string): string => {
+const getStatusLabel = (status: string ): string => {
     const statusMap: Record<string, string> = {
         'pending': 'قيد الانتظار',
-        'approved': 'موافق عليه',
+        'accepted': 'موافق عليه',
         'rejected': 'مرفوض',
-        'completed': 'مكتملة',
     };
     return statusMap[status] || status;
 };
@@ -1346,36 +1374,35 @@ const getStatusLabel = (status: string): string => {
 const getStatusSeverity = (status: string) => {
     const severityMap: Record<string, "success" | "secondary" | "info" | "warning" | "danger"> = {
         'pending': 'warning',
-        'approved': 'success',
+        'accepted': 'success',
         'rejected': 'danger',
-        'completed': 'info'
     };
     return severityMap[status] || 'secondary';
 };
 
 const getPriorityLabel = (priority: string): string => {
-  const labels: Record<string, string> = {
-    low: 'منخفضة',
-    medium: 'متوسطة',
-    high: 'عالية'
-  };
-  return labels[priority] || priority;
+    const labels: Record<string, string> = {
+        low: 'منخفضة',
+        medium: 'متوسطة',
+        high: 'عالية'
+    };
+    return labels[priority] || priority;
 };
 
 const getPrioritySeverity = (priority: string) => {
-  const severities: Record<string, "success" | "secondary" | "info" | "warning" | "danger"> = {
-    low: 'info',
-    medium: 'warn',
-    high: 'danger'
-  };
-  return severities[priority] || 'info';
+    const severities: Record<string, "success" | "secondary" | "info" | "warning" | "danger"> = {
+        low: 'info',
+        medium: 'warning',
+        high: 'danger'
+    };
+    return severities[priority] || 'info';
 };
 
 const handlePrint = () => {
-  window.print();
+    window.print();
 };
 
-const formatDate = (dateString: string): string => {
+const formatDate = (dateString?: string | null): string => {
     if (!dateString) return 'غير محدد';
     const date = new Date(dateString);
     return date.toLocaleDateString('ar-IQ', { year: 'numeric', month: 'long', day: 'numeric' });
@@ -1398,7 +1425,7 @@ const resetFilters = () => {
 };
 
 const resetForm = () => {
-    estimateForm.vendor_id = null;
+    estimateForm.vendor_id = undefined;
     estimateForm.estimate_date = null;
     estimateForm.status = "pending";
     estimateForm.notes = null;

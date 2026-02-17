@@ -11,6 +11,7 @@ import AdminDecisionTab from './components/adminDecisionTab.vue';
 import warehouseTab from './components/warehouseTab.vue';
 import estimateTab from './components/estimateTab.vue';
 import { hasAnyPermission, hasPermission } from '../../services/permission';
+import printReport from './components/printReport.vue';
 
 const props = defineProps<{
   visible: boolean;
@@ -95,6 +96,22 @@ const internalVisible = computed({
               </div>
             </div>
           </Tab>
+
+          <Tab 
+            value="4" 
+            class="custom-tab" 
+            v-if="hasAnyPermission([
+              'create-Estimate',
+              'edit-Estimate'
+            ])">
+            <div class="tab-content">
+              <i class="fas fa-file-invoice-dollar tab-icon"></i>
+              <div class="tab-text">
+                <span class="tab-label">التقرير</span>
+                <span class="tab-description">التقرير النهائي</span>
+              </div>
+            </div>
+          </Tab>
         </TabList>
 
         <TabPanels class="custom-tab-panels">
@@ -140,6 +157,21 @@ const internalVisible = computed({
               :purchaseRequest="purchaseRequest"
               :needs_assessments="purchaseRequest?.needs_assessments ?? []"
               @saved="emit('updated')"
+            />
+          </TabPanel>
+
+          <TabPanel 
+            value="4" 
+            class="custom-tab-panel"
+            v-if="hasAnyPermission([
+              'create-Estimate',
+              'edit-Estimate'
+            ])"
+            >
+            
+            <printReport
+              :id="purchaseRequest?.id"
+              :purchaseRequest="purchaseRequest"
             />
           </TabPanel>
         </TabPanels>

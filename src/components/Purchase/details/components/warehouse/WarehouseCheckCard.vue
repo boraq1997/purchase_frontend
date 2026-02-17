@@ -5,16 +5,13 @@
  */
 import Card from 'primevue/card';
 import Tag from 'primevue/tag';
-import Divider from 'primevue/divider';
-import Message from 'primevue/message';
-import Skeleton from 'primevue/skeleton';
 
 /**
  * Vue Composition API helpers
  * - computed: creates reactive derived values
  * - defineProps: provides strongly typed component props
  */
-import { computed, defineProps } from 'vue';
+import { computed } from 'vue';
 
 /**
  * Type definition for a single request item
@@ -77,23 +74,6 @@ const availabilityConfig: any = {
  * - severity: Visual importance level
  * - icon: Icon that reflects the condition state
  */
-const conditionConfig: any = {
-    new: {
-        label: 'جديدة',
-        severity: 'success',
-        icon: 'pi-sparkles',
-    },
-    used: {
-        label: 'مستعملة',
-        severity: 'info',
-        icon: 'pi-box',
-    },
-    damaged: {
-        label: 'متضررة',
-        severity: 'danger',
-        icon: 'pi-exclamation-circle',
-    }
-};
 
 /**
  * Resolves the recommendation tag configuration based on the given value
@@ -111,7 +91,7 @@ const conditionConfig: any = {
  *
  * @returns Object containing label, severity, and icon
  */
-const recommendationTag = (value) => {
+const recommendationTag = (value: string | undefined) => {
     switch (value) {
         case 'provide_from_stock':
             return {
@@ -165,9 +145,6 @@ const currentAvailability = computed(() =>
  *
  * @returns Condition configuration or null
  */
-const currentCondition = computed(() =>
-    wh.value?.condition ? conditionConfig[wh.value.condition] : null
-);
 </script>
 
 <template>

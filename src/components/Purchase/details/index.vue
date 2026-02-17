@@ -24,6 +24,8 @@
  * - watch: for observing reactive value changes
  */
 import { computed, ref, watch } from 'vue';
+import { useToast } from "primevue/usetoast";
+import { useConfirm } from "primevue/useconfirm";
 
 /**
  * PrimeVue UI components
@@ -41,10 +43,8 @@ import Divider from 'primevue/divider';
  * Local components
  */
 import ItemsTable from './components/ItemsTable.vue';
-import NeedsAssessmentCard from './components/needs/NeedsAssessmentCard.vue';
 import WarehouseCheckCard from './components/warehouse/WarehouseCheckCard.vue';
 import EstimatesCard from './components/estimates/EstimatesCard.vue';
-import EditPurchaseDialog from '../create/EditPurchaseDialog.vue';
 import PurchaseFormDialog from '../create/PurchaseFormDialog.vue';
 import RequestActionsDialog from '../actions/RequestActionsDialog.vue';
 
@@ -52,21 +52,22 @@ import RequestActionsDialog from '../actions/RequestActionsDialog.vue';
  * Services
  * Used to re-fetch the purchase request from the backend after updates
  */
-import purchaseRequestsService from '../services/purchaseRequests.service';
-
 /**
  * Type definitions
  */
 import type { PurchaseRequest } from '../interfaces/purchase.interfaces';
-import { RequestItem } from '../interfaces/item.interfaces';
+import { RequestItem } from '../interfaces/item.interfaces'
 import { hasAnyPermission, hasPermission } from '../../services/permission';
+import purchaseRequestsService from '../services/purchaseRequests.service';
 
 /**
  * Accordion active panel state
  * Controls which accordion panel is currently open
  */
 const active = ref('0');
-const actionVisiblity = ref<boolean>(false);
+const toast = useToast(); // Toast notifications
+const confirm = useConfirm(); // Confirm dialog
+const isConfirming = ref(false); // Flag to prevent multiple confirm dialogs
 
 /**
  * Component props
@@ -156,6 +157,7 @@ function handleSelectItem(item: RequestItem) {
  */
 const emit = defineEmits<{
     (e: 'update:visible', value: boolean): void;
+    (e: 'deleted'): void;
 }>();
 
 /**
@@ -181,6 +183,47 @@ function openEdit() {
     editDialogVisible.value = true;
 }
 
+const confirmDeleteRequest = (request: any)=>{
+    if (isConfirming.value) return;
+    if (!request) return;
+    isConfirming.value = true;
+
+    confirm.require({
+        message: `هل انت متاكد من حذف بيانات طلب الشراء  "${request.title}"`,
+        header: "تأكيد الحذف",
+        icon: "pi pi-exclamation-triangle text-yellow-200",
+        acceptLabel: "تأكيد",
+        acceptIcon: "pi pi-check",
+        acceptClass:"p-button-sm border border-red-500 bg-red-500 text-white",
+        rejectLabel: "إلغاء",
+        rejectIcon: "pi pi-times",
+        rejectClass:"p-button-sm border border-gray-400 text-gray-600 bg-transparent hover:bg-gray-200",
+        accept: async()=>{
+            try {
+                await purchaseRequestsService.delete(request.id)
+                toast.add({
+                    severity: "success",
+                    summary: "رسالة نجاح",
+                    detail: "تم حذف بيانات الطلب بنجاح",
+                    life: 3000
+                })
+                emit('deleted');
+                internalVisible.value = false;
+            } catch (err: any) {
+                toast.add({
+                    severity: "error",
+                    summary: "رسالة خطاء",
+                    detail: "حدث خطاء ما اثناء حذف بيانات الطلب",
+                    life: 3000
+                })
+            } finally {
+                isConfirming.value = false;
+            }
+        },
+        reject: ()=>(isConfirming.value = false)
+    });
+}
+
 /**
  * Indicates whether a valid request is available
  *
@@ -199,19 +242,6 @@ const actionsDialogVisible = ref(false);
  * Used after actions or updates to ensure the dialog
  * reflects the latest data from the server
  */
-async function refreshRequest() {
-    if (!props.request) return;
-
-    // Fetch updated request data
-    const updated = await purchaseRequestsService.getById(props.request.id);
-
-    // Update request fields inside the dialog
-    props.request.title = updated.title;
-    props.request.description = updated.description;
-    props.request.department_id = updated.department_id;
-    props.request.priority = updated.priority;
-    props.request.items = updated.items;
-}
 
 watch(
     () => props.visible,
@@ -228,7 +258,7 @@ watch(
  *
  * @param updatedRequest - The updated request data returned from the edit dialog
  */
-function handleUpdated(updatedRequest) {
+function handleUpdated(updatedRequest: PurchaseRequest) {
     // Close edit dialog
     editDialogVisible.value = false;
 
@@ -299,50 +329,59 @@ const tabs = [
                             <span class="text-xl font-semibold text-900">
                                 {{ props.request?.request_number }}
                             </span>
-                        </div>
-
-                        <!-- Status + Priority + Actions -->
-                        <div class="flex align-items-center gap-2 flex-wrap">
-
-                            <!-- STATUS TAG -->
                             <Tag
-                                :value="statusLabel[props.request?.status_type]"
-                                :severity="statusColor[props.request?.status_type]"
+                                :value="statusLabel[props.request?.status_type || 'pending']"
+                                :severity="statusColor[props.request?.status_type || 'pending']"
                                 rounded
                             >
                                 <template #default>
                                     <div class="flex align-items-center gap-2 px-2">
                                         <i class="pi pi-flag-fill text-xs"></i>
-                                        <span class="font-medium">{{ statusLabel[props.request?.status_type] }}</span>
+                                        <span class="font-medium">{{ statusLabel[props.request?.status_type || 'pending'] }}</span>
                                     </div>
                                 </template>
                             </Tag>
 
                             <!-- PRIORITY TAG -->
                             <Tag
-                                :value="priorityLabel[props.request?.priority]"
-                                :severity="priorityColor[props.request?.priority]"
+                                :value="priorityLabel[props.request?.priority || 'medium']"
+                                :severity="priorityColor[props.request?.priority || 'medium']"
                                 rounded
                             >
                                 <template #default>
                                     <div class="flex align-items-center gap-2 px-2">
                                         <i class="pi pi-exclamation-circle text-xs"></i>
-                                        <span class="font-medium">{{ priorityLabel[props.request?.priority] }}</span>
+                                        <span class="font-medium">{{ priorityLabel[props.request?.priority || 'medium'] }}</span>
                                     </div>
                                 </template>
                             </Tag>
+                        </div>
+
+                        <!-- Status + Priority + Actions -->
+                        <div class="flex align-items-center gap-2 flex-wrap">
+
+                            <!-- STATUS TAG -->
+                            
 
                             <!-- ACTIONS -->
                             <div class="flex gap-2">
                                 <Button
                                     v-if="hasPermission('edit-Procurement')"
-                                    label="تعديل"
                                     icon="fas fa-pen"
                                     severity="info"
                                     size="small"
                                     @click="openEdit"
                                     outlined
                                     v-tooltip.top="'تعديل الطلب'"
+                                />
+
+                                <Button
+                                    severity="danger"
+                                    icon="fas fa-trash-alt"
+                                    size="small"
+                                    outlined
+                                    v-tooltip.top="'حذف الطلب'"
+                                    @click="confirmDeleteRequest(props.request)"
                                 />
 
                                 <Button
@@ -428,11 +467,11 @@ const tabs = [
                                 <div class="flex-1">
                                     <div class="text-500 text-xs mb-1">تاريخ الإنشاء</div>
                                     <div class="text-900 font-medium">
-                                        {{ new Date(props.request?.created_at).toLocaleDateString('ar-IQ', {
-                                            year: 'numeric',
+                                        {{ props.request?.created_at ? new Date(props.request.created_at).toLocaleDateString('ar-IQ', {
+                                            day: '2-digit',
                                             month: 'long',
-                                            day: 'numeric'
-                                        }) ?? '—' }}
+                                            year: 'numeric'
+                                        }) : '-' }}
                                     </div>
                                 </div>
                             </div>

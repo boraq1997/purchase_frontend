@@ -51,16 +51,6 @@ const pagination = reactive({
     total: 0
 });
 
-// قيم الفلترة
-// const filters = reactive({
-//     department_id: null,
-//     status_type: null,
-//     priority: null,
-//     search: '',
-//     date_from: null,
-//     date_to: null,
-// });
-
 const filters = reactive({
     department_id: null as number | null,
     status_type: null as string | null,
@@ -98,7 +88,6 @@ async function loadRequests() {
     loading.value = false;
 }
 
-import AddPurchaseDialog from '../create/AddPurchaseDialog.vue';
 import PurchaseFormDialog from '../create/PurchaseFormDialog.vue';
 import { hasPermission } from '../../services/permission';
 
@@ -175,6 +164,7 @@ onMounted(() => {
         <PurchaseDetailsDialog
             v-model:visible="detailsDialogVisible"
             :request="selectedRequest"
+            @deleted="loadRequests"
         />
     </div>
 

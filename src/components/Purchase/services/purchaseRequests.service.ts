@@ -34,15 +34,24 @@ export default {
     return response.data;
   },
 
-  async create(data: Partial<PurchaseRequest>): Promise<PurchaseRequest> {
-    const response = await api.post(API_BASE_URL, data);
+  async create(data: Partial<PurchaseRequest> | FormData): Promise<PurchaseRequest> {
+    const response = await api.post(API_BASE_URL, data, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
+    });
     return response.data;
-  },
+},
 
-  async update(id: ID, data: Partial<PurchaseRequest>): Promise<PurchaseRequest> {
-    const response = await api.put(`${API_BASE_URL}/${id}`, data);
+  async update(id: ID, data: Partial<PurchaseRequest> | FormData): Promise<PurchaseRequest> {
+    data.append('_method', 'PUT'); 
+    const response = await api.post(`${API_BASE_URL}/${id}`, data, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
+    });
     return response.data;
-  },
+},
 
   async delete(id: ID): Promise<void> {
     await api.delete(`${API_BASE_URL}/${id}`);

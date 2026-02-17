@@ -11,7 +11,7 @@ import Tag from "primevue/tag";
 import Chip from "primevue/chip";
 import Button from "primevue/button";
 
-const props = defineProps<{
+const _props = defineProps<{
     request: PurchaseRequest;
 }>();
 
@@ -146,12 +146,14 @@ const statusMap = {
                         {{ new Date(request.created_at).toLocaleString('ar-IQ') ?? "—" }}
                     </span>
 
-                    <Button 
-                        label="التفاصيل" 
-                        icon="pi pi-arrow-left" 
-                        text
-                        size="small"
-                    />
+                    <div>
+                        <Button 
+                            label="التفاصيل" 
+                            icon="pi pi-arrow-left" 
+                            text
+                            size="small"
+                        />
+                    </div>
                 </div>
 
             </div>
@@ -174,10 +176,10 @@ const statusMap = {
 }
 
 :deep(.p-card-body) {
-  padding: 1.25rem;
+    padding: 1.25rem;
 }
 
 :deep(.p-card-content) {
-  padding: 0;
+    padding: 0;
 }
 </style>

@@ -297,125 +297,135 @@
         <Dialog
             v-model:visible="addEditUsersDialogVisible"
             :header="isEditMode ? 'تعديل بيانات المستخدم' : 'اضافة مستحدم جديد'"
-            :style="{width: '30vw'}"
+            :style="{width: '40vw'}"
             modal
             @hide="resetForm"
             dir="rtl"
         >
             <div class="flex flex-column gap-4 mt-3">
-                <!-- Name Field -->
-                <div>
-                    <FloatLabel variant="on">
-                        <InputText id="name_field" v-model="userForm.name" fluid />
-                        <label for="name_field"><i class="fas fa-user"/> الاسم الرباعي</label>
-                    </FloatLabel>
-                    <small class="text-yellow-200 text-s mt-0">الاسم الرباعي الخاص بالمستخدم يستفاد منه لمعرفة وتمييز صاحب الحساب في جميع صفحات النظام</small>
+                <div class="grid">
+                    <!-- Name Field -->
+                    <div class="col">
+                        <FloatLabel variant="on">
+                            <InputText id="name_field" v-model="userForm.name" fluid />
+                            <label for="name_field"><i class="fas fa-user"/> الاسم الرباعي</label>
+                        </FloatLabel>
+                        <small class="text-sm mt-0 line-height-3">
+                            الاسم الرباعي الخاص بالمستخدم يستفاد منه لمعرفة وتمييز صاحب الحساب في جميع صفحات النظام
+                        </small>
+                    </div>
+
+                    <!-- Username Field -->
+                    <div class="col">
+                        <FloatLabel variant="on">
+                            <InputText 
+                                id="username_feild"
+                                v-model="userForm.username"
+                                @input="feildErrors.username=''"
+                                fluid
+                                :class="{'p-invalid': feildErrors.username}"
+                                ref="usernameField"
+                            />
+                            <label for="username_feild"><i class="fas fa-user-tag"/> اسم المستخدم</label>
+                        </FloatLabel>
+                        <small v-if="feildErrors.username" class="text-red-500 text-s mt-0">{{ feildErrors.username }}</small>
+                        <small v-if="!feildErrors.username" class="line-height-3 text-s mt-0">اسم المستخدم يستفاد منه لتسجيل الدخول الى النضام ويجب ان يكون لكل مستخدم اسم فريد خاص به ولا يجوز التكرار</small>
+                    </div>
+                </div>
+                
+                <div class="grid">
+                    <!-- Password Field -->
+                    <div class="col">
+                        <FloatLabel variant="on">
+                            <Password id="password_feild" v-model="userForm.password" toggleMask fluid/>
+                            <label for="password_feild"><i class="fas fa-user-lock"/> كلمة المرور</label>
+                        </FloatLabel>
+                        <small class="line-height-3 text-s mt-0">كلمة المرور الخاصه بالمستخدم للاستخدام اثناء تسجيل الدخول مع اسم المستخدم</small>
+                    </div>
+
+                    <!-- Password Confirmation Field -->
+                    <div class="col">
+                        <FloatLabel variant="on">
+                            <Password id="password_confirm_feild" v-model="userForm.password_confirmation" toggleMask fluid/>
+                            <label for="password_confirm_feild">تأكيد كلمة المرور</label>
+                        </FloatLabel>
+                        <small class="line-height-3 text-s mt-0">تاكيد كلمة المرور يجب ان تكون مطابقة للقيمه في حقل كلمة المرور اعلاه</small>
+                    </div>
                 </div>
 
-                <!-- Username Field -->
-                <div>
-                    <FloatLabel variant="on">
-                        <InputText 
-                            id="username_feild"
-                            v-model="userForm.username"
-                            @input="feildErrors.username=''"
-                            fluid
-                            :class="{'p-invalid': feildErrors.username}"
-                            ref="usernameField"
-                        />
-                        <label for="username_feild"><i class="fas fa-user-tag"/> اسم المستخدم</label>
-                    </FloatLabel>
-                    <small v-if="feildErrors.username" class="text-red-500 text-s mt-0">{{ feildErrors.username }}</small>
-                    <small v-if="!feildErrors.username" class="text-yellow-200 text-s mt-0">اسم المستخدم يستفاد منه لتسجيل الدخول الى النضام ويجب ان يكون لكل مستخدم اسم فريد خاص به ولا يجوز التكرار</small>
+                <div class="grid">
+                    <!-- Email Field -->
+                    <div class="col">
+                        <FloatLabel variant="on">
+                            <InputText id="email_feild" v-model="userForm.email" fluid />
+                            <label for="email_feild"><i class="fas fa-envelope"/> البريد الالكتروني</label>
+                        </FloatLabel>
+                        <small class="line-height-3 text-s mt-0">البريد الالكتروني الشخصي الخاص بالمستخدم</small>
+                    </div>
+
+                    <!-- Phone Field -->
+                    <div class="col">
+                        <FloatLabel variant="on">
+                            <InputText id="phone_feild" v-model="userForm.phone" fluid />
+                            <label for="phone_feild">رقم الهاتف</label>
+                        </FloatLabel>
+                        <small class="line-height-3 text-s mt-0">رقم الهاتف الشخصي الخاص بالمستخدم</small>
+                    </div>
                 </div>
 
-                <!-- Password Field -->
-                <div>
-                    <FloatLabel variant="on">
-                        <Password id="password_feild" v-model="userForm.password" toggleMask fluid/>
-                        <label for="password_feild"><i class="fas fa-user-lock"/> كلمة المرور</label>
-                    </FloatLabel>
-                    <small class="text-yellow-200 text-s mt-0">كلمة المرور الخاصه بالمستخدم للاستخدام اثناء تسجيل الدخول مع اسم المستخدم</small>
-                </div>
+                <div class="grid">
+                    <!-- Status Field -->
+                    <div class="col">
+                        <FloatLabel variant="on">
+                            <Select
+                                id="status_feild"
+                                v-model="userForm.status"
+                                :options="[
+                                    { label: 'مفعل', value: 'active' },
+                                    { label: 'معطل', value: 'inactive' }
+                                ]"
+                                optionValue="value"
+                                optionLabel="label"
+                                class="w-full md:w-56"
+                            />
+                            <label for="status_feild">حالة المستخدم</label>
+                        </FloatLabel>
+                        <small class="line-height-3 text-s mt-0">حالة المستخدم في حال مفعله او معطلة في حال كانت معطلة لن يتمكن من تسجيل الدخول واستخدام النظام</small>
+                    </div>
 
-                <!-- Password Confirmation Field -->
-                <div>
-                    <FloatLabel variant="on">
-                        <Password id="password_confirm_feild" v-model="userForm.password_confirmation" toggleMask fluid/>
-                        <label for="password_confirm_feild">تأكيد كلمة المرور</label>
-                    </FloatLabel>
-                    <small class="text-yellow-200 text-s mt-0">تاكيد كلمة المرور يجب ان تكون مطابقة للقيمه في حقل كلمة المرور اعلاه</small>
-                </div>
+                    <!-- Role Field -->
+                    <div class="col">
+                        <FloatLabel variant="on">
+                            <Select
+                                id="role_feild"
+                                v-model="userForm.role"
+                                :options="allRoles"
+                                filter
+                                optionLabel="name"
+                                optionValue="id"
+                                class="w-full md:w-56"
+                            />
+                            <label for="role_feild">صلاحيات المستخدم</label>
+                        </FloatLabel>
+                        <small class="line-height-3 text-s mt-0">الصلاحيات والادوار الخاصه بالمستخدم ويمكن للمستخدم استخدام النظام على اساس الصلاحيات التي يتم منحها له</small>
+                    </div>
 
-                <!-- Email Field -->
-                <div>
-                    <FloatLabel variant="on">
-                        <InputText id="email_feild" v-model="userForm.email" fluid />
-                        <label for="email_feild"><i class="fas fa-envelope"/> البريد الالكتروني</label>
-                    </FloatLabel>
-                    <small class="text-yellow-200 text-s mt-0">البريد الالكتروني الشخصي الخاص بالمستخدم</small>
-                </div>
-
-                <!-- Phone Field -->
-                <div>
-                    <FloatLabel variant="on">
-                        <InputText id="phone_feild" v-model="userForm.phone" fluid />
-                        <label for="phone_feild">رقم الهاتف</label>
-                    </FloatLabel>
-                    <small class="text-yellow-200 text-s mt-0">رقم الهاتف الشخصي الخاص بالمستخدم</small>
-                </div>
-
-                <!-- Status Field -->
-                <div>
-                    <FloatLabel variant="on">
-                        <Select
-                            id="status_feild"
-                            v-model="userForm.status"
-                            :options="[
-                                { label: 'مفعل', value: 'active' },
-                                { label: 'معطل', value: 'inactive' }
-                            ]"
-                            optionValue="value"
-                            optionLabel="label"
-                            class="w-full md:w-56"
-                        />
-                        <label for="status_feild">حالة المستخدم</label>
-                    </FloatLabel>
-                    <small class="text-yellow-200 text-s mt-0">حالة المستخدم في حال مفعله او معطلة في حال كانت معطلة لن يتمكن من تسجيل الدخول واستخدام النظام</small>
-                </div>
-
-                <!-- Role Field -->
-                <div>
-                    <FloatLabel variant="on">
-                        <Select
-                            id="role_feild"
-                            v-model="userForm.role"
-                            :options="allRoles"
-                            filter
-                            optionLabel="name"
-                            optionValue="id"
-                            class="w-full md:w-56"
-                        />
-                        <label for="role_feild">صلاحيات المستخدم</label>
-                    </FloatLabel>
-                    <small class="text-yellow-200 text-s mt-0">الصلاحيات والادوار الخاصه بالمستخدم ويمكن للمستخدم استخدام النظام على اساس الصلاحيات التي يتم منحها له</small>
-                </div>
-
-                <!-- Department Field -->
-                <div>
-                    <FloatLabel variant="on">
-                        <Select
-                            id="department_feild"
-                            v-model="userForm.department_id"
-                            :options="departments"
-                            filter
-                            optionLabel="name"
-                            optionValue="id"
-                            class="w-full md:w-56"
-                        />
-                        <label for="department_feild">القسم الخاص بالمستخدم</label>
-                    </FloatLabel>
-                    <small class="text-yellow-200 text-s mt-0">القسم الذي ينتمي اليه المستخدم ويمكنه الاطلاع فقط على الطلبات والامور التي تخص قسمه فقط</small>
+                    <!-- Department Field -->
+                    <div class="col">
+                        <FloatLabel variant="on">
+                            <Select
+                                id="department_feild"
+                                v-model="userForm.department_id"
+                                :options="departments"
+                                filter
+                                optionLabel="name"
+                                optionValue="id"
+                                class="w-full md:w-56"
+                            />
+                            <label for="department_feild">القسم الخاص بالمستخدم</label>
+                        </FloatLabel>
+                        <small class="line-height-3 text-s mt-0">القسم الذي ينتمي اليه المستخدم ويمكنه الاطلاع فقط على الطلبات والامور التي تخص قسمه فقط</small>
+                    </div>
                 </div>
                 
             </div>
@@ -473,7 +483,6 @@ import Select from 'primevue/select';
 import Password from 'primevue/password';
 import FloatLabel from 'primevue/floatlabel';
 import { hasPermission } from "../services/permission";
-
 /**
  * =============================
  *  Reactive State
@@ -633,7 +642,7 @@ const saveHandling = async()=>{
 
     try {
         if (isEditMode.value && userForm.value.id) {
-            await usersService.updateUser(payload.id, payload);
+            await usersService.updateUser(payload.id!, payload);
             toast.add({
                 severity: "success",
                 summary: "نجاح",
@@ -650,7 +659,7 @@ const saveHandling = async()=>{
             });
         }
         addEditUsersDialogVisible.value = false; // Close dialog
-    } catch (err) {
+    } catch (err: any) {
         console.error(err);
         if (err?.response?.data?.message?.includes("username") && err.response.data.message.includes("taken")) {
             toast.add({
@@ -761,4 +770,5 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+
 </style>

@@ -54,6 +54,7 @@ export interface ActivityLogFilters {
   to_date?: string;
   q?: string;
   per_page?: number;
+  page?: Number;
 }
 
 /**

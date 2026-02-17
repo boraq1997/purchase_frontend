@@ -186,16 +186,12 @@
         <Dialog 
             v-model:visible="showDetailsDialog" 
             modal 
-            :draggable="false"
-            :closable="false"
+            maximizable
             class="audit-details-dialog modern-tailwind-theme"
-            :style="{ width: '95vw', maxWidth: '1000px' }"
             dir="rtl"
         >
             <template #header>
-                <div class="header-container w-full relative p-4 overflow-hidden border-round-top-2xl">
-                    <div class="absolute top-0 left-0 right-0 h-full opacity-10 bg-gradient-header"></div>
-                    
+                <div class="header-container w-full relative p-4 overflow-hidden border-round-top-2xl">                    
                     <div class="flex align-items-center justify-content-between relative z-1">
                         <div class="flex align-items-center gap-3">
                             <div class="header-icon shadow-lg">
@@ -206,9 +202,7 @@
                                 <p class="m-0 text-sm text-600 mt-1">معلومات كاملة عن الإجراء المنفذ</p>
                             </div>
                         </div>
-                        <button @click="showDetailsDialog = false" class="close-modal-btn">
-                            <i class="fas fa-times text-xl"></i>
-                        </button>
+                        
                     </div>
                 </div>
             </template>
@@ -254,13 +248,31 @@
         <div class="flex flex-column gap-4">
             <section class="glass-section action-theme">
                 <div class="flex align-items-center gap-2 mb-3">
-                    <div class="section-badge bg-purple-600"><i class="fas fa-tasks text-white text-xs"></i></div>
+                    <div class="section-badge bg-primary text-primary-contrast"><i class="fas fa-tasks text-white text-xs"></i></div>
                     <h4 class="m-0 font-bold section-title">معلومات الإجراء</h4>
                 </div>
                 <div class="grid">
-                    <div class="col-12 md:col-6 lg:col-4"><div class="data-item"><span class="label text-purple-600">الإجراء</span><p class="value">{{ selectedLog.action_label }}</p></div></div>
-                    <div class="col-12 md:col-6 lg:col-4"><div class="data-item"><span class="label text-purple-600">الكود</span><p class="value font-mono">{{ selectedLog.action }}</p></div></div>
-                    <div class="col-12 lg:col-4"><div class="data-item"><span class="label text-purple-600">التاريخ</span><p class="value flex align-items-center gap-2"><i class="far fa-calendar-alt text-purple-400"></i>{{ formatFullDate(selectedLog.created_at) }}</p></div></div>
+                    <div class="col-12 md:col-6 lg:col-4">
+                        <div class="data-item">
+                            <span class="label text-purple-600">الإجراء</span>
+                            <p class="value">{{ selectedLog.action_label }}</p>
+                        </div>
+                    </div>
+                    <div class="col-12 md:col-6 lg:col-4">
+                        <div class="data-item">
+                            <span class="label text-purple-600">الكود</span>
+                            <p class="value font-mono">{{ selectedLog.action }}</p>
+                        </div>
+                    </div>
+                    <div class="col-12 lg:col-4">
+                        <div class="data-item">
+                            <span class="label text-purple-600">التاريخ</span>
+                            <p class="value flex align-items-center gap-2">
+                                <i class="far fa-calendar-alt text-purple-400"></i>
+                                {{ formatFullDate(selectedLog.created_at) }}
+                            </p>
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -270,10 +282,10 @@
                     <h4 class="m-0 font-bold section-title">المستخدم</h4>
                 </div>
                 <div class="grid">
-                    <div class="col-12 md:col-6 lg:col-3"><div class="data-item"><span class="label text-blue-600">الاسم</span><p class="value">{{ selectedLog.actor?.name }}</p></div></div>
-                    <div class="col-12 md:col-6 lg:col-3"><div class="data-item"><span class="label text-blue-600">الدور</span><Tag :value="selectedLog.actor?.role" class="bg-blue-100 text-blue-800 border-none px-3 font-bold" /></div></div>
-                    <div class="col-12 md:col-6 lg:col-3"><div class="data-item"><span class="label text-blue-600">النوع</span><p class="value text-sm">{{ selectedLog.actor?.type }}</p></div></div>
-                    <div class="col-12 md:col-6 lg:col-3"><div class="data-item"><span class="label text-blue-600">ID</span><p class="value font-mono text-xs">{{ selectedLog.actor?.id }}</p></div></div>
+                    <div class="col-12 md:col-6 lg:col-3"><div class="data-item"><span class="label text-blue-600">الاسم</span><p class="value">{{ selectedLog.actor_name }}</p></div></div>
+                    <div class="col-12 md:col-6 lg:col-3"><div class="data-item"><span class="label text-blue-600">الدور</span><Tag :value="selectedLog.actor_role" class="bg-blue-100 text-blue-800 border-none px-3 font-bold" /></div></div>
+                    <div class="col-12 md:col-6 lg:col-3"><div class="data-item"><span class="label text-blue-600">النوع</span><p class="value text-sm">{{ selectedLog.actor_type }}</p></div></div>
+                    <div class="col-12 md:col-6 lg:col-3"><div class="data-item"><span class="label text-blue-600">ID</span><p class="value font-mono text-xs">{{ selectedLog.actor_id }}</p></div></div>
                 </div>
             </section>
 
@@ -283,9 +295,9 @@
                     <h4 class="m-0 font-bold section-title">الهدف</h4>
                 </div>
                 <div class="grid">
-                    <div class="col-12 md:col-4"><div class="data-item"><span class="label text-green-600">النوع</span><p class="value">{{ selectedLog.subject?.type }}</p></div></div>
-                    <div class="col-12 md:col-4"><div class="data-item"><span class="label text-green-600">ID</span><p class="value font-mono text-xs">{{ selectedLog.subject?.id || '—' }}</p></div></div>
-                    <div class="col-12 md:col-4"><div class="data-item"><span class="label text-green-600">المعرّف</span><p class="value font-mono text-xs">{{ selectedLog.subject?.identifier || '—' }}</p></div></div>
+                    <div class="col-12 md:col-4"><div class="data-item"><span class="label text-green-600">النوع</span><p class="value">{{ selectedLog.subject_type }}</p></div></div>
+                    <div class="col-12 md:col-4"><div class="data-item"><span class="label text-green-600">ID</span><p class="value font-mono text-xs">{{ selectedLog.subject_id || '—' }}</p></div></div>
+                    <div class="col-12 md:col-4"><div class="data-item"><span class="label text-green-600">المعرّف</span><p class="value font-mono text-xs">{{ selectedLog.subject_identifier || '—' }}</p></div></div>
                 </div>
             </section>
 
@@ -355,7 +367,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive, onMounted, computed } from "vue";
+import { ref, reactive, onMounted } from "vue";
 import { useToast } from "primevue/usetoast";
 import activityService, { type ActivityLog, type ActivityLogFilters } from "./activityService";
 import { FilterMatchMode } from "@primevue/core/api";
@@ -370,6 +382,7 @@ import Message from "primevue/message";
 import Tag from 'primevue/tag';
 import Dialog from "primevue/dialog";
 import FloatLabel from 'primevue/floatlabel';
+import Card from 'primevue/card';
 
 const toast = useToast();
 const isLoading = ref(true);
@@ -391,56 +404,15 @@ const breadcrumbItems = ref([
     { label: "سجل النظام", to: "/logs", icon: "fa-solid fa-clock-rotate-left" },
 ]);
 
-const getStatusStyles = (status) => ({
+const getStatusStyles = (status: string) => ({
     bg: status === 'success' ? 'bg-green-100' : status === 'failed' ? 'bg-red-100' : 'bg-yellow-100',
     text: status === 'success' ? 'text-green-600' : status === 'failed' ? 'text-red-600' : 'text-yellow-600'
 });
 
-const getSeverityStyles = (sev) => ({
+const getSeverityStyles = (sev: string) => ({
     bg: sev === 'danger' ? 'bg-red-100' : sev === 'warning' ? 'bg-yellow-100' : 'bg-blue-100',
     text: sev === 'danger' ? 'text-red-600' : sev === 'warning' ? 'text-yellow-600' : 'text-blue-600'
 });
-
-// Computed properties for statistics
-const successCount = computed(() => 
-    allLogs.value.filter(log => log.status === 'success').length
-);
-
-const failedCount = computed(() => 
-    allLogs.value.filter(log => log.status === 'failed' || log.status === 'error').length
-);
-
-const uniqueUsersCount = computed(() => 
-    new Set(allLogs.value.map(log => log.actor.id)).size
-);
-
-const successPercentage = computed(() => {
-    const total = allLogs.value.length;
-    return total > 0 ? Math.round((successCount.value / total) * 100) : 0;
-});
-
-const failedPercentage = computed(() => {
-    const total = allLogs.value.length;
-    return total > 0 ? Math.round((failedCount.value / total) * 100) : 0;
-});
-
-const usersPercentage = computed(() => {
-    const total = allLogs.value.length;
-    const users = uniqueUsersCount.value;
-    return total > 0 ? Math.min(Math.round((users / total) * 100), 100) : 0;
-});
-
-const dialogTitle = computed(() => 
-    selectedLog.value ? `تفاصيل العملية #${selectedLog.value.id}` : 'تفاصيل العملية'
-);
-
-const hasChanges = computed(() => 
-    selectedLog.value && (
-        selectedLog.value.changed_fields || 
-        selectedLog.value.old_values || 
-        selectedLog.value.new_values
-    )
-);
 
 // Helper functions
 const getStatusLabel = (status: string) => {
@@ -530,7 +502,8 @@ const formatTime = (dateString: string) => {
     return date.toLocaleTimeString('ar-IQ');
 };
 
-const formatFullDate = (dateString: string) => {
+const formatFullDate = (dateString?: string) => {
+    if (!dateString) return;
     const date = new Date(dateString);
     return date.toLocaleString('ar-IQ', {
         year: 'numeric',

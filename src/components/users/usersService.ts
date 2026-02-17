@@ -36,6 +36,7 @@ export interface UserFormData {
   role: number | null;
 }
 
+
 class UserService {
   private baseUrl = '/users';
 
@@ -50,12 +51,12 @@ class UserService {
   }
 
   // Create new user
-  createUser(data: UserCreateData): Promise<User> {
+  createUser(data: UserFormData): Promise<User> {
     return api.post(this.baseUrl, data).then(res => res.data.data);
   }
 
   // Update existing user
-  updateUser(id: number, data: UserUpdateData): Promise<User> {
+  updateUser(id: number, data: UserFormData): Promise<User> {
     return api.put(`${this.baseUrl}/${id}`, data).then(res => res.data.data);
   }
 

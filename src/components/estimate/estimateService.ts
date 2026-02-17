@@ -1,7 +1,7 @@
 import api from "../api/api";
 
 /* ================================================================
-   Interfaces
+Interfaces
 ================================================================ */
 
 export interface Vendor {
@@ -22,7 +22,7 @@ export interface EstimateItemInput {
 
 export interface EstimatePayload {
     vendor_id?: number;
-    estimate_date?: string | null;
+    estimate_date: Date | null;
     status?: "pending" | "accepted" | "rejected";
     notes?: string | null;
     items?: EstimateItemInput[];
@@ -45,6 +45,13 @@ export interface EstimateItem {
     };
 }
 
+interface PurchaseRequest {
+    id: number;
+    request_number: string;
+    title: string;
+    priority: 'low' | 'medium' | 'high';
+}
+
 export interface Estimate {
     id: number;
 
@@ -57,11 +64,7 @@ export interface Estimate {
 
     estimate_items: EstimateItem[];
 
-    purchase_request?: {
-        id: number;
-        request_number: string;
-        title: string;
-    };
+    purchase_request: PurchaseRequest[]; 
 
     created_at?: string;
     updated_at?: string;

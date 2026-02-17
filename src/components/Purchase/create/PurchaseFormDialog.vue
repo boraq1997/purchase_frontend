@@ -14,10 +14,11 @@ import Select from 'primevue/select';
 import FloatLabel from 'primevue/floatlabel';
 import { useConfirm } from "primevue/useconfirm";
 
+import UploadFile from './components/fileUpload.vue';
+
 import purchaseRequestsService from '../services/purchaseRequests.service';
 import DepartmentService from '../../departments/DepartmentService';
 import { useToast } from 'primevue/usetoast';
-import { hasPermission } from '../../services/permission';
 
 const toast = useToast();
 const confirm = useConfirm();
@@ -25,7 +26,7 @@ const departmentId = ref<number>();
 const hasDeapartment = ref<boolean>(false);
 
 /* =========================
-   PROPS & EMITS
+PROPS & EMITS
 ========================= */
 const props = defineProps<{
     visible: boolean;
@@ -47,7 +48,7 @@ const isEditMode = computed(() => !!props.request);
 const loading = ref(false);
 
 /* =========================
-   DATA
+DATA
 ========================= */
 const departments = ref<any[]>([]);
 
@@ -80,8 +81,11 @@ const form = reactive({
     items: [] as any[],
 });
 
+const newFilesToUpload = ref<File[]>([]);
+const existingFiles = ref<any[]>([]);
+
 /* =========================
-   VALIDATION ERRORS
+VALIDATION ERRORS
 ========================= */
 const formErrors = reactive({
     title: '',
@@ -97,7 +101,6 @@ const itemErrors = reactive({
     specifications: ''
 });
 
-// دالة لإعادة تعيين أخطاء النموذج الرئيسي
 function resetFormErrors() {
     formErrors.title = '';
     formErrors.description = '';
@@ -105,7 +108,6 @@ function resetFormErrors() {
     formErrors.items = '';
 }
 
-// دالة لإعادة تعيين أخطاء المادة
 function resetItemErrors() {
     itemErrors.item_name = '';
     itemErrors.quantity = '';
@@ -113,179 +115,99 @@ function resetItemErrors() {
     itemErrors.specifications = '';
 }
 
-// دالة للتحقق من صحة النموذج الرئيسي
 function validateForm(): boolean {
     resetFormErrors();
     let isValid = true;
 
-    // التحقق من العنوان
     if (!form.title || form.title.trim() === '') {
         formErrors.title = 'عنوان الطلب مطلوب';
         isValid = false;
-        toast.add({
-            severity: 'error',
-            summary: 'خطأ في التحقق',
-            detail: 'يرجى إدخال عنوان الطلب',
-            life: 3000
-        });
+        toast.add({ severity: 'error', summary: 'خطأ في التحقق', detail: 'يرجى إدخال عنوان الطلب', life: 3000 });
     } else if (form.title.length < 3) {
         formErrors.title = 'العنوان يجب أن يكون 3 أحرف على الأقل';
         isValid = false;
-        toast.add({
-            severity: 'error',
-            summary: 'خطأ في التحقق',
-            detail: 'عنوان الطلب قصير جداً (3 أحرف على الأقل)',
-            life: 3000
-        });
+        toast.add({ severity: 'error', summary: 'خطأ في التحقق', detail: 'عنوان الطلب قصير جداً (3 أحرف على الأقل)', life: 3000 });
     } else if (form.title.length > 200) {
         formErrors.title = 'العنوان طويل جداً (200 حرف كحد أقصى)';
         isValid = false;
-        toast.add({
-            severity: 'error',
-            summary: 'خطأ في التحقق',
-            detail: 'عنوان الطلب طويل جداً',
-            life: 3000
-        });
+        toast.add({ severity: 'error', summary: 'خطأ في التحقق', detail: 'عنوان الطلب طويل جداً', life: 3000 });
     }
 
-    // التحقق من القسم
     const finalDepartmentId = departmentId.value ?? form.department_id;
     if (!finalDepartmentId) {
         formErrors.department_id = 'القسم مطلوب';
         isValid = false;
-        toast.add({
-            severity: 'error',
-            summary: 'خطأ في التحقق',
-            detail: 'يرجى اختيار القسم',
-            life: 3000
-        });
+        toast.add({ severity: 'error', summary: 'خطأ في التحقق', detail: 'يرجى اختيار القسم', life: 3000 });
     }
 
-    // التحقق من المواد
     if (!form.items || form.items.length === 0) {
         formErrors.items = 'يجب إضافة مادة واحدة على الأقل';
         isValid = false;
-        toast.add({
-            severity: 'error',
-            summary: 'خطأ في التحقق',
-            detail: 'يجب إضافة مادة واحدة على الأقل للطلب',
-            life: 3000
-        });
+        toast.add({ severity: 'error', summary: 'خطأ في التحقق', detail: 'يجب إضافة مادة واحدة على الأقل للطلب', life: 3000 });
     }
 
     return isValid;
 }
 
-// دالة للتحقق من صحة بيانات المادة
 function validateItem(): boolean {
     resetItemErrors();
     let isValid = true;
 
-    // التحقق من اسم المادة
     if (!itemForm.item_name || itemForm.item_name.trim() === '') {
         itemErrors.item_name = 'اسم المادة مطلوب';
         isValid = false;
-        toast.add({
-            severity: 'error',
-            summary: 'خطأ في التحقق',
-            detail: 'يرجى إدخال اسم المادة',
-            life: 3000
-        });
+        toast.add({ severity: 'error', summary: 'خطأ في التحقق', detail: 'يرجى إدخال اسم المادة', life: 3000 });
     } else if (itemForm.item_name.length < 2) {
         itemErrors.item_name = 'اسم المادة قصير جداً';
         isValid = false;
-        toast.add({
-            severity: 'error',
-            summary: 'خطأ في التحقق',
-            detail: 'اسم المادة يجب أن يكون حرفين على الأقل',
-            life: 3000
-        });
+        toast.add({ severity: 'error', summary: 'خطأ في التحقق', detail: 'اسم المادة يجب أن يكون حرفين على الأقل', life: 3000 });
     }
 
-    // التحقق من الكمية
     if (!itemForm.quantity || itemForm.quantity <= 0) {
         itemErrors.quantity = 'الكمية مطلوبة ويجب أن تكون أكبر من صفر';
         isValid = false;
-        toast.add({
-            severity: 'error',
-            summary: 'خطأ في التحقق',
-            detail: 'يرجى إدخال كمية صحيحة (أكبر من صفر)',
-            life: 3000
-        });
+        toast.add({ severity: 'error', summary: 'خطأ في التحقق', detail: 'يرجى إدخال كمية صحيحة (أكبر من صفر)', life: 3000 });
     } else if (itemForm.quantity > 1000000) {
         itemErrors.quantity = 'الكمية كبيرة جداً';
         isValid = false;
-        toast.add({
-            severity: 'error',
-            summary: 'خطأ في التحقق',
-            detail: 'الكمية المدخلة كبيرة جداً',
-            life: 3000
-        });
+        toast.add({ severity: 'error', summary: 'خطأ في التحقق', detail: 'الكمية المدخلة كبيرة جداً', life: 3000 });
     }
 
-    // التحقق من الوحدة
     if (!itemForm.unit || itemForm.unit.trim() === '') {
         itemErrors.unit = 'الوحدة مطلوبة';
         isValid = false;
-        toast.add({
-            severity: 'error',
-            summary: 'خطأ في التحقق',
-            detail: 'يرجى اختيار وحدة القياس',
-            life: 3000
-        });
+        toast.add({ severity: 'error', summary: 'خطأ في التحقق', detail: 'يرجى اختيار وحدة القياس', life: 3000 });
     }
 
-    // التحقق من السعر التقديري (اختياري لكن إذا تم إدخاله يجب أن يكون صحيحاً)
     if (itemForm.estimated_unit_price !== null && itemForm.estimated_unit_price !== undefined) {
         if (itemForm.estimated_unit_price < 0) {
-            toast.add({
-                severity: 'error',
-                summary: 'خطأ في التحقق',
-                detail: 'السعر لا يمكن أن يكون سالباً',
-                life: 3000
-            });
+            toast.add({ severity: 'error', summary: 'خطأ في التحقق', detail: 'السعر لا يمكن أن يكون سالباً', life: 3000 });
             isValid = false;
         } else if (itemForm.estimated_unit_price > 100000000) {
-            toast.add({
-                severity: 'error',
-                summary: 'خطأ في التحقق',
-                detail: 'السعر كبير جداً',
-                life: 3000
-            });
+            toast.add({ severity: 'error', summary: 'خطأ في التحقق', detail: 'السعر كبير جداً', life: 3000 });
             isValid = false;
         }
     }
 
-    // التحقق من طول المواصفات
     if (itemForm.specifications && itemForm.specifications.length > 500) {
         itemErrors.specifications = 'المواصفات طويلة جداً (500 حرف كحد أقصى)';
         isValid = false;
-        toast.add({
-            severity: 'error',
-            summary: 'خطأ في التحقق',
-            detail: 'المواصفات طويلة جداً',
-            life: 3000
-        });
+        toast.add({ severity: 'error', summary: 'خطأ في التحقق', detail: 'المواصفات طويلة جداً', life: 3000 });
     }
 
     return isValid;
 }
 
 /* =========================
-   LOAD DEPARTMENTS
+LOAD DEPARTMENTS
 ========================= */
-const loadDepartments = async()=>{
+const loadDepartments = async () => {
     try {
         const res = await DepartmentService.getAll();
-        departments.value = res.data ?? res;
-        
+        departments.value = Array.isArray(res) ? res : res.data;
+
         if (!departments.value || departments.value.length === 0) {
-            toast.add({
-                severity: 'warn',
-                summary: 'تنبيه',
-                detail: 'لا توجد أقسام متاحة',
-                life: 3000
-            });
+            toast.add({ severity: 'warn', summary: 'تنبيه', detail: 'لا توجد أقسام متاحة', life: 3000 });
         }
     } catch (error: any) {
         console.error('Error loading departments:', error);
@@ -296,7 +218,7 @@ const loadDepartments = async()=>{
             life: 4000
         });
     }
-}
+};
 
 onMounted(async () => {
     try {
@@ -308,36 +230,18 @@ onMounted(async () => {
                 hasDeapartment.value = true;
                 return;
             }
-        } 
+        }
         loadDepartments();
     } catch (err) {
         console.error('Invalid auth_department in localStorage', err);
-        toast.add({
-            severity: 'error',
-            summary: 'خطأ',
-            detail: 'حدث خطأ في قراءة بيانات القسم',
-            life: 3000
-        });
+        toast.add({ severity: 'error', summary: 'خطأ', detail: 'حدث خطأ في قراءة بيانات القسم', life: 3000 });
         loadDepartments();
     }
 });
 
 /* =========================
-   WATCH OPEN DIALOG
+WATCH OPEN DIALOG
 ========================= */
-const resolvedDepartmentId = computed<number | undefined>(() => {
-    const row = localStorage.getItem('auth_department');
-
-    if (row) {
-        try {
-            const authDepartment = JSON.parse(row);
-            return authDepartment?.id;
-        } catch (err) {
-            console.error('Error parsing auth_department:', err);
-        }
-    }
-})
-
 watch(
     () => props.visible,
     v => {
@@ -352,6 +256,8 @@ watch(
                 form.description = props.request.description || '';
                 form.department_id = props.request.department?.id || null;
                 form.priority = props.request.priority || 'medium';
+                
+                existingFiles.value = props.request.images || [];
 
                 form.items = props.request.items?.map((it: any) => ({
                     id: it.id,
@@ -365,12 +271,7 @@ watch(
                 resetFormErrors();
             } catch (error) {
                 console.error('Error loading request data:', error);
-                toast.add({
-                    severity: 'error',
-                    summary: 'خطأ',
-                    detail: 'حدث خطأ في تحميل بيانات الطلب',
-                    life: 3000
-                });
+                toast.add({ severity: 'error', summary: 'خطأ', detail: 'حدث خطأ في تحميل بيانات الطلب', life: 3000 });
             }
         } else {
             resetForm();
@@ -380,7 +281,7 @@ watch(
 );
 
 /* =========================
-   RESET FORM
+RESET FORM
 ========================= */
 function resetForm() {
     form.title = '';
@@ -388,11 +289,22 @@ function resetForm() {
     form.department_id = null;
     form.priority = 'medium';
     form.items = [];
+    
+    newFilesToUpload.value = [];
+    existingFiles.value = [];
+
     resetFormErrors();
 }
 
 /* =========================
-   ITEMS MANAGEMENT
+FILE UPLOAD HANDLER
+========================= */
+function onFilesUpdated(files: File[]) {
+    newFilesToUpload.value = files;
+}
+
+/* =========================
+ITEMS MANAGEMENT
 ========================= */
 const itemDialogVisible = ref(false);
 const isEditingItem = ref(false);
@@ -418,12 +330,7 @@ function resetItemForm() {
 
 function openAddItem() {
     if (form.items.length >= 100) {
-        toast.add({
-            severity: 'warn',
-            summary: 'تحذير',
-            detail: 'لا يمكن إضافة أكثر من 100 مادة في الطلب الواحد',
-            life: 3000
-        });
+        toast.add({ severity: 'warn', summary: 'تحذير', detail: 'لا يمكن إضافة أكثر من 100 مادة في الطلب الواحد', life: 3000 });
         return;
     }
 
@@ -431,8 +338,7 @@ function openAddItem() {
     currentItemIndex.value = null;
     resetItemForm();
     itemDialogVisible.value = true;
-    
-    // التركيز على حقل اسم المادة
+
     nextTick(() => {
         itemNameInputRef.value?.$el?.focus();
     });
@@ -440,12 +346,7 @@ function openAddItem() {
 
 function editItem(index: number) {
     if (index < 0 || index >= form.items.length) {
-        toast.add({
-            severity: 'error',
-            summary: 'خطأ',
-            detail: 'المادة المحددة غير موجودة',
-            life: 3000
-        });
+        toast.add({ severity: 'error', summary: 'خطأ', detail: 'المادة المحددة غير موجودة', life: 3000 });
         return;
     }
 
@@ -459,30 +360,17 @@ function editItem(index: number) {
 }
 
 function saveItem() {
-    // التحقق من صحة البيانات
-    if (!validateItem()) {
-        return;
-    }
+    if (!validateItem()) return;
 
     const payload = { ...itemForm };
 
     try {
         if (isEditingItem.value && currentItemIndex.value !== null) {
             form.items[currentItemIndex.value] = payload;
-            toast.add({
-                severity: "success",
-                summary: "تم التحديث",
-                detail: "تم تحديث المادة بنجاح",
-                life: 3000
-            });
+            toast.add({ severity: "success", summary: "تم التحديث", detail: "تم تحديث المادة بنجاح", life: 3000 });
         } else {
             form.items.push(payload);
-            toast.add({
-                severity: "success",
-                summary: "تمت الإضافة",
-                detail: "تم إضافة المادة بنجاح",
-                life: 3000
-            });
+            toast.add({ severity: "success", summary: "تمت الإضافة", detail: "تم إضافة المادة بنجاح", life: 3000 });
         }
 
         itemDialogVisible.value = false;
@@ -491,23 +379,13 @@ function saveItem() {
         currentItemIndex.value = null;
     } catch (error) {
         console.error('Error saving item:', error);
-        toast.add({
-            severity: 'error',
-            summary: 'خطأ',
-            detail: 'حدث خطأ أثناء حفظ المادة',
-            life: 3000
-        });
+        toast.add({ severity: 'error', summary: 'خطأ', detail: 'حدث خطأ أثناء حفظ المادة', life: 3000 });
     }
 }
 
 function deleteItem(index: number) {
     if (index < 0 || index >= form.items.length) {
-        toast.add({
-            severity: 'error',
-            summary: 'خطأ',
-            detail: 'المادة المحددة غير موجودة',
-            life: 3000
-        });
+        toast.add({ severity: 'error', summary: 'خطأ', detail: 'المادة المحددة غير موجودة', life: 3000 });
         return;
     }
 
@@ -517,71 +395,65 @@ function deleteItem(index: number) {
         icon: "pi pi-exclamation-triangle text-yellow-500",
         acceptLabel: "تأكيد",
         acceptIcon: "pi pi-check",
-        acceptClass:"p-button-sm border border-red-500 bg-red-500 text-white",
+        acceptClass: "p-button-sm border border-red-500 bg-red-500 text-white",
         rejectLabel: "إلغاء",
         rejectIcon: "pi pi-times",
-        rejectClass:"p-button-sm border border-gray-400 text-gray-600 bg-transparent hover:bg-gray-200",
-        accept: ()=>{
+        rejectClass: "p-button-sm border border-gray-400 text-gray-600 bg-transparent hover:bg-gray-200",
+        accept: () => {
             try {
                 form.items.splice(index, 1);
-                toast.add({
-                    severity: 'success',
-                    summary: 'تم الحذف',
-                    detail: 'تم حذف المادة بنجاح',
-                    life: 2500
-                });
+                toast.add({ severity: 'success', summary: 'تم الحذف', detail: 'تم حذف المادة بنجاح', life: 2500 });
             } catch (error) {
                 console.error('Error deleting item:', error);
-                toast.add({
-                    severity: 'error',
-                    summary: 'خطأ',
-                    detail: 'حدث خطأ أثناء حذف المادة',
-                    life: 3000
-                });
+                toast.add({ severity: 'error', summary: 'خطأ', detail: 'حدث خطأ أثناء حذف المادة', life: 3000 });
             }
         }
     });
 }
 
 /* =========================
-   SUBMIT
+SUBMIT
 ========================= */
 async function submit() {
-    // التحقق من صحة النموذج
-    if (!validateForm()) {
-        return;
-    }
+    if (!validateForm()) return;
 
     const finalDepartmentId = departmentId.value ?? form.department_id;
 
     try {
         loading.value = true;
 
-        const payload = {
-            title: form.title.trim(),
-            description: form.description.trim(),
-            department_id: finalDepartmentId,
-            priority: form.priority,
-            items: form.items.map(it => ({
-                id: isEditMode.value ? it.id : undefined,
-                item_name: it.item_name.trim(),
-                quantity: it.quantity,
-                unit: it.unit,
-                specs: it.specifications?.trim() || '',
-                estimated_unit_price: it.estimated_unit_price,
-            }))
-        };
+        // ✅ استخدام FormData لإرسال الملفات مع البيانات
+        const formData = new FormData();
+        formData.append('title', form.title.trim());
+        formData.append('description', form.description.trim());
+        formData.append('department_id', String(finalDepartmentId));
+        formData.append('priority', form.priority);
+
+        form.items.forEach((item: any, index: number) => {
+            for (const key in item) {
+                if (item[key] !== null && item[key] !== undefined) {
+                    // الصيغة الصحيحة: items[0][item_name] = "Value"
+                    formData.append(`items[${index}][${key}]`, item[key]);
+                }
+            }
+        });
+
+
+        if (newFilesToUpload.value.length > 0) {
+            newFilesToUpload.value.forEach((file: File) => {
+                formData.append('images[]', file);
+            });
+        }
+
 
         const res = isEditMode.value
-            ? await purchaseRequestsService.update(props.request.id, payload)
-            : await purchaseRequestsService.create(payload);
+            ? await purchaseRequestsService.update(props.request.id, formData)
+            : await purchaseRequestsService.create(formData);
 
         toast.add({
             severity: 'success',
             summary: isEditMode.value ? 'تم التحديث' : 'تم الإنشاء',
-            detail: isEditMode.value
-                ? 'تم تعديل طلب الشراء بنجاح'
-                : 'تم إنشاء طلب الشراء بنجاح',
+            detail: isEditMode.value ? 'تم تعديل طلب الشراء بنجاح' : 'تم إنشاء طلب الشراء بنجاح',
             life: 2500
         });
 
@@ -591,9 +463,9 @@ async function submit() {
 
     } catch (err: any) {
         console.error('Submit error:', err);
-        
+
         let errorMessage = 'حدث خطأ غير متوقع';
-        
+
         if (err?.response?.status === 401) {
             errorMessage = 'انتهت صلاحية الجلسة، يرجى تسجيل الدخول مرة أخرى';
         } else if (err?.response?.status === 403) {
@@ -610,21 +482,16 @@ async function submit() {
             errorMessage = err.response.data.message;
         }
 
-        toast.add({
-            severity: 'error',
-            summary: 'خطأ',
-            detail: errorMessage,
-            life: 4000
-        });
+        toast.add({ severity: 'error', summary: 'خطأ', detail: errorMessage, life: 4000 });
     } finally {
         loading.value = false;
     }
 }
 
-// إغلاق نافذة المادة مع تأكيد إذا كانت هناك بيانات
 function closeItemDialog() {
     const hasData = itemForm.item_name || itemForm.quantity || itemForm.unit || itemForm.specifications;
-    
+
+
     if (hasData && !isEditingItem.value) {
         confirm.require({
             header: "تأكيد الإغلاق",
@@ -660,9 +527,9 @@ function closeItemDialog() {
         <Card>
             <template #content>
                 <FloatLabel variant="on" class="mt-3">
-                    <InputText 
-                        v-model="form.title" 
-                        fluid 
+                    <InputText
+                        v-model="form.title"
+                        fluid
                         id="title_field"
                         :class="{ 'p-invalid': formErrors.title }"
                         maxlength="200"
@@ -676,10 +543,10 @@ function closeItemDialog() {
                 <small v-if="formErrors.title" class="p-error block mt-1">{{ formErrors.title }}</small>
 
                 <FloatLabel variant="on" class="mt-4">
-                    <Textarea 
-                        v-model="form.description" 
-                        id="description_field" 
-                        rows="3" 
+                    <Textarea
+                        v-model="form.description"
+                        id="description_field"
+                        rows="3"
                         fluid
                         maxlength="1000"
                     />
@@ -731,15 +598,27 @@ function closeItemDialog() {
 
                 <Divider />
 
+                <!-- ✅ قسم المرفقات -->
+                <div class="mt-2">
+                    <div class="flex align-items-center gap-2 mb-3">
+                        <i class="fas fa-paperclip text-gray-500 text-lg" />
+                        <h3 class="text-xl font-bold m-0">المرفقات</h3>
+                        <span class="text-sm text-gray-400">(اختياري)</span>
+                    </div>
+
+                    <!-- مكوّن رفع الملفات -->
+                    <UploadFile @update:files="onFilesUpdated" :existing-files="existingFiles" />
+                </div>
+
+                <Divider />
+
                 <!-- المواد -->
                 <div class="flex justify-content-between align-items-center mb-3">
                     <h3 class="text-xl font-bold m-0">
                         المواد المطلوبة
                         <span class="text-red-500">*</span>
                     </h3>
-                    <span class="text-sm text-gray-500">
-                        ({{ form.items.length }} مادة)
-                    </span>
+                    <span class="text-sm text-gray-500">({{ form.items.length }} مادة)</span>
                 </div>
 
                 <Button
@@ -753,30 +632,27 @@ function closeItemDialog() {
                 />
                 <small v-if="formErrors.items" class="p-error block mt-1 mb-2">{{ formErrors.items }}</small>
 
-                <DataTable 
-                    v-if="form.items.length" 
+                <DataTable
+                    v-if="form.items.length"
                     :value="form.items"
                     class="mt-3"
                     stripedRows
                 >
                     <Column field="item_name">
                         <template #header>
-                            <i class="fas fa-box text-gray-500"/>
-                            اسم المادة
+                            <i class="fas fa-box text-gray-500"/> اسم المادة
                         </template>
                     </Column>
 
                     <Column field="quantity">
                         <template #header>
-                            <i class="fas fa-hashtag text-gray-500"/>
-                            الكمية
+                            <i class="fas fa-hashtag text-gray-500"/> الكمية
                         </template>
                     </Column>
 
                     <Column field="unit">
                         <template #header>
-                            <i class="fas fa-object-group text-gray-500"/>
-                            الوحدة  
+                            <i class="fas fa-object-group text-gray-500"/> الوحدة
                         </template>
                         <template #body="slotProps">
                             {{ unitsList.find(u => u.value === slotProps.data.unit)?.label || slotProps.data.unit }}
@@ -785,8 +661,7 @@ function closeItemDialog() {
 
                     <Column field="specifications">
                         <template #header>
-                            <i class="fas fa-tags text-gray-500"/>
-                            المواصفات
+                            <i class="fas fa-tags text-gray-500"/> المواصفات
                         </template>
                         <template #body="slotProps">
                             <span v-if="slotProps.data.specifications" class="text-sm">
@@ -799,23 +674,22 @@ function closeItemDialog() {
 
                     <Column>
                         <template #header>
-                            <i class="fas fa-cogs"/>
-                            الإدارة
+                            <i class="fas fa-cogs"/> الإدارة
                         </template>
                         <template #body="slotProps">
-                            <Button 
-                                icon="pi pi-pencil" 
-                                text 
+                            <Button
+                                icon="pi pi-pencil"
+                                text
                                 severity="info"
                                 v-tooltip.top="'تعديل'"
-                                @click="editItem(slotProps.index)" 
+                                @click="editItem(slotProps.index)"
                             />
-                            <Button 
-                                icon="pi pi-trash" 
-                                text 
+                            <Button
+                                icon="pi pi-trash"
+                                text
                                 severity="danger"
                                 v-tooltip.top="'حذف'"
-                                @click="deleteItem(slotProps.index)" 
+                                @click="deleteItem(slotProps.index)"
                             />
                         </template>
                     </Column>
@@ -828,6 +702,9 @@ function closeItemDialog() {
                         <p class="text-sm text-gray-500 dark:text-gray-400">اضغط على زر "إضافة مادة" لبدء إضافة المواد</p>
                     </template>
                 </Card>
+
+                
+
             </template>
 
             <template #footer>
@@ -864,64 +741,61 @@ function closeItemDialog() {
     >
         <div class="p-fluid">
             <FloatLabel variant="on" class="mt-3">
-                <InputText 
-                    v-model="itemForm.item_name" 
-                    id="itemName_field" 
-                    class="w-full" 
+                <InputText
+                    v-model="itemForm.item_name"
+                    id="itemName_field"
+                    class="w-full"
                     ref="itemNameInputRef"
                     :class="{ 'p-invalid': itemErrors.item_name }"
                     maxlength="200"
                 />
                 <label for="itemName_field" class="font-semibold mb-2 block">
-                    <i class="fas fa-box"/>
-                    اسم المادة
+                    <i class="fas fa-box"/> اسم المادة
                     <span class="text-red-500">*</span>
                 </label>
             </FloatLabel>
             <small v-if="itemErrors.item_name" class="p-error block mt-1">{{ itemErrors.item_name }}</small>
 
             <FloatLabel variant="on" class="mt-5">
-                <InputNumber  
-                    v-model="itemForm.quantity" 
-                    id="quantity_field" 
-                    inputClass="w-full" 
-                    class="w-full "
-                    :invalid="itemErrors.quantity != '' "
+                <InputNumber
+                    v-model="itemForm.quantity"
+                    id="quantity_field"
+                    inputClass="w-full"
+                    class="w-full"
+                    :invalid="itemErrors.quantity != ''"
                     :min="0"
                     :max="1000000"
                 />
                 <label for="quantity_field" class="font-semibold mb-2 block">
-                    <i class="fas fa-hashtag"/>
-                    الكمية
+                    <i class="fas fa-hashtag"/> الكمية
                     <span class="text-red-500">*</span>
                 </label>
             </FloatLabel>
             <small v-if="itemErrors.quantity" class="p-error block mt-1">{{ itemErrors.quantity }}</small>
 
             <FloatLabel variant="on" class="mt-5">
-                <Select 
-                    v-model="itemForm.unit" 
-                    id="unit_field" 
-                    :options="unitsList" 
-                    optionLabel="label" 
-                    optionValue="value" 
-                    filter 
+                <Select
+                    v-model="itemForm.unit"
+                    id="unit_field"
+                    :options="unitsList"
+                    optionLabel="label"
+                    optionValue="value"
+                    filter
                     fluid
                     :invalid="itemErrors.unit != ''"
                 />
                 <label for="unit_field" class="font-semibold mb-2 block">
-                    <i class="fas fa-object-group"/>
-                    اختر الوحدة
+                    <i class="fas fa-object-group"/> اختر الوحدة
                     <span class="text-red-500">*</span>
                 </label>
             </FloatLabel>
             <small v-if="itemErrors.unit" class="p-error block mt-1">{{ itemErrors.unit }}</small>
 
             <FloatLabel variant="on" class="mt-5">
-                <InputNumber  
-                    v-model="itemForm.estimated_unit_price" 
-                    id="price_field" 
-                    inputClass="w-full" 
+                <InputNumber
+                    v-model="itemForm.estimated_unit_price"
+                    id="price_field"
+                    inputClass="w-full"
                     class="w-full"
                     :min="0"
                     :max="100000000"
@@ -930,24 +804,22 @@ function closeItemDialog() {
                     locale="ar-IQ"
                 />
                 <label for="price_field" class="font-semibold mb-2 block">
-                    <i class="fas fa-dollar-sign"/>
-                    السعر التقديري للوحدة (اختياري)
+                    <i class="fas fa-dollar-sign"/> السعر التقديري للوحدة (اختياري)
                 </label>
             </FloatLabel>
 
             <FloatLabel variant="on" class="mt-5">
-                <Textarea 
-                    v-model="itemForm.specifications" 
-                    id="specifications_field" 
-                    class="w-full" 
-                    rows="3" 
-                    auto-resize 
+                <Textarea
+                    v-model="itemForm.specifications"
+                    id="specifications_field"
+                    class="w-full"
+                    rows="3"
+                    auto-resize
                     :maxlength="500"
                     :class="{ 'p-invalid': itemErrors.specifications }"
                 />
                 <label for="specifications_field" class="font-semibold mb-2 block">
-                    <i class="fa-solid fa-tags"/>
-                    المواصفات
+                    <i class="fa-solid fa-tags"/> المواصفات
                 </label>
             </FloatLabel>
             <small v-if="itemErrors.specifications" class="p-error block mt-1">{{ itemErrors.specifications }}</small>
@@ -956,18 +828,8 @@ function closeItemDialog() {
             </small>
 
             <div class="mt-4 flex justify-content-end gap-2">
-                <Button 
-                    label="إلغاء" 
-                    icon="fas fa-times" 
-                    outlined 
-                    severity="secondary" 
-                    @click="closeItemDialog" 
-                />
-                <Button 
-                    :label="isEditingItem ? 'تحديث' : 'إضافة'" 
-                    icon="fas fa-check" 
-                    @click="saveItem" 
-                />
+                <Button label="إلغاء" icon="fas fa-times" outlined severity="secondary" @click="closeItemDialog" />
+                <Button :label="isEditingItem ? 'تحديث' : 'إضافة'" icon="fas fa-check" @click="saveItem" />
             </div>
         </div>
     </Dialog>

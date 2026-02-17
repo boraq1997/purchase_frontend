@@ -7,7 +7,7 @@
 // - Emits updated filters to parent using v-model:filters
 // ============================================================================
 
-import { ref, reactive, watch, defineProps, defineEmits, onMounted } from 'vue';
+import { ref, reactive, watch, onMounted } from 'vue';
 import Select from 'primevue/select';
 import DatePicker from 'primevue/datepicker';
 import InputText from 'primevue/inputtext';
@@ -22,8 +22,8 @@ const props = defineProps<{
         status_type: string | null;
         priority: string | null;
         search: string;
-        date_from: string | null;
-        date_to: string | null;
+        date_from: Date | null;
+        date_to: Date | null;
     };
 }>();
 
@@ -56,7 +56,7 @@ watch(
 
 watch(
     ()=>internalFilters.search,
-    (newVal)=>{
+    (_newVal)=>{
         if (searchTimeout) clearTimeout(searchTimeout);
         searchTimeout = setTimeout(() => {
             emit('update:filters', {...internalFilters});

@@ -1,13 +1,18 @@
 import api from '../api/api';
 
 /* =============================
- 🧩 Data Interfaces
- ============================= */
+🧩 Data Interfaces
+============================= */
 
 // Permission Interface
 export interface Permission {
   id: number;
   name: string;
+}
+
+interface PaginatedResponse<T> {
+  data: T[];
+  meta?: any;
 }
 
 // Role Interface
@@ -55,7 +60,7 @@ class RolesService {
    * Fetch all permissions for roles
    * @returns Array of Permission
    */
-  async getAllPermissions(): Promise<Permission[]> {
+  async getAllPermissions(): Promise<PaginatedResponse<Permission> | Permission[]> {
     const response = await api.get<{ data: Permission[] }>('/permissions');
     return response.data.data;
   }

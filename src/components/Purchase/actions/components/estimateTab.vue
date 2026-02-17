@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue';
+import { ref, watch, onMounted } from 'vue';
 import { useToast } from 'primevue/usetoast';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
@@ -24,18 +24,18 @@ const toast = useToast();
 const allVendors = ref<any[]>([]);
 
 const newEstimateForms = ref<Array<any>>([]);
-const expandedEstimates = ref<any[]>([]);
+// const expandedEstimates = ref<any[]>([]);
 // Computed: تتبع المواد التي لها عروض سعر
-const itemsWithEstimates = computed(() => {
-    const itemIds = new Set<number>();
-    props.purchaseRequest?.items?.forEach((item: any) => {
-        if (item.estimate && item.estimate.length > 0) itemIds.add(item.id);
-    });
-    newEstimateForms.value.forEach(form => {
-        form.itemsDetails?.forEach((it: any) => itemIds.add(it.id));
-    });
-    return itemIds;
-});
+// const itemsWithEstimates = computed(() => {
+//     const itemIds = new Set<number>();
+//     props.purchaseRequest?.items?.forEach((item: any) => {
+//         if (item.estimate && item.estimate.length > 0) itemIds.add(item.id);
+//     });
+//     newEstimateForms.value.forEach(form => {
+//         form.itemsDetails?.forEach((it: any) => itemIds.add(it.id));
+//     });
+//     return itemIds;
+// });
 
 function addNewEstimateForm() {
     newEstimateForms.value.push({
@@ -436,24 +436,24 @@ onMounted(()=>{
 .items-card :deep(.p-card-body), 
 .estimate-card :deep(.p-card-body), 
 .empty-state-card :deep(.p-card-body) {
-     padding: 0; 
+  padding: 0; 
 }
 
 .items-card :deep(.p-card-content), 
 .estimate-card :deep(.p-card-content), 
 .empty-state-card :deep(.p-card-content) {
-     padding: 1.5rem; 
+  padding: 1.5rem; 
 }
 
 .card-header-custom, 
 .estimate-header {
-     background: linear-gradient(14deg, #1b1645 0%, #38333c 100%); 
-     padding: 0.5rem; 
-     display: flex; 
-     justify-content: space-between; 
-     align-items: center; 
-     color: white; 
-     border-radius: 10px 10px 0 0; 
+  background: linear-gradient(14deg, #1b1645 0%, #38333c 100%); 
+  padding: 0.5rem; 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+  color: white; 
+  border-radius: 10px 10px 0 0; 
 }
 
 .icon-wrapper {
@@ -468,8 +468,8 @@ onMounted(()=>{
 }
 
 .custom-datatable :deep(.p-datatable-thead > tr > th) {
-     border-bottom: 1px solid #e9ecef; 
-     font-weight: 600; 
+  border-bottom: 1px solid #e9ecef; 
+  font-weight: 600; 
 }
 
 .empty-state {
@@ -480,16 +480,16 @@ onMounted(()=>{
 }
 
 .empty-state i {
-     animation: float 3s ease-in-out infinite; 
+  animation: float 3s ease-in-out infinite; 
 }
 
 @keyframes float {
-    0%, 100% {
-         transform: translateY(0); 
-        } 
-    50% {
-         transform: translateY(-10px); 
-        } 
+  0%, 100% {
+        transform: translateY(0); 
+      } 
+  50% {
+        transform: translateY(-10px); 
+      } 
 }
 
 .form-grid {

@@ -168,15 +168,19 @@
       dir="rtl"
     >
       <div class="flex flex-column gap-4 mt-3">
-        <FloatLabel variant="on">
-          <InputText id="name_feild" v-model="departmentForm.name" fluid />
-          <label for="name_feild"><i class="fas fa-font"/> اسم القسم</label>
-        </FloatLabel>
+        <div class="grid">
+          <FloatLabel variant="on" class="col">
+            <InputText id="name_feild" v-model="departmentForm.name" fluid />
+            <label for="name_feild"><i class="fas fa-font"/> اسم القسم</label>
+          </FloatLabel>
 
-        <FloatLabel variant="on">
-          <InputText id="code_field" v-model="departmentForm.code" fluid />
-          <label for="code_field"><i class="fas fa-barcode"/> رمز القسم</label>
-        </FloatLabel>
+          <FloatLabel variant="on" class="col">
+            <InputText id="code_field" v-model="departmentForm.code" fluid />
+            <label for="code_field"><i class="fas fa-barcode"/> رمز القسم</label>
+          </FloatLabel>
+        </div>
+
+        
 
 
         <FloatLabel variant="on">
@@ -327,14 +331,15 @@ import Toast from 'primevue/toast';
 import ConfirmDialog from 'primevue/confirmdialog';
 import FloatLabel from 'primevue/floatlabel';
 
-import DepartmentService, { Department } from "./DepartmentService";
+import DepartmentService from "./DepartmentService"
+import type { Department, DepartmentUser } from "./DepartmentService";
 // import type { Department } from "./DepartmentService";
 import usersService from "../users/usersService";
 import { FilterMatchMode } from "@primevue/core/api";
 import { hasPermission } from "../services/permission";
 
 /* =============================
-   Refs & Reactive State
+  Refs & Reactive State
 ============================= */
 const toast = useToast();
 const confirm = useConfirm();
@@ -383,7 +388,7 @@ const breadcrumbItems = ref([
 const managerInfo = ref();
 
 /* =============================
-   Computed Properties
+  Computed Properties
 ============================= */
 // Exclude manager from users list in MultiSelect
 const filteredUsers = computed(() => {
@@ -391,7 +396,7 @@ const filteredUsers = computed(() => {
 });
 
 /* =============================
-   API Calls
+  API Calls
 ============================= */
 const fetchAllDepartments = async () => {
   isLoading.value = true;
@@ -423,7 +428,7 @@ const getAllUsers = async (department?: any) => {
       }));
 
       const userIds = new Set(availableUsers.map(u => u.id));
-      currentUsers.forEach(u => {
+      currentUsers.forEach((u: DepartmentUser) => {
         if (!userIds.has(u.id)) availableUsers.push(u);
       });
     }
@@ -504,14 +509,24 @@ const saveHandling = async () => {
 
   const payload = {
     ...departmentForm.value,
-    manager_user_id: departmentForm.value.manager?.id ?? null,
-    users: departmentForm.value.users.map(u => u.id),
+    manager_user_id: departmentForm.value.manager?.id ?? undefined,
+    users: departmentForm.value.users.map(u => ({
+      id: u.id,
+      name: u.name,
+      email: u.email,
+      username: u.username
+    })),
   };
 
   try {
-    if (isEditMode.value && departmentForm.value.id !== null) {
-      await DepartmentService.update(payload.id, payload);
-      toast.add({ severity: "success", summary: "نجاح", detail: "تم تحديث بيانات القسم بنجاح", life: 3000 });
+    if (isEditMode.value && departmentForm.value.id !== undefined) {
+      if (payload.id !== undefined) {
+        await DepartmentService.update(payload.id, payload);
+        toast.add({ severity: "success", summary: "نجاح", detail: "تم تحديث بيانات القسم بنجاح", life: 3000 });
+      } else {
+        toast.add({ severity: "error", summary: "رسالة خطاء", detail: "حدث خطاء ما اثناء تحديث بيانات القسم", life: 3000 });
+      }
+      
     } else {
       await DepartmentService.create(payload);
       toast.add({ severity: "success", summary: "نجاح", detail: "تم اضافة قسم بنجاح", life: 3000 });
@@ -572,7 +587,7 @@ const confirmDeleteDepartment = (department: any) => {
 const resetForm = () => {
   isEditMode.value = false;
   departmentForm.value = {
-    id: null,
+    id: undefined,
     name: '',
     username: '',
     code: '',
@@ -583,7 +598,7 @@ const resetForm = () => {
 };
 
 /* =============================
-   Lifecycle Hooks
+  Lifecycle Hooks
 ============================= */
 onMounted(async () => {
   await getAllUsers();

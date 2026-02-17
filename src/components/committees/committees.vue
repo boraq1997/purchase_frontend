@@ -267,7 +267,7 @@ import { useConfirm } from "primevue/useconfirm";
 import { FilterMatchMode } from "@primevue/core/api";
 import committeesService from "./committeesService";
 import usersService from "../users/usersService";
-import type { Committee } from "./committeesService";
+import type { Committee, CommitteeUser } from "./committeesService";
 
 import Breadcrumb from "primevue/breadcrumb";
 import Button from "primevue/button";
@@ -312,9 +312,9 @@ const committeeForm = ref<Committee>({
     description: "",
     department_id: null,
     department: null,
-    manager_user_id: null,
+    manager_user_id: undefined,
     manager: null,
-    users: [],
+    users: [] as CommitteeUser[],
 });
 
 const breadcrumbHome = ref({ icon: "pi pi-home", to: "/" });
@@ -438,15 +438,22 @@ const saveHandling = async () => {
 
     isSaving.value = true;
 
+    // ✅ تحويل users إلى شكل متوافق مع CommitteeUser[]
     const payload = {
         ...committeeForm.value,
-        manager_user_id: committeeForm.value.manager?.id ?? null,
-        users: committeeForm.value.users.map((u) => u.id),
+        manager_user_id: committeeForm.value.manager?.id ?? undefined,
+        users: committeeForm.value.users.map((u) => ({ 
+            id: u.id,
+            name: u.name,
+            email: u.email,
+            username: u.username,
+            department: u.department ?? null,
+        })),
     };
 
     try {
-        if (isEditMode.value && committeeForm.value.id) {
-            await committeesService.update(payload.id, payload);
+        if (isEditMode.value && committeeForm.value.id !== undefined) {
+            await committeesService.update(committeeForm.value.id, payload);
             toast.add({
                 severity: "success",
                 summary: "نجاح",
@@ -532,7 +539,7 @@ const confirmDeleteCommittee = (committee: any) => {
 const resetForm = () => {
     isEditMode.value = false;
     committeeForm.value = {
-        id: null,
+        id: undefined,
         name: "",
         description: "",
         department_id: null,

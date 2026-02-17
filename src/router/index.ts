@@ -5,15 +5,15 @@ import Departments from '../components/departments/Departments.vue';
 import Committees from '../components/committees/committees.vue';
 import Users from '../components/users/users.vue';
 import Roles from '../components/roles/roles.vue';
-import PurchaseRequests from '../components/purchase-requests/purchase-requests.vue';
+//import PurchaseRequests from '../components/purchase-requests/purchase-requests.vue';
 import Home from '../components/home/home.vue';
 import warehouse from '../components/warehouse/warehouse.vue';
 import Estimate from '../components/estimate/estimate.vue';
-import Index from '../components/Purchase/main/index.vue';
+import HomePurchase from '../components/Purchase/main/index.vue';
 import Vendors from '../components/vendors/Vendors.vue';
 import Activity from '../components/activityLogs/activity.vue';
-import notFoundPage from '../components/errors/notFountPage.vue';
-import internlaServerError from '../components/errors/internlaServerError.vue';
+import notFoundPage from '../components/errors/notFoundPage.vue';
+import internalServerError from '../components/errors/internalServerError.vue';
 import forbiddenError from '../components/errors/forbiddenError.vue';
 // Import components for each route
 
@@ -25,7 +25,7 @@ const routes = [
     {path: '/departments', name: 'departments', component: Departments},
     {path: '/committees', name: 'committees', component: Committees},
     {path: '/roles', name: 'roles', component: Roles},
-    {path: '/purchase-request', name: 'purchase-request', component: Index},
+    {path: '/purchase-request', name: 'purchase-request', component: HomePurchase},
     {path: '/warehouse', name: 'warehouse', component: warehouse},
     {path: '/estimate', name: 'estimate', component: Estimate},
     {path: '/vendors', name: 'vendors', component: Vendors},
@@ -34,7 +34,7 @@ const routes = [
     {
         path: '/500',
         name: 'ServerError',
-        component: internlaServerError,
+        component: internalServerError,
         meta: {
           title: '500 - خطاء في الخادم'
         }

@@ -303,7 +303,7 @@
               <TabView>
                 
                 <!-- Roles Tab -->
-                <TabPanel>
+                <TabPanel value="role">
                   <template #header>
                     <div class="flex align-items-center gap-2">
                       <i class="pi pi-star"></i>
@@ -346,7 +346,7 @@
                 </TabPanel>
 
                 <!-- Permissions Tab -->
-                <TabPanel>
+                <TabPanel value="permissions">
                   <template #header>
                     <div class="flex align-items-center gap-2">
                       <i class="pi pi-key"></i>
@@ -415,7 +415,7 @@
               <TabView>
                 
                 <!-- Committees Tab -->
-                <TabPanel>
+                <TabPanel value="committes">
                   <template #header>
                     <div class="flex align-items-center gap-2">
                       <i class="pi pi-users"></i>
@@ -458,7 +458,7 @@
                 </TabPanel>
 
                 <!-- Sessions Tab -->
-                <TabPanel>
+                <TabPanel value="sessions">
                   <template #header>
                     <div class="flex align-items-center gap-2">
                       <i class="pi pi-calendar"></i>

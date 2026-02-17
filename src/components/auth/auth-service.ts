@@ -1,5 +1,4 @@
 import api from '../api/api';
-import router from '../../router';
 
 /**
  * @interface LoginCredentials

@@ -4,7 +4,7 @@ import router from '../../router';
 // Create an Axios instance with default configuration
 const http = axios.create({
   // Base URL for all API requests
-  baseURL: 'http://10.55.3.22:8000/api',
+  baseURL: 'http://127.0.0.1:8000/api',
   // Default headers for requests
   headers: {
     'Content-Type': 'application/json',

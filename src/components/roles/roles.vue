@@ -141,8 +141,8 @@
                                             <!-- Permission Group Card -->
                                             <div class="permission-group p-3 border-round h-full">
                                                 <h4 class="font-semibold text-base mb-3">
-                                                    <i :class="getGroupIcon(group)" class="mr-2 text-primary"></i>
-                                                    {{ getEntityArabicName(group) }}
+                                                    <i :class="getGroupIcon(String(group))" class="mr-2 text-primary"></i>
+                                                    {{ getEntityArabicName(String(group)) }}
                                                 </h4>
                                                 <div class="flex flex-wrap gap-2">
                                                     <Tag
@@ -192,7 +192,7 @@
                         <InputText id="roleName" v-model="roleForm.name" fluid/>
                         <label for="roleName"><i class="fas fa-user-shield"/> اسم المجموعة</label>
                     </FloatLabel>
-                    <small class="text-yellow-200 text-s mt-0">
+                    <small class=" text-s mt-0">
                         اسم المجموعة العام كي يتم اختياره عند اضافة مستخدمين جدد
                     </small>
                 </div>
@@ -314,7 +314,7 @@ import Breadcrumb from "primevue/breadcrumb";
 import Button from "primevue/button";
 import InputText from "primevue/inputtext";
 import Panel from 'primevue/panel';
-import rolesService, { type RoleFilters } from './rolesService';
+import rolesService, { type RoleFilters, type Permission } from './rolesService';
 import Tag from 'primevue/tag';
 import MultiSelect from 'primevue/multiselect';
 import Dialog from "primevue/dialog";
@@ -324,8 +324,8 @@ import FloatLabel from 'primevue/floatlabel';
 import { hasPermission } from '../services/permission';
 
 /* =============================
- Translation & Description Maps
- ============================= */
+Translation & Description Maps
+============================= */
 
 // Arabic translations for actions
 const actionTranslations: Record<string, string> = {
@@ -479,8 +479,8 @@ const permissionDescriptions: Record<string, string> = {
 };
 
 /* =============================
- Refs & Reactive State
- ============================= */
+Refs & Reactive State
+============================= */
 
 // Toast & Confirmation dialogs
 const toast = useToast();
@@ -505,8 +505,8 @@ const addEditRoleDialogVisible = ref(false);
 // Breadcrumbs
 const breadcrumbHome = ref({ icon: "pi pi-home", to: "/" });
 const breadcrumbItems = ref([
-  { label: "الرئيسية", to: "/", icon: "fas fa-house" },
-  { label: "المجموعات والصلاحيات", to: "/roles", icon: "fa-solid fa-shield-halved" },
+    { label: "الرئيسية", to: "/", icon: "fas fa-house" },
+    { label: "المجموعات والصلاحيات", to: "/roles", icon: "fa-solid fa-shield-halved" },
 ]);
 
 // Role Form
@@ -518,23 +518,23 @@ const roleForm = ref({
 
 // Filters
 const filters = reactive<RoleFilters>({
-  search: '',
-  name: '',
-  permissions: [],
-  all: false
+    search: '',
+    name: '',
+    permissions: [],
+    all: false
 });
 
 // Reset all filters
 const resetFilter = () => {
-  filters.search = '';
-  filters.name = '';
-  filters.permissions = [];
-  getAllRoles();
+    filters.search = '';
+    filters.name = '';
+    filters.permissions = [];
+    getAllRoles();
 };
 
 /* =============================
- Helper Functions
- ============================= */
+Helper Functions
+============================= */
 
 // Get Arabic name for entity
 const getEntityArabicName = (entity: string): string => {
@@ -563,30 +563,31 @@ const getArabicLabelFromValue = (value: string): string => {
     const parts = value.split("-");
     const action = parts[0];
     const entity = parts.slice(1).join("-");
-    return getFullArabicLabel(action, entity);
+    return getFullArabicLabel(action ?? '', entity ?? '');
 };
 
 // Get icon from permission value
 const getPermissionIconFromValue = (value: string): string => {
     const action = value.split("-")[0];
-    return getPermissionIcon(action);
+    return getPermissionIcon(action ?? '');
 };
 
 // Get color hex from permission value
 const getPermissionColorHexFromValue = (value: string): string => {
     const action = value.split("-")[0];
-    return getPermissionColorHex(action);
+    return getPermissionColorHex(action ?? '');
 };
 
 /* =============================
- Computed: Filtered Roles
- ============================= */
+Computed: Filtered Roles
+============================= */
 const filteredRoles = computed(() => {
     isLoading.value = true;
     const result = allRoles.value.filter(role => {
         const matchSearch = !filters.search || role.name.includes(filters.search);
         const matchName = !filters.name || role.name.includes(filters.name);
-        const matchPermissions = !filters.permissions.length || role.permissions.some(p => filters.permissions.includes(p.name));
+        const matchPermissions = !filters.permissions?.length 
+            || role.permissions.some((p: Permission) => filters.permissions!.includes(p.name));
         return matchSearch && matchName && matchPermissions;
     });
     isLoading.value = false;
@@ -594,8 +595,8 @@ const filteredRoles = computed(() => {
 });
 
 /* =============================
- Group Permissions For Display
- ============================= */
+Group Permissions For Display
+============================= */
 const groupPermissions = (permissions: any[]) => {
     const grouped: Record<string, any[]> = {};
 
@@ -666,8 +667,8 @@ const getPermissionIcon = (action: string) => {
 };
 
 /* =============================
- API Calls: Fetch Roles
- ============================= */
+API Calls: Fetch Roles
+============================= */
 const getAllRoles = async () => {
     isLoading.value = true;
     try {
@@ -692,12 +693,14 @@ const getAllRoles = async () => {
 };
 
 /* =============================
- API Calls: Fetch Permissions
- ============================= */
+API Calls: Fetch Permissions
+============================= */
 const getPermissions = async () => {
     try {
         const response = await rolesService.getAllPermissions();
-        allPermissions.value = Array.isArray(response) ? response : response.data || [];
+        allPermissions.value = Array.isArray(response) 
+            ? response 
+            : response.data ?? [];
 
         const grouped: Record<string, any[]> = {};
 
@@ -764,8 +767,8 @@ const getPermissions = async () => {
 };
 
 /* =============================
- Open Dialog: Add or Edit Role
- ============================= */
+Open Dialog: Add or Edit Role
+============================= */
 const openAddEditRole = (role: any = null) => {
     if (role) {
         isEditMode.value = true;
@@ -782,9 +785,10 @@ const openAddEditRole = (role: any = null) => {
 };
 
 /* =============================
- Save / Update Role
- ============================= */
+Save / Update Role
+============================= */
 const saveHandling = async () => {
+    // تحقق من الحقول المطلوبة
     if (!roleForm.value.name || roleForm.value.permissions.length === 0) {
         toast.add({
             severity: "error",
@@ -798,11 +802,21 @@ const saveHandling = async () => {
     isSaving.value = true;
 
     try {
+        // حضر الـ payload لتوافق واجهة Role
+        const payload = {
+            ...roleForm.value,
+            // حول permissions من string[] إلى Permission[]
+            permissions: roleForm.value.permissions.map((p) =>
+                typeof p === 'string' ? { id: 0, name: p } : p
+            ),
+        };
+
         if (isEditMode.value && roleForm.value.id) {
-            await rolesService.updateRole(roleForm.value.id, roleForm.value);
+            // id مؤكد موجود، استخدم non-null assertion
+            await rolesService.updateRole(roleForm.value.id, payload);
             toast.add({ severity: "success", summary: "نجاح", detail: "تم التحديث", life: 2000 });
         } else {
-            await rolesService.createRole(roleForm.value);
+            await rolesService.createRole(payload);
             toast.add({ severity: "success", summary: "نجاح", detail: "تمت الإضافة", life: 2000 });
         }
 
@@ -822,8 +836,8 @@ const saveHandling = async () => {
 };
 
 /* =============================
- Confirm Delete Role
- ============================= */
+Confirm Delete Role
+============================= */
 const confirmDeleteRole = (role: any) => {
     if (isConfirming.value) return;
     isConfirming.value = true;
@@ -866,8 +880,8 @@ const resetForm = () => {
 };
 
 /* =============================
- Helper: Get Icon for Permission Group
- ============================= */
+Helper: Get Icon for Permission Group
+============================= */
 const getGroupIcon = (group: string) => {
     const icons: { [key: string]: string } = {
         // Main entities
@@ -906,16 +920,16 @@ const getGroupIcon = (group: string) => {
 };
 
 /* =============================
- Panel Toggle Logic
- ============================= */
+Panel Toggle Logic
+============================= */
 const openPanel = ref<number | null>(null);
 const togglePanel = (roleId: number) => {
     openPanel.value = openPanel.value === roleId ? null : roleId;
 };
 
 /* =============================
- Lifecycle: On Mounted
- ============================= */
+Lifecycle: On Mounted
+============================= */
 onMounted(() => {
     getAllRoles();
     getPermissions();

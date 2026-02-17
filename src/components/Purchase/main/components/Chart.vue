@@ -8,8 +8,8 @@
 //   for the same data, all wrapped in PrimeVue Card components.
 // ============================================================================
 
-import { computed, defineProps } from 'vue';
-import type { PurchaseRequest } from './purchase.interfaces';
+import { computed } from 'vue';
+import type { PurchaseRequest } from '../../interfaces/purchase.interfaces';
 import Chart from 'primevue/chart';
 import Card from 'primevue/card';
 

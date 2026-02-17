@@ -19,21 +19,12 @@
     </main>
 
     <!-- Back To Top Button -->
-    <Transition name="fade-slide">
-      <Button
-        v-show="showBackToTop"
-        icon="pi pi-arrow-up" 
-        class="back-to-top-classic"
-        rounded
-        @click="scrollToTop"
-      />
-    </Transition>
+    <ScrollTop/>
   </div>
 </template>
 
 <script setup lang="ts">
 import {ref, onMounted, onUnmounted}from 'vue';
-import Button from 'primevue/button';
 // Import the Navbar component for the application's navigation bar
 import navbar from './components/navbar/navbar.vue';
 // Import PrimeVue Toast component for displaying notifications
@@ -41,6 +32,7 @@ import Toast from 'primevue/toast';
 
 // Import PrimeVue ConfirmDialog component for confirmation dialogs
 import ConfirmDialog from 'primevue/confirmdialog';
+import ScrollTop from 'primevue/scrolltop';
 
 // Import RouterView from vue-router to render the current route's component
 import { RouterView } from 'vue-router';
@@ -50,13 +42,6 @@ const showBackToTop = ref(false);
 const handleScroll = () => {
   showBackToTop.value = window.scrollY > 300;
 };
-
-const scrollToTop = () => {
-  window.scrollTo({
-    top: 0,
-    behavior: 'smooth'
-  });
-}
 
 onMounted(() => {
     window.addEventListener('scroll', handleScroll);

@@ -157,7 +157,7 @@ const toggleUserMenu = (event: Event) => {
  */
 const handleLogout = async() => {
   try {
-    const response = await AuthServices.logout();
+    await AuthServices.logout();
     toast.add({
       severity: "success",
       summary: "رسالة نجاح",

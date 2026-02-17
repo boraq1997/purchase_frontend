@@ -248,7 +248,7 @@
                                     </div>
                                     <Tag 
                                         :value="estimate.purchase_request?.priority ?? 'low'"
-                                        :severity="priorityColor[estimate.purchase_request?.priority ?? 'low']"
+                                        :severity="priorityColor[(estimate.purchase_request?.priority ?? 'low') as Priority]"
                                         rounded
                                     />
                                 </div>
@@ -272,9 +272,9 @@
                                             <span>حالة الطلب</span>
                                         </div>
                                         <Chip
-                                            :label="statusMap[estimate.status]?.label ?? '—'"
-                                            :icon="statusMap[estimate.status]?.icon ?? ''"
-                                            :class="(statusMap[estimate.status]?.class ?? '') + ' w-full justify-content-center font-semibold'"
+                                            :label="statusMap[estimate.status as EstimateStatus]?.label ?? '—'"
+                                            :icon="statusMap[estimate.status as EstimateStatus]?.icon ?? ''"
+                                            :class="(statusMap[estimate.status as EstimateStatus]?.class ?? '') + ' w-full justify-content-center font-semibold'"
                                         />
                                     </div>
 
@@ -307,7 +307,7 @@
                                 <!-- Items List Accordion -->
                                 <div class="mb-3">
                                     <Accordion :multiple="false">
-                                        <AccordionPanel multiple >
+                                        <AccordionPanel value="0" multiple >
                                             <AccordionHeader>
                                                 <div class="flex align-items-center justify-content-between w-full pl-3">
                                                     <div class="flex align-items-center gap-2">
@@ -404,8 +404,8 @@
 <script lang="ts" setup>
 
 /* =========================================================
-   Vue & PrimeVue Core Imports
-   ========================================================= */
+Vue & PrimeVue Core Imports
+========================================================= */
 import { ref, reactive, onMounted } from 'vue';
 import { useToast } from "primevue/usetoast";
 import { useConfirm } from "primevue/useconfirm";
@@ -413,14 +413,14 @@ import { FilterMatchMode } from "@primevue/core/api";
 import { hasPermission } from '../services/permission';
 
 /* =========================================================
-   Services & Types
-   ========================================================= */
+Services & Types
+========================================================= */
 import VendorsService, { type Vendor } from './VendorsService';
 import estimateService from '../estimate/estimateService';
 
 /* =========================================================
-   PrimeVue Components Imports
-   ========================================================= */
+PrimeVue Components Imports
+========================================================= */
 import Breadcrumb from "primevue/breadcrumb";
 import Button from "primevue/button";
 import DataTable from "primevue/datatable";
@@ -440,28 +440,28 @@ import AccordionContent from 'primevue/accordioncontent';
 import FloatLabel from 'primevue/floatlabel';
 
 /* =========================================================
-   PrimeVue Utilities
-   ========================================================= */
+PrimeVue Utilities
+========================================================= */
 const toast = useToast();      // Toast notifications handler
 const confirm = useConfirm(); // Confirmation dialog handler
 
 /* =========================================================
-   UI State Flags
-   ========================================================= */
+UI State Flags
+========================================================= */
 const isLoading = ref(true);        // Global loading indicator
 const isSaving = ref(false);        // Save button loading state
 const isEditMode = ref(false);      // Determines add/edit mode
 const isConfirming = ref(false);    // Prevents multiple confirmations
 
 /* =========================================================
-   Data Collections
-   ========================================================= */
+Data Collections
+========================================================= */
 const allVendors = ref<any[]>([]);       // All vendors list
 const vendorEstimates = ref<any[]>([]);  // Estimates related to a vendor
 
 /* =========================================================
-   Vendor Form State
-   ========================================================= */
+Vendor Form State
+========================================================= */
 const vendorForm = ref<Vendor>({
     id: undefined,
     name: '',
@@ -472,21 +472,21 @@ const vendorForm = ref<Vendor>({
 });
 
 /* =========================================================
-   Dialog Visibility Controls
-   ========================================================= */
+Dialog Visibility Controls
+========================================================= */
 const addEditVendorDialogVisible = ref(false);
 const showAllEstimatesDialogVisible = ref(false);
 
 /* =========================================================
-   DataTable Filters
-   ========================================================= */
+DataTable Filters
+========================================================= */
 const filters = reactive({
     global: { value: null, matchMode: FilterMatchMode.CONTAINS },
 });
 
 /* =========================================================
-   Breadcrumb Configuration
-   ========================================================= */
+Breadcrumb Configuration
+========================================================= */
 const breadcrumbHome = ref({ icon: 'fas fa-store', to: "/" });
 const breadcrumbItems = ref([
     { label: "الرئيسية", to: "/", icon: "fas fa-house" },
@@ -494,14 +494,14 @@ const breadcrumbItems = ref([
 ]);
 
 /* =========================================================
-   Fetch All Vendors with Relations
-   ========================================================= */
+Fetch All Vendors with Relations
+========================================================= */
 const getAllVendors = async () => {
     isLoading.value = true;
 
     try {
         const response = await VendorsService.getAllVendorsWithRelations();
-        allVendors.value = response;
+        allVendors.value = Array.isArray(response) ? response : response.data;
         console.log(allVendors.value);
     } catch (err: any) {
         console.log(err);
@@ -517,8 +517,8 @@ const getAllVendors = async () => {
 };
 
 /* =========================================================
-   Open Add / Edit Vendor Dialog
-   ========================================================= */
+Open Add / Edit Vendor Dialog
+========================================================= */
 const openAddEditVendorDialog = async (vendor: any = null) => {
     if (vendor) {
         // Edit mode
@@ -540,8 +540,8 @@ const openAddEditVendorDialog = async (vendor: any = null) => {
 };
 
 /* =========================================================
-   Open Vendor Estimates Dialog
-   ========================================================= */
+Open Vendor Estimates Dialog
+========================================================= */
 const openAllEstimatesDialog = async (vendor: any) => {
     if (!vendor) {
         toast.add({
@@ -568,8 +568,8 @@ const openAllEstimatesDialog = async (vendor: any) => {
 };
 
 /* =========================================================
-   Confirm & Delete Vendor
-   ========================================================= */
+Confirm & Delete Vendor
+========================================================= */
 const confirmDeleteVendor = (vendor: any) => {
     if (isConfirming.value) return;
 
@@ -614,8 +614,8 @@ const confirmDeleteVendor = (vendor: any) => {
 };
 
 /* =========================================================
-   Create / Update Vendor
-   ========================================================= */
+Create / Update Vendor
+========================================================= */
 const saveHandling = async () => {
     if (!vendorForm.value.name) {
         toast.add({
@@ -636,7 +636,16 @@ const saveHandling = async () => {
     try {
         if (isEditMode.value && vendorForm.value.id) {
             // Update vendor
-            await VendorsService.update(payload.id, payload);
+            if (payload.id !== undefined) {
+                await VendorsService.update(payload.id, payload);
+            } else {
+                toast.add({
+                    severity: "warning",
+                    summary: "رسالة تحذير",
+                    detail: "عذرا حدث خطاء ما اثناء حفظ بيانات البائع يرجى اعادة المحاولة",
+                    life: 3000
+                });
+            }
             toast.add({
                 severity: "success",
                 summary: "رسالة نجاح",
@@ -671,15 +680,21 @@ const saveHandling = async () => {
 };
 
 /* =========================================================
-   Estimates Helpers (UI Mapping)
-   ========================================================= */
-const priorityColor = {
+Estimates Helpers (UI Mapping)
+========================================================= */
+type Priority = 'high' | 'medium' | 'low';
+const priorityColor: Record<Priority, string> = {
     high: "danger",
     medium: "warn",
     low: "success",
 };
 
-const statusMap = {
+type EstimateStatus = | 'pending' | 'approved' | 'rejected' | 'completed';
+const statusMap: Record<EstimateStatus, {
+    label: string; 
+    icon: string; 
+    class: string;
+}>= {
     pending: {
         label: "معلقة",
         icon: "pi pi-hourglass",
@@ -703,8 +718,8 @@ const statusMap = {
 };
 
 /* =========================================================
-   Reset Vendor Form
-   ========================================================= */
+Reset Vendor Form
+========================================================= */
 const resetForm = () => {
     vendorForm.value = {
         id: undefined,
@@ -717,8 +732,8 @@ const resetForm = () => {
 };
 
 /* =========================================================
-   Lifecycle Hook
-   ========================================================= */
+Lifecycle Hook
+========================================================= */
 onMounted(() => {
     getAllVendors();
 });
@@ -739,10 +754,10 @@ onMounted(() => {
 }
 
 :deep(.p-card-body) {
-  padding: 1.25rem;
+    padding: 1.25rem;
 }
 
 :deep(.p-card-content) {
-  padding: 0;
+    padding: 0;
 }
 </style>

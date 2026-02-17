@@ -58,7 +58,7 @@ const form = reactive({
 onMounted(async () => {
     try {
         const res = await DepartmentService.getAll();
-        departments.value = res.data ?? res;
+        departments.value = (res as any).data ?? res;
     } catch (e) {
         toast.add({
             severity: 'error',
@@ -179,14 +179,10 @@ async function submitUpdate() {
         const payload = {
             title: form.title,
             description: form.description,
-            department_id: form.department_id,
+            department_id: form.department_id ?? undefined,
             priority: form.priority,
-            // لو الbackend يحتاج user_id أضفه هنا
-            // user_id: props.request.user_id ?? 1,
             items: mappedItems,
         };
-
-        console.log('UPDATE PAYLOAD =>', JSON.parse(JSON.stringify(payload)));
 
         const res = await purchaseRequestsService.update(props.request.id, payload);
 
@@ -199,13 +195,11 @@ async function submitUpdate() {
             life: 2500
         });
 
-        emit('updated', res.data);
+        emit('updated', res);
         emit('update:visible', false);
 
     } catch (err: any) {
-        console.error('UPDATE ERROR =>', err);
         console.error('ERROR RESPONSE =>', err?.response?.data);
-
         toast.add({
             severity: 'error',
             summary: 'خطأ',

@@ -1,6 +1,6 @@
 // Import the createApp function from Vue to initialize the application
 import { createApp } from 'vue';
-
+import {createPinia} from 'pinia';
 // Import the global CSS styles for the application
 import './style.css';
 
@@ -32,6 +32,7 @@ import Tooltip from 'primevue/tooltip';
 
 // Create the Vue application instance
 const app = createApp(App);
+app.use(createPinia());
 
 // Configure PrimeVue with the Aura theme
 app.use(PrimeVue, {
