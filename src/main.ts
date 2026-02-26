@@ -1,6 +1,8 @@
 // Import the createApp function from Vue to initialize the application
 import { createApp } from 'vue';
 import {createPinia} from 'pinia';
+import { definePreset } from '@primeuix/themes';
+
 // Import the global CSS styles for the application
 import './style.css';
 
@@ -34,10 +36,30 @@ import Tooltip from 'primevue/tooltip';
 const app = createApp(App);
 app.use(createPinia());
 
+
+const MyPreset = definePreset(Aura, {
+    semantic: {
+        primary: {
+            50: '{amber.50}',
+            100: '{amber.100}',
+            200: '{amber.200}',
+            300: '{amber.300}',
+            400: '{amber.400}',
+            500: '{amber.500}',
+            600: '{amber.600}',
+            700: '{amber.700}',
+            800: '{amber.800}',
+            900: '{amber.900}',
+            950: '{amber.950}'
+        }
+    }
+});
+
+
 // Configure PrimeVue with the Aura theme
 app.use(PrimeVue, {
   theme: {
-    preset: Aura,
+    preset: MyPreset,
   },
 });
 

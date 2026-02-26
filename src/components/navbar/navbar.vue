@@ -1,6 +1,6 @@
 <template>
   <!-- Main header section with navigation bar -->
-  <header class="shadow-md" dir="rtl">
+  <header class="shadow-md" dir="rtl" >
     <!-- PrimeVue Menubar for top navigation -->
     <Menubar v-if="!hideMenu" :model="topItems" class="!rounded-none" style="padding: 5px 50px;">
       <!-- Start slot: Application branding/logo -->
@@ -15,7 +15,7 @@
         <a
           v-ripple
           v-bind="props.action"
-          class="flex align-items-center p-menuitem-link"
+          class="flex align-items-center p-menuitem-link hover:text-primary"
           :class="{
             'p-button-danger p-button-text': item.isDanger && !item.disabled,
             'p-disabled': item.disabled,

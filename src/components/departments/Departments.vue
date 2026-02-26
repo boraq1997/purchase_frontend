@@ -26,7 +26,7 @@
     <div class="flex justify-between mb-3">
       <Button 
         v-if="hasPermission('create-Department')"
-        class="p-button-sm" 
+        class="mb-3 mr-3" 
         label="قسم جديد" 
         icon="fas fa-plus" 
         @click="openAddEditDepartmentDialog()" 
@@ -170,7 +170,7 @@
       <div class="flex flex-column gap-4 mt-3">
         <div class="grid">
           <FloatLabel variant="on" class="col">
-            <InputText id="name_feild" v-model="departmentForm.name" fluid />
+            <InputText id="name_feild" v-model="departmentForm.name" fluid autofocus/>
             <label for="name_feild"><i class="fas fa-font"/> اسم القسم</label>
           </FloatLabel>
 
@@ -232,7 +232,7 @@
           :label="isEditMode ? 'حفظ التعديلات' : 'اضافة'" 
           icon="pi pi-check" 
           :loading="isSaving" 
-          :disabled="!departmentForm.name || !departmentForm.code"
+          :disabled="!departmentForm.name"
           class="p-button-sm" 
         />
       </template>
@@ -301,8 +301,7 @@
     </Dialog>
 
     <!-- Toast & Confirm Dialog -->
-    <Toast dir="rtl"/>
-    <ConfirmDialog group="deleteDepartment" />
+    
   </div>
 </template>
 
@@ -310,7 +309,7 @@
 /* =============================
    Imports
 ============================= */
-import { ref, reactive, computed, onMounted } from "vue";
+import { ref, reactive, computed, onMounted, onUnmounted } from "vue";
 import { useToast } from "primevue/usetoast";
 import { useConfirm } from "primevue/useconfirm";
 import Breadcrumb from "primevue/breadcrumb";
@@ -327,8 +326,6 @@ import Textarea from 'primevue/textarea';
 import Tag from 'primevue/tag';
 import Popover from 'primevue/popover';
 import Message from 'primevue/message';
-import Toast from 'primevue/toast';
-import ConfirmDialog from 'primevue/confirmdialog';
 import FloatLabel from 'primevue/floatlabel';
 
 import DepartmentService from "./DepartmentService"
@@ -368,6 +365,13 @@ const departmentForm = ref<Department>({
   manager: null,
   users: [],
 });
+
+const handleShourtcut = (event) => {
+  if (event.ctrlKey && event.key === 's') {
+    event.preventDefault();
+    openAddEditDepartmentDialog()
+  }
+}
 
 // Filters
 const filters = reactive({
@@ -500,8 +504,13 @@ const openUsersDialog = (department: any) => {
 
 // Save Add/Edit Form
 const saveHandling = async () => {
-  if (!departmentForm.value.name || !departmentForm.value.code) {
-    toast.add({ severity: "warn", summary: "رسالة تنبيه", detail: "رجاءً قم بملئ جميع الحقول", life: 3000 });
+  if (!departmentForm.value.name) {
+    toast.add({ 
+      severity: "warn", 
+      summary: "رسالة تنبيه", 
+      detail: "رجاءً قم بكتابة الاسم الخاص بالقسم", 
+      life: 3000
+    });
     return;
   }
 
@@ -522,20 +531,40 @@ const saveHandling = async () => {
     if (isEditMode.value && departmentForm.value.id !== undefined) {
       if (payload.id !== undefined) {
         await DepartmentService.update(payload.id, payload);
-        toast.add({ severity: "success", summary: "نجاح", detail: "تم تحديث بيانات القسم بنجاح", life: 3000 });
+        toast.add({ 
+          severity: "success", 
+          summary: "نجاح", 
+          detail: "تم تحديث بيانات القسم بنجاح", 
+          life: 3000 
+        });
       } else {
-        toast.add({ severity: "error", summary: "رسالة خطاء", detail: "حدث خطاء ما اثناء تحديث بيانات القسم", life: 3000 });
+        toast.add({ 
+          severity: "error", 
+          summary: "رسالة خطاء", 
+          detail: "حدث خطاء ما اثناء تحديث بيانات القسم", 
+          life: 3000
+        });
       }
       
     } else {
       await DepartmentService.create(payload);
-      toast.add({ severity: "success", summary: "نجاح", detail: "تم اضافة قسم بنجاح", life: 3000 });
+      toast.add({ 
+        severity: "success", 
+        summary: "نجاح", 
+        detail: "تم اضافة قسم بنجاح",
+        life: 3000
+      });
     }
 
     
   } catch (err) {
     console.error(err);
-    toast.add({ severity: "error", summary: "رسالة خطاء", detail: "حصل خطاء اثناء اضافة القسم", life: 3000 });
+    toast.add({ 
+      severity: "error", 
+      summary: "رسالة خطاء", 
+      detail: "حصل خطاء اثناء اضافة القسم", 
+      life: 3000 
+    });
   } finally {
     isSaving.value = false;
     await fetchAllDepartments();
@@ -555,7 +584,6 @@ const confirmDeleteDepartment = (department: any) => {
   isConfirming.value = true;
 
   confirm.require({
-    group: "deleteDepartment",
     message: `هل أنت متأكد من حذف بيانات القسم؟ "${department.name}"`,
     header: "تأكيد الحذف",
     icon: "pi pi-exclamation-triangle text-yellow-500",
@@ -603,7 +631,12 @@ const resetForm = () => {
 onMounted(async () => {
   await getAllUsers();
   await fetchAllDepartments();
+  window.addEventListener('keydown', handleShourtcut);
 });
+
+onUnmounted(() => {
+  window.addEventListener('keydown', handleShourtcut)
+})
 </script>
 
 <style scoped>

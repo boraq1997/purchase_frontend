@@ -143,7 +143,7 @@ onMounted(()=>{
                 departmentId.value = authDepartment.id;
                 hasDepartment.value = true;
                 return;
-            }
+            } 
         }
         loadDepartments();
     } catch (err) {
@@ -154,7 +154,7 @@ onMounted(()=>{
 </script>
 
 <template>
-    <div class="p-4 rounded-lg shadow space-y-4" dir="rtl">
+    <div class="rounded-lg shadow space-y-4" dir="rtl">
 
         <!-- زر إعادة التعيين -->
         <div class="flex justify-content-end mb-2">

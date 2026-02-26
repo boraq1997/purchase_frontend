@@ -4,7 +4,7 @@ import router from '../../router';
 // Create an Axios instance with default configuration
 const http = axios.create({
   // Base URL for all API requests
-  baseURL: 'http://127.0.0.1:8000/api',
+  baseURL: import.meta.env.VITE_API_BASE_URL,
   // Default headers for requests
   headers: {
     'Content-Type': 'application/json',

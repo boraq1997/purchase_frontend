@@ -38,6 +38,7 @@ import AccordionPanel from 'primevue/accordionpanel';
 import AccordionHeader from 'primevue/accordionheader';
 import AccordionContent from 'primevue/accordioncontent';
 import Divider from 'primevue/divider';
+import Galleria from 'primevue/galleria';
 
 /**
  * Local components
@@ -68,7 +69,7 @@ const active = ref('0');
 const toast = useToast(); // Toast notifications
 const confirm = useConfirm(); // Confirm dialog
 const isConfirming = ref(false); // Flag to prevent multiple confirm dialogs
-
+const baseURL = import.meta.env.VITE_API_FILES_BASE_URL;
 /**
  * Component props
  *
@@ -83,6 +84,41 @@ const props = defineProps<{
     visible: boolean;
     request: PurchaseRequest | null;
 }>();
+
+const displayPurchaseFiles = ref(false)
+
+const images = computed(() => {
+    if (!props.request?.images) return []
+
+    return props.request.images.map((img: any) => ({
+        itemImageSrc: baseURL + img.file_url,
+        thumbnailImageSrc: baseURL + img.file_url,
+        alt: img.file_name ?? 'image'
+    }))
+})
+
+const openImages = () => {
+    displayPurchaseFiles.value = true
+}
+
+const responsiveOptions = ref([
+    {
+        breakpoint: '1500px',
+        numVisible: 5
+    },
+    {
+        breakpoint: '1024px',
+        numVisible: 3
+    },
+    {
+        breakpoint: '768px',
+        numVisible: 2
+    },
+    {
+        breakpoint: '560px',
+        numVisible: 1
+    }
+]);
 
 /**
  * UI configuration for request status colors
@@ -274,10 +310,10 @@ function handleUpdated(updatedRequest: PurchaseRequest) {
 
 // Tab configurations for item details
 const tabs = [
-    { value: '0', icon: 'fa-solid fa-warehouse', label: 'المخازن', tooltip: 'معلومات المخازن' },
-    { value: '2', icon: 'fa-solid fa-receipt', label: 'العروض', tooltip: 'عروض الأسعار' },
-    { value: '3', icon: 'fas fa-print', label: 'التقارير', tooltip: 'طباعة التقارير' }
-];
+    { value: '0', label: 'المخازن',       icon: 'fa-solid fa-warehouse', tooltip: 'فحص المخازن' },
+    { value: '2', label: 'عروض الأسعار', icon: 'fa-solid fa-receipt',   tooltip: 'عروض الأسعار المقدمة' },
+    { value: '3', label: 'التقارير',      icon: 'fas fa-print',          tooltip: 'طباعة التقارير' },
+]
 </script>
 
 <template>
@@ -297,9 +333,50 @@ const tabs = [
         }"
     >
         <template #header>
-            <div class="flex align-items-center gap-2">
-                <i class="pi pi-file-edit text-2xl text-primary"></i>
-                <span class="text-xl font-semibold">تفاصيل طلب الشراء</span>
+            <div class="flex flex-column gap-2">
+                
+                <!-- Title -->
+                <div class="flex align-items-center gap-2">
+                    <i class="pi pi-file-edit text-2xl text-primary"></i>
+                    <span class="text-xl font-semibold">تفاصيل طلب الشراء</span>
+                </div>
+
+                <!-- Request Number + Status + Priority -->
+                <div class="flex align-items-center gap-2 mr-4">
+                    <div class="bg-primary-100 text-primary-700 border-circle w-2rem h-2rem flex align-items-center justify-content-center">
+                        <i class="pi pi-hashtag text-sm"></i>
+                    </div>
+                    <span class="text-base font-medium text-700">
+                        {{ props.request?.request_number }}
+                    </span>
+
+                    <Tag
+                        :value="statusLabel[props.request?.status_type || 'pending']"
+                        :severity="statusColor[props.request?.status_type || 'pending']"
+                        rounded
+                    >
+                        <template #default>
+                            <div class="flex align-items-center gap-2 px-2">
+                                <i class="pi pi-flag-fill text-xs"></i>
+                                <span class="font-medium">{{ statusLabel[props.request?.status_type || 'pending'] }}</span>
+                            </div>
+                        </template>
+                    </Tag>
+
+                    <Tag
+                        :value="priorityLabel[props.request?.priority || 'medium']"
+                        :severity="priorityColor[props.request?.priority || 'medium']"
+                        rounded
+                    >
+                        <template #default>
+                            <div class="flex align-items-center gap-2 px-2">
+                                <i class="pi pi-exclamation-circle text-xs"></i>
+                                <span class="font-medium">{{ priorityLabel[props.request?.priority || 'medium'] }}</span>
+                            </div>
+                        </template>
+                    </Tag>
+                </div>
+
             </div>
         </template>
 
@@ -318,112 +395,75 @@ const tabs = [
             <section class="mb-4">
                 <div class="surface-card border-1 surface-border border-round-lg p-4">
 
-                    <!-- HEADER (Request number + status + priority + actions) -->
-                    <div class="flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+                    <!-- HEADER -->
+                    <div class="flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
 
-                        <!-- Request Number -->
-                        <div class="flex align-items-center gap-2">
-                            <div class="bg-primary-100 text-primary-700 border-circle w-2rem h-2rem flex align-items-center justify-content-center">
-                                <i class="pi pi-hashtag text-sm"></i>
-                            </div>
-                            <span class="text-xl font-semibold text-900">
-                                {{ props.request?.request_number }}
-                            </span>
-                            <Tag
-                                :value="statusLabel[props.request?.status_type || 'pending']"
-                                :severity="statusColor[props.request?.status_type || 'pending']"
-                                rounded
-                            >
-                                <template #default>
-                                    <div class="flex align-items-center gap-2 px-2">
-                                        <i class="pi pi-flag-fill text-xs"></i>
-                                        <span class="font-medium">{{ statusLabel[props.request?.status_type || 'pending'] }}</span>
-                                    </div>
-                                </template>
-                            </Tag>
-
-                            <!-- PRIORITY TAG -->
-                            <Tag
-                                :value="priorityLabel[props.request?.priority || 'medium']"
-                                :severity="priorityColor[props.request?.priority || 'medium']"
-                                rounded
-                            >
-                                <template #default>
-                                    <div class="flex align-items-center gap-2 px-2">
-                                        <i class="pi pi-exclamation-circle text-xs"></i>
-                                        <span class="font-medium">{{ priorityLabel[props.request?.priority || 'medium'] }}</span>
-                                    </div>
-                                </template>
-                            </Tag>
+                        <!-- Title & Description -->
+                        <div class="flex flex-column gap-1 flex-1">
+                            <h3 class="text-900 font-semibold text-xl m-0">
+                                {{ props.request?.title }}
+                            </h3>
+                            <p class="text-600 line-height-3 m-0 text-sm" v-if="props.request?.description">
+                                {{ props.request?.description }}
+                            </p>
+                            <p class="text-400 text-sm m-0" v-else>
+                                لا يوجد وصف
+                            </p>
                         </div>
 
-                        <!-- Status + Priority + Actions -->
-                        <div class="flex align-items-center gap-2 flex-wrap">
-
-                            <!-- STATUS TAG -->
-                            
-
-                            <!-- ACTIONS -->
-                            <div class="flex gap-2">
-                                <Button
-                                    v-if="hasPermission('edit-Procurement')"
-                                    icon="fas fa-pen"
-                                    severity="info"
-                                    size="small"
-                                    @click="openEdit"
-                                    outlined
-                                    v-tooltip.top="'تعديل الطلب'"
-                                />
-
-                                <Button
-                                    severity="danger"
-                                    icon="fas fa-trash-alt"
-                                    size="small"
-                                    outlined
-                                    v-tooltip.top="'حذف الطلب'"
-                                    @click="confirmDeleteRequest(props.request)"
-                                />
-
-                                <Button
-                                    v-if="hasAnyPermission([
-                                        'finalize-procurement',
-                                        'approve-purchase-request',
-                                        'generate-report',
-                                        'create-WarehouseCheck',
-                                        'edit-WarehouseCheck',
-                                        'delete-WarehouseCheck',
-                                        'view-Report',
-                                        'create-Report',
-                                        'edit-Report',
-                                        'delete-Report'
-                                    ])"
-                                    label="إجراءات"
-                                    icon="fas fa-cog"
-                                    severity="warn"
-                                    size="small"
-                                    outlined
-                                    @click="actionsDialogVisible = true"
-                                    v-tooltip.top="'إجراءات الطلب'"
-                                />
-                            </div>
+                        <!-- ACTIONS -->
+                        <div class="flex gap-2 flex-shrink-0">
+                            <Button
+                                icon="fas fa-images"
+                                severity="info"
+                                size="small"
+                                outlined
+                                v-tooltip.top="'عرض الملفات'"
+                                @click.prevent="openImages"
+                            />
+                            <Button
+                                v-if="hasPermission('edit-Procurement')"
+                                icon="fas fa-pen"
+                                severity="info"
+                                size="small"
+                                outlined
+                                v-tooltip.top="'تعديل الطلب'"
+                                @click="openEdit"
+                            />
+                            <Button
+                                severity="danger"
+                                icon="fas fa-trash-alt"
+                                size="small"
+                                outlined
+                                v-tooltip.top="'حذف الطلب'"
+                                @click="confirmDeleteRequest(props.request)"
+                            />
+                            <Button
+                                v-if="hasAnyPermission([
+                                    'finalize-procurement',
+                                    'approve-purchase-request',
+                                    'generate-report',
+                                    'create-WarehouseCheck',
+                                    'edit-WarehouseCheck',
+                                    'delete-WarehouseCheck',
+                                    'view-Report',
+                                    'create-Report',
+                                    'edit-Report',
+                                    'delete-Report'
+                                ])"
+                                label="إجراءات"
+                                icon="fas fa-cog"
+                                severity="warn"
+                                size="small"
+                                outlined
+                                v-tooltip.top="'إجراءات الطلب'"
+                                @click="actionsDialogVisible = true"
+                            />
                         </div>
 
                     </div>
 
                     <Divider class="my-3" />
-
-                    <!-- TITLE & DESCRIPTION -->
-                    <div class="mb-4">
-                        <h3 class="text-900 font-semibold text-xl mb-2 m-0">
-                            {{ props.request?.title }}
-                        </h3>
-                        <p class="text-600 line-height-3 m-0" v-if="props.request?.description">
-                            {{ props.request?.description }}
-                        </p>
-                        <p class="text-400 text-sm m-0" v-else>
-                            لا يوجد وصف
-                        </p>
-                    </div>
 
                     <!-- GRID INFO -->
                     <div class="grid text-sm">
@@ -499,95 +539,131 @@ const tabs = [
             <!-- SECTION: Selected Item Details -->
             <!-- ============================================= -->
             <section>
-                <div class="surface-card border-1 surface-border border-round-lg p-4">
-                    
-                    <div class="flex align-items-center gap-2 mb-3">
-                        <i class="pi pi-info-circle text-primary text-xl"></i>
-                        <h3 class="text-lg font-semibold m-0">تفاصيل المادة المختارة</h3>
+                <div class="surface-card border-1 surface-border border-round-xl p-0 overflow-hidden shadow-2">
+
+                <!-- ── Header ── -->
+                <div class="flex align-items-center gap-3 px-4 py-3 surface-50 border-bottom-1 surface-border">
+                    <div class="flex align-items-center justify-content-center border-round-lg bg-primary-100 text-primary p-2">
+                    <i class="pi pi-info-circle text-lg" />
+                    </div>
+                    <div class="flex flex-column gap-1">
+                    <span class="font-bold text-900 text-base">تفاصيل المادة المختارة</span>
+                    <span v-if="selectedItem" class="text-primary font-semibold text-xs">{{ selectedItem.item_name }}</span>
+                    </div>
+                    <div v-if="selectedItem" class="mr-auto">
+                    <Tag severity="success" value="عرض نشط" icon="pi pi-circle-fill" rounded />
+                    </div>
+                </div>
+
+                <div class="p-4">
+
+                    <!-- ── Empty State ── -->
+                    <div v-if="!selectedItem" class="flex flex-column align-items-center justify-content-center py-7 gap-3">
+                    <div class="flex align-items-center justify-content-center border-round-2xl bg-primary-50 p-4">
+                        <i class="fas fa-hand-pointer text-primary text-4xl" />
+                    </div>
+                    <div class="text-center">
+                        <p class="font-bold text-900 text-base m-0 mb-1">لم تُحدَّد أي مادة</p>
+                        <p class="text-500 text-sm m-0">اختر مادة من الجدول أعلاه لعرض تفاصيلها هنا</p>
+                    </div>
                     </div>
 
-                    <!-- No Item Selected State -->
-                    <div v-if="!selectedItem" class="text-center py-6">
-                        <div class="inline-flex align-items-center justify-content-center bg-gray-100 border-circle mb-3" style="width: 4rem; height: 4rem;">
-                            <i class="pi pi-arrow-up text-3xl text-400"></i>
-                        </div>
-                        <p class="text-600 m-0">اختر مادة من الجدول أعلاه لعرض تفاصيلها</p>
-                    </div>
-
-                    <!-- Item Selected - Show Tabs -->
+                    <!-- ── Tabs + Content ── -->
                     <div v-else>
-                        
-                        <!-- Tab Navigation -->
-                        <div class="flex gap-2 mb-4 border-bottom-1 surface-border pb-2 overflow-x-auto">
-                            <Button
-                                v-for="tab in tabs"
-                                :key="tab.value"
-                                @click="active = tab.value"
-                                :outlined="active !== tab.value"
-                                size="small"
-                                class="flex-shrink-0"
-                                v-tooltip.top="tab.tooltip"
-                            >
-                                <template #default>
-                                    <i :class="tab.icon" class="mr-2"></i>
-                                    <span>{{ tab.label }}</span>
-                                </template>
-                            </Button>
+
+                    <!-- Tab Navigation -->
+                    <div class="flex gap-2 pb-3 border-bottom-1 surface-border overflow-x-auto mb-4">
+                        <Button
+                        v-for="tab in tabs"
+                        :key="tab.value"
+                        :label="tab.label"
+                        :icon="tab.icon"
+                        :severity="active === tab.value ? 'primary' : 'secondary'"
+                        :outlined="active !== tab.value"
+                        size="small"
+                        class="flex-shrink-0 border-round-lg font-semibold"
+                        v-tooltip.top="tab.tooltip"
+                        @click="active = tab.value"
+                        />
+                    </div>
+
+                    <!-- ── Panel: المخازن ── -->
+                    <div v-if="active === '0'">
+                        <div class="flex align-items-center gap-2 mb-3">
+                        <div class="flex align-items-center justify-content-center border-round-lg bg-blue-50 text-blue-600 p-2">
+                            <i class="fa-solid fa-warehouse text-sm" />
                         </div>
+                        <span class="font-bold text-900 text-sm">معلومات المخازن</span>
+                        </div>
+                        <WarehouseCheckCard :item="selectedItem" />
+                    </div>
 
-                        <!-- Accordion Content -->
-                        <Accordion v-model:value="active">
-                            
-                            <!-- Warehouse Check -->
-                            <AccordionPanel value="0">
-                                <AccordionHeader>
-                                    <div class="flex align-items-center gap-2">
-                                        <i class="fa-solid fa-warehouse text-primary"></i>
-                                        <span>معلومات المخازن</span>
-                                    </div>
-                                </AccordionHeader>
-                                <AccordionContent>
-                                    <WarehouseCheckCard :item="selectedItem" />
-                                </AccordionContent>
-                            </AccordionPanel>
+                    <!-- ── Panel: عروض الأسعار ── -->
+                    <div v-else-if="active === '2'">
+                        <div class="flex align-items-center gap-2 mb-3">
+                        <div class="flex align-items-center justify-content-center border-round-lg bg-green-50 text-green-600 p-2">
+                            <i class="fa-solid fa-receipt text-sm" />
+                        </div>
+                        <span class="font-bold text-900 text-sm">عروض الأسعار</span>
+                        </div>
+                        <EstimatesCard :item="selectedItem" />
+                    </div>
 
-                            <!-- Estimates -->
-                            <AccordionPanel value="2">
-                                <AccordionHeader>
-                                    <div class="flex align-items-center gap-2">
-                                        <i class="fa-solid fa-receipt text-primary"></i>
-                                        <span>عروض الأسعار</span>
-                                    </div>
-                                </AccordionHeader>
-                                <AccordionContent>
-                                    <EstimatesCard :item="selectedItem" />
-                                </AccordionContent>
-                            </AccordionPanel>
-
-                            <!-- Reports -->
-                            <AccordionPanel value="3">
-                                <AccordionHeader>
-                                    <div class="flex align-items-center gap-2">
-                                        <i class="fas fa-print text-primary"></i>
-                                        <span>التقارير</span>
-                                    </div>
-                                </AccordionHeader>
-                                <AccordionContent>
-                                    <div class="text-center py-4 text-500">
-                                        <i class="pi pi-file-pdf text-4xl mb-3 block"></i>
-                                        <p>قريباً: سيتم إضافة خاصية طباعة التقارير</p>
-                                    </div>
-                                </AccordionContent>
-                            </AccordionPanel>
-
-                        </Accordion>
+                    <!-- ── Panel: التقارير ── -->
+                    <div v-else-if="active === '3'">
+                        <div class="flex align-items-center gap-2 mb-3">
+                        <div class="flex align-items-center justify-content-center border-round-lg bg-orange-50 text-orange-600 p-2">
+                            <i class="fas fa-print text-sm" />
+                        </div>
+                        <span class="font-bold text-900 text-sm">التقارير</span>
+                        </div>
+                        <div class="flex flex-column align-items-center justify-content-center py-6 gap-3 border-2 border-dashed surface-border border-round-xl surface-50">
+                        <div class="flex align-items-center justify-content-center border-round-xl bg-orange-50 p-3">
+                            <i class="pi pi-file-pdf text-orange-400 text-3xl" />
+                        </div>
+                        <div class="text-center">
+                            <p class="font-bold text-900 text-sm m-0 mb-1">قريباً</p>
+                            <p class="text-500 text-xs m-0">سيتم إضافة خاصية طباعة التقارير لهذه المادة</p>
+                        </div>
+                        </div>
+                    </div>
 
                     </div>
+                </div>
                 </div>
             </section>
 
         </div>
+
+                
     </Dialog>
+
+    <Galleria
+        v-if="images.length > 0"
+        v-model:visible="displayPurchaseFiles"
+        :value="images"
+        :responsiveOptions="responsiveOptions"
+        :numVisible="Math.min(images.length, 5)"
+        :showItemNavigators="images.length > 1"
+        :showThumbnails="images.length > 1"
+        :circular="true"
+        :fullScreen="true"
+    >
+        <template #item="slotProps">
+            <img
+                :src="slotProps.item.itemImageSrc"
+                :alt="slotProps.item.alt"
+                style="width: 100%; display: block; max-height: 80vh; object-fit: contain;"
+            />
+        </template>
+        <template #thumbnail="slotProps">
+            <img
+                :src="slotProps.item.thumbnailImageSrc"
+                :alt="slotProps.item.alt"
+                style="display: block; width: 100px; height: 60px; object-fit: cover;"
+            />
+        </template>
+    </Galleria>
 
     <!-- Edit Purchase Dialog -->
     <PurchaseFormDialog

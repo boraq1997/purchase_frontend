@@ -23,16 +23,14 @@
         <!-- =============================
         Action Buttons
         ============================= -->
-        <div class="flex justify-between mb-3">
-            <Button 
+        <Button 
                 v-if="hasPermission('create-User')"
-                class="p-button-sm" 
+                class="mb-3 mr-3" 
                 label="اضافة" 
                 icon="fas fa-plus"
                 @click="openAddEditUserDialog()"
                 v-tooltip="{ value: 'اضافة مستخدم جديد', showDelay: 1000, hideDelay: 300 }"
             />
-        </div>
 
         <!-- =============================
         Users DataTable

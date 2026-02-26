@@ -137,6 +137,7 @@ onMounted(() => {
                 label="إضافة طلب جديد"
                 icon="fas fa-plus"
                 @click="openAddDialog"
+                class="mt-5 mb-0"
             />
         <!-- FILTER PANEL -->
         <FilterPanel

@@ -85,12 +85,11 @@ function getEstimatesCount(item: RequestItem) {
                 <template #body="{ data }">
                     <Chip
                         :label="`${data.quantity} ${data.unit}`"
-                        icon="pi pi-box"
+                        icon="fa-solid fa-boxes-stacked"
                     />
                 </template>
             </Column>
 
-            <!-- الملاحظات/المواصفات -->
             <Column header="الملاحظات" style="min-width: 150px;">
                 <template #header>
                     <i class="fas fa-note-sticky text-gray-500"/>
@@ -113,7 +112,7 @@ function getEstimatesCount(item: RequestItem) {
                 </template>
             </Column>
 
-            <Column header="بيان الحاجة" style="min-width: 180px;">
+            <!-- <Column header="بيان الحاجة" style="min-width: 180px;">
                 <template #header>
                     <i class="fas fa-hand-holding-medical text-gray-400 dark:text-gray-300"/>
                 </template>
@@ -121,7 +120,6 @@ function getEstimatesCount(item: RequestItem) {
                 <template #body="{ data }">
                     <div v-if="data.needs_assessment" class="flex flex-col gap-2">
 
-                    <!-- حالة التقييم -->
                         <Tag
                             :severity="needsStatusColor[data.needs_assessment.needs_status]"
                             :value="
@@ -136,7 +134,6 @@ function getEstimatesCount(item: RequestItem) {
                         />
 
 
-                    <!-- سبب التقييم -->
                     <div
                         v-if="data.needs_assessment.reason"
                         class="text-xs text-gray-700 dark:text-gray-300 p-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-inner max-h-28 overflow-auto break-words whitespace-pre-line"
@@ -146,18 +143,12 @@ function getEstimatesCount(item: RequestItem) {
 
                     </div>
 
-                    <!-- حالة عدم التقييم -->
                     <div v-else class="text-gray-400 dark:text-gray-500 text-xs italic">
                     غير مقيم
                     </div>
                 </template>
-            </Column>
+            </Column> -->
 
-
-
-
-
-            <!-- فحص المخازن -->
             <Column header="المخازن" style="min-width: 150px;">
                 <template #header>
                     <i class="fas fa-warehouse text-gray-500"/>
@@ -181,7 +172,7 @@ function getEstimatesCount(item: RequestItem) {
                         </p>
                     </div>
 
-                    <div v-else class="text-500 text-xs">
+                    <div v-else class="text-yellow-500">
                         لم يتم الفحص
                     </div>
 
@@ -195,7 +186,7 @@ function getEstimatesCount(item: RequestItem) {
                 </template>
                 <template #body="{ data }">
                     <Tag
-                        severity="info"
+                        :severity="getEstimatesCount(data) === 0 ? 'danger' : 'info'"
                         :value="getEstimatesCount(data)"
                         icon="fas fa-hashtag"
                         class="font-bold"

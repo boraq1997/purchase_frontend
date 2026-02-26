@@ -27,7 +27,7 @@
         <div class="flex justify-between mb-3">
             <Button 
                 v-if="hasPermission('create-Committees')"
-                class="p-button-sm bg-teal-500" 
+                class="mr-3" 
                 label="لجنة جديدة" 
                 icon="fas fa-plus" 
                 @click="openAddEditCommitteeDialog()" 
@@ -53,7 +53,7 @@
                 <div class="flex justify-between items-center">
                     <IconField>
                         <InputIcon><i class="fas fa-search"></i></InputIcon>
-                        <InputText v-model="filters.global.value" placeholder="بحث شامل..." />
+                        <InputText v-model="filters.global.value" placeholder="بحث شامل..." style="width: 20vw"/>
                     </IconField>
                 </div>
             </template>

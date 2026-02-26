@@ -9,14 +9,15 @@
                         عروض الأسعار
                     </h1> -->
                     <Breadcrumb :home="breadcrumbHome" :model="breadcrumbItems" class="" />
+                    <Button 
+                        v-if="hasPermission('create-Estimate')"
+                        icon="fas fa-plus" 
+                        label="إضافة عرض جديد" 
+                        class="mt-4"
+                        @click="openAddEditDialog()"
+                    />
                 </div>
-                <Button 
-                    v-if="hasPermission('create-Estimate')"
-                    icon="fas fa-plus" 
-                    label="إضافة عرض جديد" 
-                    class=""
-                    @click="openAddEditDialog()"
-                />
+                
             </div>
         </div>
 
@@ -406,17 +407,18 @@
         >
             <div class="flex flex-column gap-4 mt-3">
                 <div class="grid">
-                    <div class="col-10">
+                    <div class="col">
                         <FloatLabel variant="on">
                             <Select v-model="estimateForm.vendor_id" id="vendor_id" :options="allVendors" optionLabel="name" optionValue="id" fluid/>
                             <label for="vendor_id"><i class="fas fa-store"/> اختر البائع</label>
                         </FloatLabel>
                     </div>
                     
-                    <div class="col">
+                    <div class="col-fixed" width="100px">
                         <Button
                             icon="fas fa-plus"
                             v-tooltip="'اضافة بيانات بائع جديد'"
+                            variant="outlined"
                             @click="showAddVendorForm = !showAddVendorForm"
                         />
                     </div>
@@ -471,6 +473,7 @@
                             severity="secondary"
                             size="small"
                             @click="showAddVendorForm = false"
+                            
                         />
                         <Button
                             label="حفظ البائع"
@@ -634,11 +637,13 @@
                     icon="fas fa-times"
                     @click="addEditEstimateDialogVisible = false"
                     severity="secondary"
+                    variant="outlined"
                 />
                 <Button
                     label="حفظ"
                     icon="fas fa-floppy-disk"
                     @click="submitEstimate"
+                    variant="outlined"
                 />
             </template>
         </Dialog>

@@ -14,18 +14,23 @@
             <template #header="{ chooseCallback, clearCallback, files }">
                 <div class="upload-header">
                     <div class="header-actions">
-                        <button class="action-btn btn-choose" @click="chooseCallback()" type="button">
-                            <i class="pi pi-plus" />
-                            <span>إضافة صور</span>
-                        </button>
-                        <button
-                            class="action-btn btn-clear"
-                            @click="clearCallback()"
-                            type="button"
+                        
+                        <Button 
+                            label="اضافة صور" 
+                            icon="fas fa-folder-plus" 
+                            severity="warn" 
+                            variant="outlined" 
+                            size="small" 
+                            @click="chooseCallback()" 
+                        />
+                        <Button 
+                            icon="fas fa-trash-alt" 
+                            severity="danger" 
+                            rounded 
+                            size="small"
+                            @click="clearCallback()" 
                             :disabled="!files || files.length === 0"
-                        >
-                            <i class="pi pi-trash" />
-                        </button>
+                        />
                     </div>
 
                     <Transition name="fade">
@@ -67,9 +72,17 @@
                             >
                                 <img :src="'http://localhost:8000' + file.file_url" :alt="file.file_name" />
                                 <div class="thumb-overlay"><i class="pi pi-eye" /></div>
-                                <button class="thumb-delete" type="button" @click.stop="handleDeleteExistingFile(file.id)" title="حذف">
-                                    <i class="pi pi-times" />
-                                </button>
+                                <!-- <button class="thumb-delete" type="button" @click.stop="handleDeleteExistingFile(file.id)" title="حذف">
+                                    <i class="fas fa-home" />
+                                </button> -->
+                                <Button
+                                    class="thumb-delete"
+                                    icon="fas fa-times"
+                                    severity="danger"
+                                    @click.stop="handleDeleteExistingFile(file.id)"
+                                    title="حذف"
+                                    />
+                                
                             </div>
                         </div>
                     </template>
@@ -94,6 +107,13 @@
                                 <button class="thumb-delete" type="button" @click.stop="onRemoveTemplatingFile(file, removeFileCallback, index)" title="حذف">
                                     <i class="pi pi-times" />
                                 </button>
+                                <Button 
+                                    icon="fas fa-times"
+                                    class="thumb-delete"
+                                    @click.stop="onRemoveTemplatingFile(file, removeFileCallback, index)"
+                                    title="حذف"
+                                    severity="danger"
+                                    />
                                 <span class="thumb-size">{{ formatSize(file.size) }}</span>
                             </div>
                         </div>
@@ -188,6 +208,8 @@ import Galleria from 'primevue/galleria';
 import { usePrimeVue } from 'primevue/config';
 import { useToast } from 'primevue/usetoast';
 import api from '../../../api/api';
+import Button from 'primevue/button';
+import { useConfirm } from "primevue/useconfirm";
 
 interface LightboxItem { src: string; name: string; }
 
@@ -195,6 +217,7 @@ const props = defineProps<{ existingFiles?: any[] }>();
 const emit = defineEmits<{ (e: 'update:files', files: File[]): void }>();
 
 const toast = useToast();
+const confirm = useConfirm(); // Confirm dialog
 const $primevue = usePrimeVue();
 const { existingFiles } = toRefs(props);
 
@@ -224,7 +247,7 @@ const galleriaResponsiveOptions = ref([
 // Computed
 const allImages = computed<LightboxItem[]>(() =>
     deletableFiles.value.map(f => ({
-        src: 'http://localhost:8000' + f.file_url,
+        src: import.meta.env.VITE_API_FILES_BASE_URL + f.file_url,
         name: f.file_name
     }))
 );
@@ -275,15 +298,30 @@ onUnmounted(() => {
 
 // Delete (Optimistic)
 const handleDeleteExistingFile = async (imageId: number) => {
-    const backup = [...deletableFiles.value];
-    deletableFiles.value = deletableFiles.value.filter(f => f.id !== imageId);
-    try {
-        await api.delete(`/purchase-request-images/${imageId}`);
-        toast.add({ severity: 'success', summary: 'تم الحذف', detail: 'حُذفت الصورة بنجاح', life: 2500 });
-    } catch {
-        deletableFiles.value = backup;
-        toast.add({ severity: 'error', summary: 'خطأ', detail: 'فشل الحذف، أُعيدت الصورة', life: 3000 });
-    }
+    confirm.require({
+        header: 'تأكيد الحذف',
+        message: 'هل انت متاكد من حذف بيانات الصورة؟',
+        icon: 'fa-solid fa-triangle-exclamation text-yellow-200',
+        acceptLabel: "تأكيد",
+        acceptIcon: "pi pi-check",
+        acceptClass:"p-button-sm border border-red-500 bg-red-500 text-white",
+        rejectLabel: "إلغاء",
+        rejectIcon: "pi pi-times",
+        rejectClass:"p-button-sm border border-gray-400 text-gray-600 bg-transparent hover:bg-gray-200",
+        accept: async()=>{
+            const backup = [...deletableFiles.value];
+            deletableFiles.value = deletableFiles.value.filter(f => f.id !== imageId);
+            try {
+                await api.delete(`/purchase-request-images/${imageId}`);
+                toast.add({ severity: 'success', summary: 'تم الحذف', detail: 'حُذفت الصورة بنجاح', life: 2500 });
+            } catch {
+                deletableFiles.value = backup;
+                toast.add({ severity: 'error', summary: 'خطأ', detail: 'فشل الحذف، أُعيدت الصورة', life: 3000 });
+            }
+        },
+        reject: ()=>{}
+    })
+    
 };
 
 // File events
@@ -307,7 +345,19 @@ const onSelectedFiles = (event: any) => {
 };
 
 const onRemoveTemplatingFile = (file: File, removeFileCallback: Function, index: number) => {
-    removeFileCallback(index);
+    confirm.require({
+        header: 'تأكيد الحذف',
+        message: 'هل انت متاكد من حذف بيانات الصورة؟',
+        icon: 'fa-solid fa-triangle-exclamation text-yellow-200',
+        acceptLabel: "تأكيد",
+        acceptIcon: "pi pi-check",
+        acceptClass:"p-button-sm border border-red-500 bg-red-500 text-white",
+        rejectLabel: "إلغاء",
+        rejectIcon: "pi pi-times",
+        rejectClass:"p-button-sm border border-gray-400 text-gray-600 bg-transparent hover:bg-gray-200",
+        accept: async()=>{removeFileCallback(index);},
+        reject: ()=>{}
+    })
 };
 
 const onRemoveFile = (event: any) => {
@@ -435,14 +485,16 @@ const formatSize = (bytes: number): string => {
 .thumb-delete {
     position: absolute; top: 4px; left: 4px;
     width: 20px; height: 20px; border-radius: 50%;
-    background: #ef4444; color: #fff; border: 1.5px solid #fff;
     display: flex; align-items: center; justify-content: center;
     font-size: 0.5rem; cursor: pointer;
     opacity: 0; transform: scale(0.6);
     transition: opacity 0.18s, transform 0.18s;
     z-index: 3; box-shadow: 0 2px 6px rgba(239,68,68,0.5);
 }
-.img-thumb:hover .thumb-delete { opacity: 1; transform: scale(1); }
+.img-thumb:hover .thumb-delete { 
+    opacity: 1; 
+    transform: scale(1); 
+}
 
 .thumb-size {
     position: absolute; bottom: 4px; right: 4px;

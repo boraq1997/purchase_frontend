@@ -82,6 +82,7 @@ const AuthServices = {
             localStorage.removeItem(USER_KEY);
             localStorage.removeItem(PERMISSIONS_KEY);
             localStorage.removeItem(ROLES_KEY);
+            localStorage.removeItem(DEPARTMENT_INFO)
         }
         return response;
     },

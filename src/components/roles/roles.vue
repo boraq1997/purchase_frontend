@@ -27,14 +27,12 @@
         <!-- ============================= -->
         <div v-else>
             <!-- Action Bar: Add New Role -->
-            <div class="flex justify-content-start mt-4">
-                <Button 
-                    label="إضافة مجموعة جديدة" 
-                    icon="fas fa-plus" 
-                    @click="openAddEditRole()"
-                    class="p-button-sm"
-                />
-            </div>
+            <Button 
+                label="إضافة مجموعة جديدة" 
+                icon="fas fa-plus" 
+                @click="openAddEditRole()"
+                class="mt-4"
+            />
 
             <!-- Filter Section -->
             <div class="p-4 rounded-lg shadow space-y-4" dir="rtl">

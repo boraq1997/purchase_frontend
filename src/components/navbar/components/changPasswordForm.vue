@@ -211,15 +211,14 @@ const showRequirements = computed(() => passwordChangeForm.value.new_password.le
 <template>
     <div class="password-form" dir="rtl">
         <!-- Header -->
-        <div class="form-header">
-            <div class="header-icon">
-                <i class="pi pi-shield"></i>
-            </div>
-            <div>
-                <h3 class="header-title">تحديث كلمة المرور</h3>
-                <p class="header-desc">حافظ على أمان حسابك</p>
-            </div>
-        </div>
+         <Message
+            severity="warn"
+            icon="fas fa-user-shield"
+            >
+                <h3>تحديث كلمة المرور</h3>
+                <p>حافظ على أمان حسابك</p>
+        </Message>
+        
 
         <!-- Info Message -->
         <Message 

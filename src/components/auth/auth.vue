@@ -1,24 +1,45 @@
 <template>
     <div class="card">
-        <Card class="flex flex-column row-gap-3 shadow-5 loginForm">
-            <template #title>تسجيل الدخول</template>
+        <Card class="flex flex-column row-gap-3 shadow-5 loginForm p-1">
+            <template #title>
+                <div class="text-center mb-4">
+                    <Avatar image="/login_logo.png" class="mr-2" size="xlarge" shape="circle" />
+                    <h3>تسجيل الدخول</h3>
+                </div>
+            </template>
             <template #content>
-                <div class="flex flex-column row-gap-3">
-                    <IconField>
+                <div class="flex flex-column">
+                    <IconField class="mb-4">
                         <InputIcon class="fas fa-user-tag" />
-                        <InputText v-model="username" placeholder="البريد الإلكتروني" fluid />
+                        <InputText 
+                            v-model="username" 
+                            placeholder="البريد الإلكتروني"
+                            autocomplete="username"
+                            @keyup.enter="handleLogin"
+                            fluid 
+                        />
                     </IconField>
 
-                    <IconField>
+                    <IconField class="mb-2">
                         <InputIcon class="fas fa-lock" />
-                        <Password v-model="password" toggleMask placeholder="كلمة المرور" :feedback="false" fluid />
+                        <Password 
+                            v-model="password" 
+                            toggleMask 
+                            placeholder="كلمة المرور" 
+                            :feedback="false"
+                            autocomplete="current-password"
+                            @keyup.enter="handleLogin"
+                            fluid 
+                        />
                     </IconField>
+
+                    <Button label="هل نسيت كلمة المرور؟" class="mb-3 align-self-start" variant="link" />
 
                     <Button 
-                        type="submit" 
-                        @click="handleLogin" 
-                        severity="primary" 
-                        label="الدخول" 
+                        type="submit"
+                        @click="handleLogin"
+                        severity="primary"
+                        label="الدخول"
                         class="block p-button-sm" 
                         :disabled="isLoginDisabled"
                         :loading="isLoading"
@@ -42,15 +63,18 @@ import { useToast } from "primevue/usetoast";
 import IconField from "primevue/iconfield";
 import InputIcon from "primevue/inputicon";
 import { resolveMessages } from "../services/messageResolver";
+import Avatar from 'primevue/avatar';
 
 const isLoading = ref(false);
 const toast = useToast();
 
-const username = ref();
-const password = ref();
-const isLoginDisabled = computed(()=> !username.value || !password.value);
+const username = ref('');
+const password = ref('');
+const isLoginDisabled = computed(() => !username.value || !password.value);
 
-const handleLogin = async()=>{
+const handleLogin = async () => {
+    if (isLoginDisabled.value || isLoading.value) return;
+    
     isLoading.value = true;
     try {
         const response = await AuthServices.login({
@@ -75,35 +99,35 @@ const handleLogin = async()=>{
 
             toast.add({
                 severity: 'error', 
-                summary: 'رسالة خطاء', 
+                summary: 'خطأ', 
                 detail: message, 
-                life: 3000})
+                life: 3000
+            });
         } else {
             toast.add({
                 severity: 'error', 
-                summary: 'خطاء', 
-                detail: 'حدث خطاء ما راجع الconsole الخاص بالمتصفح', 
+                summary: 'خطأ', 
+                detail: 'حدث خطأ ما، راجع الـ Console الخاص بالمتصفح', 
                 life: 3000
-            })
-            console.log(err);
+            });
+            console.error(err);
         } 
     } finally {
-        isLoading.value = false
+        isLoading.value = false;
     }
-}
+};
 
-onMounted(()=>{
+onMounted(() => {
     const token = localStorage.getItem('auth_token');
     if (token) {
         router.push('/home');
     }
-})
-
+});
 </script>
 
 <style scoped>
 .loginForm {
-  width: 350px;
+  width: 400px;
   border-radius: 8px;
   margin: auto;
   margin-top: 25vh;
