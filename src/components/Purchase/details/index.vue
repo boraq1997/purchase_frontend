@@ -33,10 +33,6 @@ import { useConfirm } from "primevue/useconfirm";
 import Dialog from 'primevue/dialog';
 import Tag from 'primevue/tag';
 import Button from 'primevue/button';
-import Accordion from 'primevue/accordion';
-import AccordionPanel from 'primevue/accordionpanel';
-import AccordionHeader from 'primevue/accordionheader';
-import AccordionContent from 'primevue/accordioncontent';
 import Divider from 'primevue/divider';
 import Galleria from 'primevue/galleria';
 

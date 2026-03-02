@@ -1,14 +1,15 @@
 <template>
-    <div class="roles-management-page p-4" dir="rtl">
-        <!-- ============================= -->
-        <!-- Header & Breadcrumb Section -->
-        <!-- ============================= -->
-        <div class="card flex justify-center">
+    <div class="card flex justify-center mb-3 mt-3">
             <Breadcrumb 
                 :home="breadcrumbHome" 
                 :model="breadcrumbItems" 
             />
         </div>
+    <div class="roles-management-page p-4" dir="rtl">
+        <!-- ============================= -->
+        <!-- Header & Breadcrumb Section -->
+        <!-- ============================= -->
+        
 
         <!-- ============================= -->
         <!-- Loading Overlay -->
@@ -31,7 +32,6 @@
                 label="إضافة مجموعة جديدة" 
                 icon="fas fa-plus" 
                 @click="openAddEditRole()"
-                class="mt-4"
             />
 
             <!-- Filter Section -->

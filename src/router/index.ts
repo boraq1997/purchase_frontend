@@ -9,6 +9,7 @@ import Roles from '../components/roles/roles.vue';
 import Home from '../components/home/home.vue';
 import warehouse from '../components/warehouse/warehouse.vue';
 import Estimate from '../components/estimate/estimate.vue';
+import Estimate2 from '../components/estimate/EstimatesView.vue';
 import HomePurchase from '../components/Purchase/main/index.vue';
 import Vendors from '../components/vendors/Vendors.vue';
 import Activity from '../components/activityLogs/activity.vue';
@@ -27,7 +28,12 @@ const routes = [
     {path: '/roles', name: 'roles', component: Roles},
     {path: '/purchase-request', name: 'purchase-request', component: HomePurchase},
     {path: '/warehouse', name: 'warehouse', component: warehouse},
-    {path: '/estimate', name: 'estimate', component: Estimate},
+    {path: '/estimate', name: 'estimate', component: Estimate2},
+    { 
+      path: '/units', 
+      name: 'Units',
+      component: () => import('../components/units/index.vue')
+    },
     {path: '/vendors', name: 'vendors', component: Vendors},
     {path: '/logs', name: 'logs', component: Activity},
     // Server error page (500)

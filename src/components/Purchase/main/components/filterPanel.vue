@@ -191,7 +191,6 @@ onMounted(()=>{
 
             <!-- حالة الطلب -->
             <div class="col">
-                <FloatLabel variant="on">
                     <Select 
                         id="internla_filter_status_type"
                         v-model="internalFilters.status_type" 
@@ -200,15 +199,13 @@ onMounted(()=>{
                         optionLabel="label" 
                         optionValue="value" 
                         fluid 
+                        placeholder="حالة الطلب"
                     />
-                    <label for="internla_filter_status_type"><i class="fa-solid fa-spinner"/> حالة الطلب</label>
-                </FloatLabel>
                 <small class="text-gray-500 text-xs">بحث وفلترة حسب حالة الطلب</small>
             </div>
 
             <!-- الأولوية -->
             <div class="col">
-                <FloatLabel variant="on">
                     <Select 
                         id="internla_filters_priority"
                         v-model="internalFilters.priority" 
@@ -217,9 +214,8 @@ onMounted(()=>{
                         optionLabel="label" 
                         optionValue="value" 
                         fluid 
+                        placeholder="الأولوية"
                     />
-                    <label for="internla_filters_priority"><i class="fa-solid fa-circle-exclamation"/> الاولوية</label>
-                </FloatLabel>
                 <small class="text-gray-500 text-xs">بحث وفلترة حسب اهمية الطلب</small>
             </div>
 

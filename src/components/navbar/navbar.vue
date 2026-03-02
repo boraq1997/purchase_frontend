@@ -194,7 +194,6 @@ const handleLogout = async() => {
 
 // Top navigation menu items
 const topItems = computed(() => {
-  console.log(hasPermission('view-User'))
   
   const items = [];
 
@@ -230,27 +229,11 @@ const topItems = computed(() => {
     });
   }
 
-  if (hasPermission('view-Role')) {
+  if (hasPermission('view-PurchaseRequest')) {
     items.push({
-      label: 'الصلاحيات',
-      icon: 'fas fa-user-shield',
-      command: ()=>router.push('/roles'),
-    });
-  }
-
-  if (hasPermission('view-Department')) {
-    items.push({
-      label: 'الاقسام',
-      icon: 'fa-solid fa-layer-group',
-      command: () => router.push('/departments')
-    });
-  }
-
-  if (hasPermission('view-Committees')) {
-    items.push({
-      label: "اللجان",
-      icon: "fa-solid fa-users-viewfinder",
-      command: ()=>router.push('/committees')
+      label: "طلبات الشراء",
+      icon: 'fa-solid fa-cart-shopping',
+      command: ()=>router.push('/purchase-request')
     });
   }
 
@@ -262,13 +245,9 @@ const topItems = computed(() => {
     });
   }
 
-  if (hasPermission('view-PurchaseRequest')) {
-    items.push({
-      label: "طلبات الشراء",
-      icon: 'fa-solid fa-cart-shopping',
-      command: ()=>router.push('/purchase-request')
-    });
-  }
+  
+
+    
 
   if (hasPermission('view-Vendors')) {
     items.push({
@@ -278,13 +257,46 @@ const topItems = computed(() => {
     });
   }
 
-  items.push(
-    {
-      label: "النظام",
-      icon: "fa-solid fa-clock-rotate-left",
-      command: ()=>router.push('/logs')
-    }
-  )
+  items.push({
+    label: "المجموعات",
+    icon: "fas fa-users-viewfinder",
+    hasSubmenu: true,
+    items: [
+      ...(hasPermission('view-Department') ? [{
+        label: 'الاقسام',
+        icon: 'fa-solid fa-layer-group',
+        command: () => router.push('/departments')
+      }]: []),
+      ...(hasPermission('view-Committees') ? [{
+        label: "اللجان",
+        icon: "fa-solid fa-users-viewfinder",
+        command: ()=>router.push('/committees')
+      }]: [])
+    ]
+  })
+
+  items.push({
+    label: "النظام",
+    icon: 'fas fa-cogs',
+    hasSubmenu: true,
+    items: [
+        {
+            label: "الوحدات",
+            icon: 'fa-solid fa-scale-unbalanced-flip',
+            command: () => router.push('/units')
+        },
+        ...(hasPermission('view-Role') ? [{
+            label: 'الصلاحيات',
+            icon: 'fas fa-user-shield',
+            command: () => router.push('/roles'),
+        }] : []),
+        {
+            label: "سجل النظام",
+            icon: "fa-solid fa-clock-rotate-left",
+            command: () => router.push('/logs')
+        },
+    ]
+})
 
   return items;
 });

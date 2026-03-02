@@ -355,3 +355,8 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+nav.p-breadcrumb {
+  border-radius: 50px;
+  margin-right: 10px;
+}

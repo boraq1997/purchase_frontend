@@ -1,11 +1,11 @@
 <template>
+    <!-- Breadcrumb Navigation -->
+    <div class="flex justify-center mt-3 mb-3">
+        <Breadcrumb :home="breadcrumbHome" :model="breadcrumbItems"/>
+    </div>
+
     <!-- Main Card Container -->
     <div class="card" dir="rtl">
-
-        <!-- Breadcrumb Navigation -->
-        <div class="flex justify-center mt-3 mb-3">
-            <Breadcrumb :home="breadcrumbHome" :model="breadcrumbItems"/>
-        </div>
 
         <!-- Loading Overlay -->
         <div

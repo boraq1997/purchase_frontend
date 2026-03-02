@@ -84,7 +84,7 @@ function getEstimatesCount(item: RequestItem) {
                 </template>
                 <template #body="{ data }">
                     <Chip
-                        :label="`${data.quantity} ${data.unit}`"
+                        :label="`${data.quantity} ${data.unit?.name ?? data.unit}`"
                         icon="fa-solid fa-boxes-stacked"
                     />
                 </template>
@@ -96,58 +96,23 @@ function getEstimatesCount(item: RequestItem) {
                 </template>
                 <template #body="{ data }">
                     <div class="flex flex-wrap gap-2">
-                        <Chip
+                        <Tag
                             v-if="data.unit"
-                            :label="`الوحدة: ${data.unit}`"
-                            class="bg-green-50 text-green-700"
-                            icon="pi pi-wallet"
+                            :value="data.unit?.name ?? data.unit"
+                            class="font-mono"
+                            severity="warn"
                         />
-                        <Chip
-                            v-if="data.modified_specifications"
-                            :label="data.modified_specifications"
-                            class="bg-gray-100 text-gray-700"
-                            icon="pi pi-align-left"
-                        />
+                        <span v-if="data.unit?.code">
+                            <Tag
+                                :value="data.unit.code"
+                                severity="info"
+                                class="font-mono text-xs"
+                            />
+                        </span>
+                        <span v-if="!data.unit" class="text-color-warn text-sm">-</span>
                     </div>
                 </template>
             </Column>
-
-            <!-- <Column header="بيان الحاجة" style="min-width: 180px;">
-                <template #header>
-                    <i class="fas fa-hand-holding-medical text-gray-400 dark:text-gray-300"/>
-                </template>
-
-                <template #body="{ data }">
-                    <div v-if="data.needs_assessment" class="flex flex-col gap-2">
-
-                        <Tag
-                            :severity="needsStatusColor[data.needs_assessment.needs_status]"
-                            :value="
-                                data.needs_assessment.needs_status === 'needed'
-                                ? 'مطلوبة'
-                                : data.needs_assessment.needs_status === 'not_needed'
-                                    ? 'غير مطلوبة'
-                                    : 'مواصفات معدلة'
-                            "
-                            rounded
-                            class="font-semibold text-sm px-3 py-1 shadow-sm"
-                        />
-
-
-                    <div
-                        v-if="data.needs_assessment.reason"
-                        class="text-xs text-gray-700 dark:text-gray-300 p-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-inner max-h-28 overflow-auto break-words whitespace-pre-line"
-                    >
-                        {{ data.needs_assessment.reason }}
-                    </div>
-
-                    </div>
-
-                    <div v-else class="text-gray-400 dark:text-gray-500 text-xs italic">
-                    غير مقيم
-                    </div>
-                </template>
-            </Column> -->
 
             <Column header="المخازن" style="min-width: 150px;">
                 <template #header>

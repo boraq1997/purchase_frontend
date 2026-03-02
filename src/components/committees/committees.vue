@@ -1,12 +1,14 @@
 <template>
-    <div class="card" dir="rtl">
-
         <!-- ============================= -->
         <!-- Breadcrumb -->
         <!-- ============================= -->
         <div class="card flex justify-center mt-3 mb-3">
             <Breadcrumb :home="breadcrumbHome" :model="breadcrumbItems" />
         </div>
+
+    <div class="card" dir="rtl">
+
+        
 
         <!-- ============================= -->
         <!-- Global Loading Overlay -->

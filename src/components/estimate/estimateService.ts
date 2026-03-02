@@ -64,7 +64,7 @@ export interface Estimate {
 
     estimate_items: EstimateItem[];
 
-    purchase_request: PurchaseRequest[]; 
+    purchase_request: PurchaseRequest; 
 
     created_at?: string;
     updated_at?: string;

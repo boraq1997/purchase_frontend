@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, reactive, computed, watch, onMounted, nextTick } from 'vue';
-
+import UnitService from '../../units/unitsService';
 import Dialog from 'primevue/dialog';
 import Card from 'primevue/card';
 import InputText from 'primevue/inputtext';
@@ -13,6 +13,9 @@ import InputNumber from 'primevue/inputnumber';
 import Select from 'primevue/select';
 import FloatLabel from 'primevue/floatlabel';
 import { useConfirm } from "primevue/useconfirm";
+import Avatar from 'primevue/avatar';
+import Tag from 'primevue/tag';
+import Message from 'primevue/message';
 
 import UploadFile from './components/fileUpload.vue';
 
@@ -24,6 +27,7 @@ const toast = useToast();
 const confirm = useConfirm();
 const departmentId = ref<number>();
 const hasDeapartment = ref<boolean>(false);
+const validationMessages = ref<string[]>([]);
 
 /* =========================
 PROPS & EMITS
@@ -58,20 +62,28 @@ const priorities = [
     { label: 'منخفضة', value: 'low' },
 ];
 
-const unitsList = [
-    { value: "piece", label: "قطعة" },
-    { value: "box", label: "صندوق" },
-    { value: "carton", label: "كارتون" },
-    { value: "pack", label: "حزمة" },
-    { value: "set", label: "طقم" },
-    { value: "kg", label: "كيلوجرام" },
-    { value: "g", label: "غرام" },
-    { value: "ton", label: "طن" },
-    { value: "meter", label: "متر" },
-    { value: "cm", label: "سنتيمتر" },
-    { value: "liter", label: "لتر" },
-    { value: "ml", label: "ملي لتر" },
-];
+const unitIsLoading = ref(true);
+const unitsList = ref<any[]>([]);
+
+const getAllUnits = async()=>{
+    unitIsLoading.value = true;
+    try {
+        const response = await UnitService.getAllUnits();
+        unitsList.value = response.data;
+    } catch (err: any) {
+        console.log(err);
+        toast.add({
+            severity: 'danger',
+            summary: "رسالة خطاء",
+            detail: "حدث خطاء ما اثناء جلب وحدات القياس",
+            life: 3000
+        });
+    } finally {
+        unitIsLoading.value = false;
+    }
+}
+
+
 
 const form = reactive({
     title: '',
@@ -91,7 +103,8 @@ const formErrors = reactive({
     title: '',
     description: '',
     department_id: '',
-    items: ''
+    items: '',
+    images: ''
 });
 
 const itemErrors = reactive({
@@ -106,6 +119,8 @@ function resetFormErrors() {
     formErrors.description = '';
     formErrors.department_id = '';
     formErrors.items = '';
+    formErrors.images = '';
+    validationMessages.value = [];
 }
 
 function resetItemErrors() {
@@ -113,37 +128,45 @@ function resetItemErrors() {
     itemErrors.quantity = '';
     itemErrors.unit = '';
     itemErrors.specifications = '';
+    validationMessages.value = [];
 }
 
 function validateForm(): boolean {
     resetFormErrors();
+    validationMessages.value = [];
     let isValid = true;
 
     if (!form.title || form.title.trim() === '') {
         formErrors.title = 'عنوان الطلب مطلوب';
+        validationMessages.value.push('يرجى إدخال عنوان الطلب');
         isValid = false;
-        toast.add({ severity: 'error', summary: 'خطأ في التحقق', detail: 'يرجى إدخال عنوان الطلب', life: 3000 });
     } else if (form.title.length < 3) {
         formErrors.title = 'العنوان يجب أن يكون 3 أحرف على الأقل';
+        validationMessages.value.push('عنوان الطلب قصير جداً (3 أحرف على الأقل)');
         isValid = false;
-        toast.add({ severity: 'error', summary: 'خطأ في التحقق', detail: 'عنوان الطلب قصير جداً (3 أحرف على الأقل)', life: 3000 });
     } else if (form.title.length > 200) {
         formErrors.title = 'العنوان طويل جداً (200 حرف كحد أقصى)';
+        validationMessages.value.push('عنوان الطلب طويل جداً');
         isValid = false;
-        toast.add({ severity: 'error', summary: 'خطأ في التحقق', detail: 'عنوان الطلب طويل جداً', life: 3000 });
     }
 
     const finalDepartmentId = departmentId.value ?? form.department_id;
     if (!finalDepartmentId) {
         formErrors.department_id = 'القسم مطلوب';
+        validationMessages.value.push('يرجى اختيار القسم');
         isValid = false;
-        toast.add({ severity: 'error', summary: 'خطأ في التحقق', detail: 'يرجى اختيار القسم', life: 3000 });
     }
 
     if (!form.items || form.items.length === 0) {
         formErrors.items = 'يجب إضافة مادة واحدة على الأقل';
+        validationMessages.value.push('يجب إضافة مادة واحدة على الأقل للطلب');
         isValid = false;
-        toast.add({ severity: 'error', summary: 'خطأ في التحقق', detail: 'يجب إضافة مادة واحدة على الأقل للطلب', life: 3000 });
+    }
+
+    if (newFilesToUpload.value.length === 0 && existingFiles.value.length === 0) {
+        formErrors.images = 'يجب رفع صورة واحدة على الأقل';
+        validationMessages.value.push('يجب رفع صورة واحدة على الأقل');
+        isValid = false;
     }
 
     return isValid;
@@ -151,48 +174,49 @@ function validateForm(): boolean {
 
 function validateItem(): boolean {
     resetItemErrors();
+    validationMessages.value = [];
     let isValid = true;
 
     if (!itemForm.item_name || itemForm.item_name.trim() === '') {
         itemErrors.item_name = 'اسم المادة مطلوب';
+        validationMessages.value.push('يرجى إدخال اسم المادة');
         isValid = false;
-        toast.add({ severity: 'error', summary: 'خطأ في التحقق', detail: 'يرجى إدخال اسم المادة', life: 3000 });
     } else if (itemForm.item_name.length < 2) {
         itemErrors.item_name = 'اسم المادة قصير جداً';
+        validationMessages.value.push('اسم المادة يجب أن يكون حرفين على الأقل');
         isValid = false;
-        toast.add({ severity: 'error', summary: 'خطأ في التحقق', detail: 'اسم المادة يجب أن يكون حرفين على الأقل', life: 3000 });
     }
 
     if (!itemForm.quantity || itemForm.quantity <= 0) {
         itemErrors.quantity = 'الكمية مطلوبة ويجب أن تكون أكبر من صفر';
+        validationMessages.value.push('يرجى إدخال كمية صحيحة (أكبر من صفر)');
         isValid = false;
-        toast.add({ severity: 'error', summary: 'خطأ في التحقق', detail: 'يرجى إدخال كمية صحيحة (أكبر من صفر)', life: 3000 });
     } else if (itemForm.quantity > 1000000) {
         itemErrors.quantity = 'الكمية كبيرة جداً';
+        validationMessages.value.push('الكمية المدخلة كبيرة جداً');
         isValid = false;
-        toast.add({ severity: 'error', summary: 'خطأ في التحقق', detail: 'الكمية المدخلة كبيرة جداً', life: 3000 });
     }
 
-    if (!itemForm.unit || itemForm.unit.trim() === '') {
-        itemErrors.unit = 'الوحدة مطلوبة';
+    if (!itemForm.unit) {
+        itemErrors.unit = 'وحدة القياس مطلوبة';
+        validationMessages.value.push('يرجى اختيار وحدة القياس');
         isValid = false;
-        toast.add({ severity: 'error', summary: 'خطأ في التحقق', detail: 'يرجى اختيار وحدة القياس', life: 3000 });
     }
 
     if (itemForm.estimated_unit_price !== null && itemForm.estimated_unit_price !== undefined) {
         if (itemForm.estimated_unit_price < 0) {
-            toast.add({ severity: 'error', summary: 'خطأ في التحقق', detail: 'السعر لا يمكن أن يكون سالباً', life: 3000 });
+            validationMessages.value.push('السعر لا يمكن أن يكون سالباً');
             isValid = false;
         } else if (itemForm.estimated_unit_price > 100000000) {
-            toast.add({ severity: 'error', summary: 'خطأ في التحقق', detail: 'السعر كبير جداً', life: 3000 });
+            validationMessages.value.push('السعر كبير جداً');
             isValid = false;
         }
     }
 
     if (itemForm.specifications && itemForm.specifications.length > 500) {
         itemErrors.specifications = 'المواصفات طويلة جداً (500 حرف كحد أقصى)';
+        validationMessages.value.push('المواصفات طويلة جداً (500 حرف كحد أقصى)');
         isValid = false;
-        toast.add({ severity: 'error', summary: 'خطأ في التحقق', detail: 'المواصفات طويلة جداً', life: 3000 });
     }
 
     return isValid;
@@ -264,7 +288,7 @@ watch(
                     item_name: it.item_name || '',
                     specifications: it.specifications ?? it.specs ?? '',
                     quantity: it.quantity || 0,
-                    unit: it.unit || '',
+                    unit: it.unit?.id ?? it.unit ?? null,
                     estimated_unit_price: it.estimated_unit_price || null,
                 })) || [];
 
@@ -315,7 +339,7 @@ const itemForm = reactive({
     item_name: '',
     specifications: '',
     quantity: null as number | null,
-    unit: '',
+    unit: null as number | null,
     estimated_unit_price: null as number | null,
 });
 
@@ -323,7 +347,7 @@ function resetItemForm() {
     itemForm.item_name = '';
     itemForm.specifications = '';
     itemForm.quantity = null;
-    itemForm.unit = '';
+    itemForm.unit = null;
     itemForm.estimated_unit_price = null;
     resetItemErrors();
 }
@@ -415,6 +439,7 @@ function deleteItem(index: number) {
 SUBMIT
 ========================= */
 async function submit() {
+     console.log(formErrors);
     if (!validateForm()) return;
 
     const finalDepartmentId = departmentId.value ?? form.department_id;
@@ -432,8 +457,7 @@ async function submit() {
         form.items.forEach((item: any, index: number) => {
             for (const key in item) {
                 if (item[key] !== null && item[key] !== undefined) {
-                    // الصيغة الصحيحة: items[0][item_name] = "Value"
-                    formData.append(`items[${index}][${key}]`, item[key]);
+                    formData.append(`items[${index}][${key}]`, String(item[key]));
                 }
             }
         });
@@ -513,6 +537,10 @@ function closeItemDialog() {
         resetItemForm();
     }
 }
+
+onMounted(()=>{
+    getAllUnits();
+})
 </script>
 
 <template>
@@ -526,6 +554,17 @@ function closeItemDialog() {
     >
         <Card>
             <template #content>
+                <Message
+        v-if="validationMessages.length"
+        severity="error"
+        class="mb-3"
+        :closable="true"
+        @close="validationMessages = []"
+    >
+        <ul class="m-0 pr-3">
+            <li v-for="(msg, i) in validationMessages" :key="i">{{ msg }}</li>
+        </ul>
+    </Message>
                 <FloatLabel variant="on" class="mt-3">
                     <InputText
                         v-model="form.title"
@@ -598,7 +637,6 @@ function closeItemDialog() {
 
                 <Divider />
 
-                <!-- ✅ قسم المرفقات -->
                 <div class="mt-2">
                     <div class="flex align-items-center gap-2 mb-3">
                         <i class="fas fa-paperclip text-gray-500 text-lg" />
@@ -606,8 +644,11 @@ function closeItemDialog() {
                         <span class="text-sm text-gray-400">(اختياري)</span>
                     </div>
 
-                    <!-- مكوّن رفع الملفات -->
                     <UploadFile @update:files="onFilesUpdated" :existing-files="existingFiles" />
+                    <small v-if="formErrors.images" class="p-error flex align-items-center gap-1 mt-1">
+                        <i class="pi pi-exclamation-circle text-xs" />
+                        {{ formErrors.images }}
+                    </small>
                 </div>
 
                 <Divider />
@@ -655,7 +696,13 @@ function closeItemDialog() {
                             <i class="fas fa-object-group text-gray-500"/> الوحدة
                         </template>
                         <template #body="slotProps">
-                            {{ unitsList.find(u => u.value === slotProps.data.unit)?.label || slotProps.data.unit }}
+                            <Tag
+                                v-if="unitsList.find(u=>u.id===slotProps.data.unit)"
+                                :value="unitsList.find(u=>u.id===slotProps.data.unit)?.name"
+                                severity="warn"
+                                class="font-mono text-xs"
+                            />
+                            <span v-else class="text-color-warn text-sm">-</span>
                         </template>
                     </Column>
 
@@ -778,35 +825,57 @@ function closeItemDialog() {
                     v-model="itemForm.unit"
                     id="unit_field"
                     :options="unitsList"
-                    optionLabel="label"
-                    optionValue="value"
+                    optionLabel="name"
+                    optionValue="id"
                     filter
                     fluid
+                    show-clear
+                    :loading="unitIsLoading"
                     :invalid="itemErrors.unit != ''"
-                />
+                >
+                    <template #value="{ value }">
+                        <div v-if="value" class="flex align-items-center gap-2">
+                            <Tag
+                                v-if="unitsList.find(u => u.id === value)?.code"
+                                :value="unitsList.find(u => u.id === value)?.code"
+                                severity="secondary"
+                                class="font-mono text-xs"
+                            />
+                            <span class="font-semibold text-sm">
+                                {{ unitsList.find(u => u.id === value)?.name }}
+                            </span>
+                        </div>
+                    </template>
+
+                    <template #option="{ option }">
+                        <div class="flex align-items-center gap-2 w-full">
+                            <Avatar
+                                :label="option.name.charAt(0).toUpperCase()"
+                                size="small"
+                                shape="square"
+                                class="text-xs font-bold flex-shrink-0"
+                            />
+                            <div class="flex flex-column flex-1 min-w-0">
+                                <span class="font-semibold text-sm">{{ option.name }}</span>
+                                <span v-if="option.description" class="text-color-secondary text-xs">
+                                    {{ option.description }}
+                                </span>
+                            </div>
+                            <Tag
+                                v-if="option.code"
+                                :value="option.code"
+                                severity="secondary"
+                                class="font-mono text-xs flex-shrink-0"
+                            />
+                        </div>
+                    </template>
+                </Select>
                 <label for="unit_field" class="font-semibold mb-2 block">
                     <i class="fas fa-object-group"/> اختر الوحدة
                     <span class="text-red-500">*</span>
                 </label>
             </FloatLabel>
             <small v-if="itemErrors.unit" class="p-error block mt-1">{{ itemErrors.unit }}</small>
-
-            <FloatLabel variant="on" class="mt-5">
-                <InputNumber
-                    v-model="itemForm.estimated_unit_price"
-                    id="price_field"
-                    inputClass="w-full"
-                    class="w-full"
-                    :min="0"
-                    :max="100000000"
-                    mode="currency"
-                    currency="IQD"
-                    locale="ar-IQ"
-                />
-                <label for="price_field" class="font-semibold mb-2 block">
-                    <i class="fas fa-dollar-sign"/> السعر التقديري للوحدة (اختياري)
-                </label>
-            </FloatLabel>
 
             <FloatLabel variant="on" class="mt-5">
                 <Textarea
