@@ -16,6 +16,7 @@ import Activity from '../components/activityLogs/activity.vue';
 import notFoundPage from '../components/errors/notFoundPage.vue';
 import internalServerError from '../components/errors/internalServerError.vue';
 import forbiddenError from '../components/errors/forbiddenError.vue';
+import Procuement from '../components/procurement/index.vue';
 // Import components for each route
 
 const routes = [
@@ -29,6 +30,7 @@ const routes = [
     {path: '/purchase-request', name: 'purchase-request', component: HomePurchase},
     {path: '/warehouse', name: 'warehouse', component: warehouse},
     {path: '/estimate', name: 'estimate', component: Estimate2},
+    {path: '/procuement', name:'Procuement', component: Procuement},
     { 
       path: '/units', 
       name: 'Units',

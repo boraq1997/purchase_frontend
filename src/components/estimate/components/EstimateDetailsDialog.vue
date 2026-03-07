@@ -33,68 +33,74 @@
         <div class="grid">
             <!-- العمود الأيسر -->
             <div class="col-12 lg:col-8">
+                <!-- معلومات طلب الشراء -->
                 <div class="surface-card border-round-xl p-4 shadow-2 mb-4">
-                    <h3 class="text-xl font-bold text-900 mb-4">معلومات طلب الشراء</h3>
+                    <h3 class="text-xl font-bold text-900 mb-4">
+                        <i class="fas fa-cart-shopping text-primary-500 ml-2"/>
+                        معلومات طلب الشراء
+                    </h3>
                     <div class="grid">
                         <div class="col-12 md:col-6">
                             <div class="p-3 border-round-lg mb-3" style="background: linear-gradient(135deg, rgba(102,126,234,0.05) 0%, rgba(118,75,162,0.05) 100%);">
                                 <span class="text-600 text-sm font-semibold mb-2 block"><i class="pi pi-hashtag ml-1"/>رقم الطلب</span>
-                                <span class="text-900 font-bold text-lg">{{ estimateData?.purchase_request?.[0]?.request_number }}</span>
+                                <span class="text-900 font-bold text-lg">{{ estimateData?.purchase_request?.request_number }}</span>
                             </div>
                         </div>
                         <div class="col-12 md:col-6">
                             <div class="p-3 border-round-lg mb-3" style="background: linear-gradient(135deg, rgba(102,126,234,0.05) 0%, rgba(118,75,162,0.05) 100%);">
                                 <span class="text-600 text-sm font-semibold mb-2 block"><i class="pi pi-flag ml-1"/>الأولوية</span>
-                                <Tag :value="getPriorityLabel(estimateData?.purchase_request?.[0]?.priority ?? 'low')"
-                                    :severity="getPrioritySeverity(estimateData?.purchase_request?.[0]?.priority ?? 'low')" class="text-base px-3 py-2" />
+                                <Tag :value="getPriorityLabel(estimateData?.purchase_request?.priority ?? 'low')"
+                                    :severity="getPrioritySeverity(estimateData?.purchase_request?.priority ?? 'low')" class="text-base px-3 py-2" />
                             </div>
                         </div>
                         <div class="col-12">
                             <div class="p-3 border-round-lg" style="background: linear-gradient(135deg, rgba(102,126,234,0.05) 0%, rgba(118,75,162,0.05) 100%);">
                                 <span class="text-600 text-sm font-semibold mb-2 block"><i class="pi pi-file-edit ml-1"/>عنوان الطلب</span>
-                                <span class="text-900 font-bold text-lg">{{ estimateData?.purchase_request?.[0]?.title }}</span>
+                                <span class="text-900 font-bold text-lg">{{ estimateData?.purchase_request?.title }}</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- جدول المواد -->
-                <div class="surface-card border-round-xl p-4 shadow-2">
-                    <h3 class="text-xl font-bold text-900 mb-4">المواد المطلوبة</h3>
+                <div class="surface-card border-round-xl p-4 shadow-2 mb-4">
+                    <h3 class="text-xl font-bold text-900 mb-4">
+                        <i class="fas fa-boxes-stacked text-primary-500 ml-2"/>
+                        المواد المطلوبة
+                    </h3>
                     <DataTable :value="estimateData?.estimate_items" responsiveLayout="scroll" stripedRows>
                         <Column field="item_name" style="min-width: 200px">
-                            <template #header><i class="fas fa-box text-gray-500"/> اسم المادة</template>
+                            <template #header><i class="fas fa-box text-gray-500 ml-1"/>اسم المادة</template>
                             <template #body="{ data }">
                                 <div class="flex align-items-center gap-2">
-                                    <i class="pi pi-box text-primary"></i>
+                                    <i class="pi pi-box text-primary"/>
                                     <span class="font-semibold text-900">{{ data.item_name }}</span>
                                 </div>
                             </template>
                         </Column>
                         <Column field="quantity" style="min-width: 120px">
-                            <template #header><i class="fas fa-hashtag text-gray-500"/> الكمية</template>
+                            <template #header><i class="fas fa-hashtag text-gray-500 ml-1"/>الكمية</template>
                             <template #body="{ data }">
                                 <Chip :label="`${data.quantity} ${data.request_item?.unit || ''}`"
                                     style="background: linear-gradient(135deg, rgba(102,126,234,0.1) 0%, rgba(118,75,162,0.1) 100%); color: #667eea;" />
                             </template>
                         </Column>
                         <Column field="unit_price" style="min-width: 150px">
-                            <template #header><i class="fas fa-dollar-sign text-gray-500"/> سعر الوحدة</template>
+                            <template #header><i class="fas fa-dollar-sign text-gray-500 ml-1"/>سعر الوحدة</template>
                             <template #body="{ data }">
                                 <span class="font-semibold text-900">{{ formatCurrency(data.unit_price) }}</span>
                                 <span class="text-500 text-sm mr-1">د.ع</span>
                             </template>
                         </Column>
                         <Column field="total_price" style="min-width: 150px">
-                            <template #header><i class="fa-solid fa-money-bill-1-wave text-gray-500"/> المجموع</template>
+                            <template #header><i class="fa-solid fa-money-bill-1-wave text-gray-500 ml-1"/>المجموع</template>
                             <template #body="{ data }">
                                 <span class="font-bold text-primary text-lg">{{ formatCurrency(data.total_price) }}</span>
                                 <span class="text-500 text-sm mr-1">د.ع</span>
                             </template>
                         </Column>
                     </DataTable>
-
-                    <div class="mt-4 p-2 border-round-xl" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+                    <div class="mt-4 p-3 border-round-xl" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
                         <div class="flex justify-content-between align-items-center">
                             <span class="text-2xl font-bold text-white">المجموع الكلي:</span>
                             <div class="text-right">
@@ -104,32 +110,90 @@
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- العمود الأيمن -->
-            <div class="col-12 lg:col-4">
-                <div class="surface-card border-round-xl p-4 shadow-2 mb-4">
-                    <h3 class="text-xl font-bold text-900 mb-4">معلومات المورد</h3>
-                    <div v-for="(item, i) in vendorDetails" :key="i"
-                        class="p-3 border-round-lg mb-3 transition-all transition-duration-200 hover:surface-100">
-                        <div class="flex align-items-center gap-3">
-                            <i :class="item.icon + ' text-primary-500'"></i>
-                            <div class="flex-1">
-                                <span class="text-600 text-xs block mb-1">{{ item.label }}</span>
-                                <span class="text-900 font-semibold block">{{ item.value }}</span>
+                <!-- معلومات المورد -->
+                <div class="surface-card border-round-xl p-4 shadow-2">
+                    <h3 class="text-xl font-bold text-900 mb-4">
+                        <i class="fas fa-user-tie text-primary-500 ml-2"/>
+                        معلومات المورد
+                    </h3>
+                    <div class="grid">
+                        <div v-for="(item, i) in vendorDetails" :key="i" class="col-12 md:col-6">
+                            <div class="p-3 border-round-lg mb-2 transition-all transition-duration-200 hover:surface-100">
+                                <div class="flex align-items-center gap-3">
+                                    <i :class="item.icon + ' text-primary-500'"/>
+                                    <div class="flex-1">
+                                        <span class="text-600 text-xs block mb-1">{{ item.label }}</span>
+                                        <span class="text-900 font-semibold block">{{ item.value }}</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <div v-if="estimateData?.notes" class="surface-card border-round-xl p-4 shadow-2">
-                    <h3 class="text-xl font-bold text-900 mb-3">الملاحظات</h3>
+            <!-- العمود الأيمن -->
+            <div class="col-12 lg:col-4 flex flex-column gap-4">
+
+                <!-- الصور -->
+                <div class="surface-card border-round-xl p-4 shadow-2">
+                    <h3 class="text-xl font-bold text-900 mb-3">
+                        <i class="fas fa-images text-primary-500 ml-2"/>
+                        الصور المرفقة
+                    </h3>
+                    <div v-if="estimateData?.images?.length" class="flex flex-wrap gap-3">
+                        <div
+                            v-for="(img, index) in estimateData.images"
+                            :key="img.id"
+                            class="border-round-xl overflow-hidden cursor-pointer transition-all transition-duration-200"
+                            style="width:90px;height:90px;border:2px solid var(--surface-200)"
+                            @click="openLightbox(index)"
+                        >
+                            <img :src="img.file_url" :alt="img.file_name"
+                                style="width:100%;height:100%;object-fit:cover" />
+                        </div>
+                    </div>
+                    <div v-else class="flex flex-column align-items-center justify-content-center py-4 text-400 gap-2">
+                        <i class="fas fa-image text-3xl"/>
+                        <span class="text-sm">لا توجد صور مرفقة</span>
+                    </div>
+                </div>
+
+                <!-- الملاحظات -->
+                <div class="surface-card border-round-xl p-4 shadow-2">
+                    <h3 class="text-xl font-bold text-900 mb-3">
+                        <i class="fas fa-note-sticky text-primary-500 ml-2"/>
+                        الملاحظات
+                    </h3>
                     <div class="p-3 border-round-lg" style="background: linear-gradient(135deg, rgba(255,216,155,0.1) 0%, rgba(25,84,123,0.1) 100%);">
-                        <p class="text-900 m-0 line-height-3">{{ estimateData.notes }}</p>
+                        <p v-if="estimateData?.notes" class="text-900 m-0 line-height-3">{{ estimateData.notes }}</p>
+                        <p v-else class="text-400 m-0 text-sm">لا توجد ملاحظات</p>
                     </div>
                 </div>
             </div>
         </div>
+
+<!-- Galleria -->
+<Galleria
+    v-model:visible="lightboxOpen"
+    v-model:activeIndex="lightboxIndex"
+    :value="estimateData?.images ?? []"
+    :numVisible="5"
+    :circular="true"
+    :fullScreen="true"
+    :showItemNavigators="(estimateData?.images?.length ?? 0) > 1"
+    :showThumbnails="(estimateData?.images?.length ?? 0) > 1"
+>
+    <template #item="{ item }">
+        <img :src="item.file_url" :alt="item.file_name"
+            style="max-width:100%;max-height:70vh;object-fit:contain;display:block" />
+    </template>
+    <template #thumbnail="{ item }">
+        <img :src="item.file_url" :alt="item.file_name"
+            style="width:60px;height:60px;object-fit:cover;border-radius:6px" />
+    </template>
+</Galleria>
 
         <template #footer>
             <Button label="إغلاق" icon="fas fa-times" severity="secondary" outlined class="px-5" @click="emit('update:visible', false)" />
@@ -139,7 +203,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import Dialog from 'primevue/dialog';
 import Button from 'primevue/button';
 import Chip from 'primevue/chip';
@@ -147,6 +211,10 @@ import Tag from 'primevue/tag';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import type { Estimate } from '../estimateService';
+import Galleria from 'primevue/galleria';
+
+const lightboxOpen  = ref(false);
+const lightboxIndex = ref(0);
 
 const props = defineProps<{
     visible: boolean;
@@ -164,6 +232,11 @@ const vendorDetails = computed(() => [
     { icon: 'fas fa-envelope', label: 'البريد الإلكتروني', value: props.estimateData?.vendor?.email || 'غير متوفر' },
     { icon: 'fas fa-map-location-dot', label: 'العنوان', value: props.estimateData?.vendor?.address || 'غير متوفر' },
 ]);
+
+const openLightbox = (index: number) => {
+    lightboxIndex.value = index;
+    lightboxOpen.value  = true;
+};
 
 const getStatusLabel = (s: string) => ({ pending: 'قيد الانتظار', accepted: 'موافق عليه', rejected: 'مرفوض' }[s] || s);
 const getStatusSeverity = (s: string): any => ({ pending: 'warning', accepted: 'success', rejected: 'danger' }[s] || 'secondary');

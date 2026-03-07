@@ -66,6 +66,7 @@
             @submit="submitEstimate"
             @saveVendor="saveVendor"
             @reset="resetForm"
+            @update:newFiles="newFilesToUpload = $event"
         />
         <EstimateDetailsDialog
             v-model:visible="estimateAllDetailsDialogVisible"
@@ -95,7 +96,7 @@ const {
     estimateData, estimateForm, vendorForm, filters, pagination,
     selectedPurchaseId, addEditEstimateDialogVisible, estimateAllDetailsDialogVisible,
     hasDepartment,
-    totalEstimateAmount, statusCounts, statusPercentages,
+    totalEstimateAmount, statusCounts, statusPercentages, newFilesToUpload,
     fetchAllEstimates, fetchAllDepartments,
     openAddEditDialog, submitEstimate, saveVendor,
     confirmDeleteEstimate, showEstimateDetails,

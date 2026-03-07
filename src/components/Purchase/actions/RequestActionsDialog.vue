@@ -51,7 +51,6 @@ const internalVisible = computed({
           <Tab 
             value="0" 
             class="custom-tab"
-            v-if="hasPermission('approve-purchase-request')"
             >
             <div class="tab-content">
               <i class="fas fa-gavel tab-icon"></i>
@@ -115,7 +114,7 @@ const internalVisible = computed({
         </TabList>
 
         <TabPanels class="custom-tab-panels">
-          <TabPanel value="0" class="custom-tab-panel" v-if="hasPermission('approve-purchase-request')">
+          <TabPanel value="0" class="custom-tab-panel">
             <AdminDecisionTab
               :id="purchaseRequest?.id"
               :items="purchaseRequest?.items ?? []"

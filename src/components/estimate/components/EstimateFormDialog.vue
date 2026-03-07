@@ -115,6 +115,12 @@
                 </Transition>
             </div>
 
+            <!-- ─── FileUpload ─────────────────────────────────────────────────── -->
+            <ImageUpload
+                :existing-files="existingFiles"
+                @update:files="onFilesUpdated"
+            />
+
             <!-- ─── Section 2: Core Info ──────────────────────────────────────── -->
             <div class="surface-50 border-round-xl p-4 border-1 border-200">
                 <div class="flex align-items-center gap-2 mb-3">
@@ -171,7 +177,7 @@
                                         </div>
                                         <span v-else class="text-400">جاري التحميل...</span>
                                     </template>
-                                    <span v-else class="text-400">اختر طلب الشراء</span>
+                                    
                                 </template>
                                 <template #option="{ option }">
                                     <div class="flex flex-column gap-1 py-1">
@@ -362,6 +368,7 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Tag from 'primevue/tag';
 import Badge from 'primevue/badge';
+import ImageUpload from './fileUpload.vue';
 
 const statusOptions = [
     { label: 'معلق',  value: 'pending',  icon: 'fas fa-clock',       color: 'var(--yellow-500)' },
@@ -369,6 +376,21 @@ const statusOptions = [
     { label: 'مرفوض', value: 'rejected', icon: 'fas fa-circle-xmark', color: 'var(--red-500)'    },
 ];
 
+// ─── حالة الملفات ────────────────────────────────────────────────────────────
+const newFilesToUpload = ref<File[]>([]);
+// بعد - اجعلها تستقبل الصور من estimateForm
+const existingFiles = computed(() => {
+    console.log(props)
+
+    return props.estimateForm?.images ?? [];
+});
+
+function onFilesUpdated(files: File[]) {
+    newFilesToUpload.value = files;
+    emit('update:newFiles', files);
+}
+
+// ─── Props ───────────────────────────────────────────────────────────────────
 const props = defineProps<{
     visible: boolean;
     isEditMode: boolean;
@@ -390,6 +412,7 @@ const emit = defineEmits<{
     'submit': [];
     'saveVendor': [];
     'reset': [];
+    'update:newFiles': [files: File[]];
 }>();
 
 // ─── المواد المتاحة من طلب الشراء المختار ───────────────────────────────────
@@ -421,27 +444,22 @@ watch(() => props.visible, (val) => {
 function onItemsSelected(newIds: number[]) {
     const oldIds = selectedItemIds.value;
 
-    // مواد أُضيفت
-    const added = newIds.filter(id => !oldIds.includes(id));
-    // مواد أُزيلت
+    const added   = newIds.filter(id => !oldIds.includes(id));
     const removed = oldIds.filter(id => !newIds.includes(id));
 
-    // أضف المواد الجديدة للـ items
     added.forEach(id => {
         const item = availableItems.value.find((i: any) => i.id === id);
         if (!item) return;
-        // في التعديل: استخدم السعر الموجود إن وُجد
         const existing = props.estimateForm.items.find((i: any) => i.request_item_id === id);
         props.estimateForm.items.push({
             request_item_id: id,
-            item_name: item.item_name,
-            quantity: item.quantity,
-            unit_price: existing?.unit_price ?? 0,
-            notes: existing?.notes ?? null,
+            item_name:   item.item_name,
+            quantity:    item.quantity,
+            unit_price:  existing?.unit_price ?? 0,
+            notes:       existing?.notes ?? null,
         });
     });
 
-    // أزل المواد المحذوفة من الـ items
     removed.forEach(id => {
         const idx = props.estimateForm.items.findIndex((i: any) => i.request_item_id === id);
         if (idx !== -1) props.estimateForm.items.splice(idx, 1);

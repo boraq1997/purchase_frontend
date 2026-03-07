@@ -26,6 +26,7 @@ export interface EstimatePayload {
     status?: "pending" | "accepted" | "rejected";
     notes?: string | null;
     items?: EstimateItemInput[];
+    images?: any[];
 }
 
 export interface EstimateItem {
@@ -141,8 +142,10 @@ class EstimateService {
     | Update estimate
     |--------------------------------------------------------------------------
     */
-    async update(id: number, payload: Partial<EstimatePayload>): Promise<Estimate> {
-        const res = await api.put(`/estimates/${id}`, payload);
+    async update(id: number, payload: FormData): Promise<Estimate> {
+        const res = await api.post(`/estimates/${id}`, payload, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
         return res.data.data;
     }
 

@@ -166,6 +166,7 @@ export interface PurchaseRequest {
   creator: User;
   user_id?: ID;
   priority: PriorityLevel;
+  images: [];
   total_estimated_cost?: number;
   created_at: string;
   updated_at?: string;

@@ -134,7 +134,7 @@ onMounted(() => {
         <!-- PAGE TITLE -->
 
             <Button
-                v-if="hasPermission('create-PurchaseRequest')"
+                v-if="hasPermission('PurchaseRequest-create')"
                 label="إضافة طلب جديد"
                 icon="fas fa-plus"
                 @click="openAddDialog"

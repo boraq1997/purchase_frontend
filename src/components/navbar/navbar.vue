@@ -237,6 +237,12 @@ const topItems = computed(() => {
     });
   }
 
+  items.push({
+    label: "order",
+    icon: "fas fa-home",
+    command: ()=>router.push('/procuement')
+  });
+
   if (hasPermission('view-Estimate')) {
     items.push({
       label: "عروض الاسعار",

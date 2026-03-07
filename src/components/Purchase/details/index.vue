@@ -44,7 +44,8 @@ import WarehouseCheckCard from './components/warehouse/WarehouseCheckCard.vue';
 import EstimatesCard from './components/estimates/EstimatesCard.vue';
 import PurchaseFormDialog from '../create/PurchaseFormDialog.vue';
 import RequestActionsDialog from '../actions/RequestActionsDialog.vue';
-
+import Badge from 'primevue/badge';
+import OverlayBadge from 'primevue/overlaybadge';
 /**
  * Services
  * Used to re-fetch the purchase request from the backend after updates
@@ -65,7 +66,6 @@ const active = ref('0');
 const toast = useToast(); // Toast notifications
 const confirm = useConfirm(); // Confirm dialog
 const isConfirming = ref(false); // Flag to prevent multiple confirm dialogs
-const baseURL = import.meta.env.VITE_API_FILES_BASE_URL;
 /**
  * Component props
  *
@@ -87,8 +87,8 @@ const images = computed(() => {
     if (!props.request?.images) return []
 
     return props.request.images.map((img: any) => ({
-        itemImageSrc: baseURL + img.file_url,
-        thumbnailImageSrc: baseURL + img.file_url,
+        itemImageSrc: img.file_url,
+        thumbnailImageSrc: img.file_url,
         alt: img.file_name ?? 'image'
     }))
 })
@@ -416,6 +416,8 @@ const tabs = [
                                 outlined
                                 v-tooltip.top="'عرض الملفات'"
                                 @click.prevent="openImages"
+                                :badge="props.request?.images.length.toString() || '0'"
+                                badgeSeverity="danger"
                             />
                             <Button
                                 v-if="hasPermission('edit-Procurement')"

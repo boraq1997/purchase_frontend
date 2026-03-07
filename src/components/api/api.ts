@@ -49,5 +49,22 @@ http.interceptors.response.use(
   }
 );
 
+http.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('auth_token');
+    if (token && config.headers) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    // ← أضف هذا: إذا كان الـ payload FormData، احذف Content-Type حتى يضبطه المتصفح تلقائياً
+    if (config.data instanceof FormData) {
+      delete config.headers['Content-Type'];
+    }
+
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
 // Export the configured Axios instance for use in the application
 export default http;

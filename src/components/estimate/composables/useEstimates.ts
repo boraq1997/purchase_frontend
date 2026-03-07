@@ -27,7 +27,8 @@ export function useEstimates() {
 
     const addEditEstimateDialogVisible = ref(false);
     const estimateAllDetailsDialogVisible = ref(false);
-
+    const newFilesToUpload = ref<File[]>([]);
+    
     const departmentId = ref<number>();
     const hasDepartment = ref<boolean>(false);
 
@@ -52,6 +53,7 @@ export function useEstimates() {
         status: 'pending',
         notes: null,
         items: [],
+        images: [],
     });
 
     const vendorForm = reactive({
@@ -161,6 +163,7 @@ export function useEstimates() {
                 unit_price: item.unit_price != null ? Number(item.unit_price) : 0,
                 notes: item.notes,
             }));
+            estimateForm.images = estimateSnapshot.images ?? [];
             selectedPurchaseId.value = estimateSnapshot.purchase_request?.id ?? null;
         } else {
             isEditMode.value = false;
@@ -172,20 +175,58 @@ export function useEstimates() {
     const submitEstimate = async () => {
         try {
             isSaving.value = true;
+
             if (isEditMode.value && estimateId.value) {
-                await estimateService.update(estimateId.value, {
-                    ...estimateForm,
-                    estimate_date: estimateForm.estimate_date?.toISOString() ?? null,
+                const formData = new FormData();
+                formData.append('_method', 'PUT');
+                formData.append('vendor_id', String(estimateForm.vendor_id ?? ''));
+                formData.append('estimate_date', estimateForm.estimate_date?.toISOString() ?? '');
+                formData.append('status', estimateForm.status ?? '');
+                formData.append('notes', estimateForm.notes ?? '');
+
+                estimateForm.items.forEach((item, i) => {
+                    formData.append(`items[${i}][request_item_id]`, String(item.request_item_id));
+                    formData.append(`items[${i}][item_name]`,       item.item_name ?? '');
+                    formData.append(`items[${i}][unit_price]`,      String(item.unit_price));
+                    formData.append(`items[${i}][quantity]`,        String(item.quantity));
+                    formData.append(`items[${i}][notes]`,           item.notes ?? '');
                 });
+
+                // فقط الملفات الجديدة
+                newFilesToUpload.value.forEach(file => {
+                    formData.append('images[]', file);
+                });
+
+                await estimateService.update(estimateId.value, formData);
                 toast.add({ severity: 'success', summary: 'تم', detail: 'تم حفظ عرض السعر بنجاح', life: 3000 });
+
             } else {
                 if (!selectedPurchaseId.value) {
                     toast.add({ severity: 'error', summary: 'خطأ', detail: 'يرجى اختيار طلب شراء', life: 3000 });
                     return;
                 }
-                await estimateService.createWithItems(selectedPurchaseId.value, estimateForm);
+                const formData = new FormData();
+                formData.append('vendor_id',      String(estimateForm.vendor_id ?? ''));
+                formData.append('estimate_date',  estimateForm.estimate_date?.toISOString() ?? '');
+                formData.append('status',         estimateForm.status ?? '');
+                formData.append('notes',          estimateForm.notes ?? '');
+
+                estimateForm.items.forEach((item, i) => {
+                    formData.append(`items[${i}][request_item_id]`, String(item.request_item_id));
+                    formData.append(`items[${i}][item_name]`,       item.item_name ?? '');
+                    formData.append(`items[${i}][unit_price]`,      String(item.unit_price));
+                    formData.append(`items[${i}][quantity]`,        String(item.quantity));
+                    formData.append(`items[${i}][notes]`,           item.notes ?? '');
+                });
+
+                newFilesToUpload.value.forEach(file => {
+                    formData.append('images[]', file);
+                });
+
+                await estimateService.createWithItems(selectedPurchaseId.value, formData);
                 toast.add({ severity: 'success', summary: 'تم', detail: 'تم إضافة عرض سعر جديد', life: 3000 });
             }
+
             addEditEstimateDialogVisible.value = false;
             fetchAllEstimates();
         } catch {
@@ -260,6 +301,7 @@ export function useEstimates() {
         estimateForm.notes = null;
         estimateForm.items = [];
         selectedPurchaseId.value = null;
+        estimateForm.images = [];
     };
 
     // watch(selectedPurchaseId, (purchaseId) => {
@@ -287,7 +329,7 @@ export function useEstimates() {
         allEstimate, allDepartments, allVendors, allPurchase,
         estimateData, estimateForm, vendorForm, filters, pagination,
         selectedPurchaseId, addEditEstimateDialogVisible, estimateAllDetailsDialogVisible,
-        hasDepartment, departmentId,
+        hasDepartment, departmentId, newFilesToUpload,
         // computed
         totalEstimateAmount, statusCounts, statusPercentages,
         // methods
