@@ -83,19 +83,12 @@ function getEstimatesCount(item: RequestItem) {
                     <i class="fas fa-hashtag text-gray-500"/>
                 </template>
                 <template #body="{ data }">
-                    <Chip
-                        :label="`${data.quantity} ${data.unit?.name ?? data.unit}`"
-                        icon="fa-solid fa-boxes-stacked"
-                    />
-                </template>
-            </Column>
-
-            <Column header="الملاحظات" style="min-width: 150px;">
-                <template #header>
-                    <i class="fas fa-note-sticky text-gray-500"/>
-                </template>
-                <template #body="{ data }">
                     <div class="flex flex-wrap gap-2">
+                        <Tag
+                            :value="`${data.quantity}`"
+                            class="font-mono"
+                            severity="info"
+                        />
                         <Tag
                             v-if="data.unit"
                             :value="data.unit?.name ?? data.unit"
@@ -109,10 +102,29 @@ function getEstimatesCount(item: RequestItem) {
                                 class="font-mono text-xs"
                             />
                         </span>
-                        <span v-if="!data.unit" class="text-color-warn text-sm">-</span>
                     </div>
                 </template>
             </Column>
+
+            <Column header="الملاحظات" style="min-width: 180px;">
+    <template #header>
+        <div class="flex align-items-center gap-2">
+            <i class="fas fa-note-sticky text-gray-500"></i>
+            <span>الملاحظات</span>
+        </div>
+    </template>
+
+    <template #body="{ data }">
+        <span
+            v-tooltip.top="data.specifications"
+            class="text-sm text-gray-700"
+        >
+            {{ data.specifications?.length > 40
+                ? data.specifications.substring(0,40) + '...'
+                : data.specifications || '-' }}
+        </span>
+    </template>
+</Column>
 
             <Column header="المخازن" style="min-width: 150px;">
                 <template #header>
