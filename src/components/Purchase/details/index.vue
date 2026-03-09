@@ -652,6 +652,7 @@ const tabs = [
                 :src="slotProps.item.itemImageSrc"
                 :alt="slotProps.item.alt"
                 style="width: 100%; display: block; max-height: 80vh; object-fit: contain;"
+                @error="(e) => (e.target.src = './img-not-found.avif')"
             />
         </template>
         <template #thumbnail="slotProps">
@@ -659,6 +660,7 @@ const tabs = [
                 :src="slotProps.item.thumbnailImageSrc"
                 :alt="slotProps.item.alt"
                 style="display: block; width: 100px; height: 60px; object-fit: cover;"
+                @error="(e) => (e.target.src = './missing.avif')"
             />
         </template>
     </Galleria>

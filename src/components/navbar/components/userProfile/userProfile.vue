@@ -501,7 +501,11 @@ const copyToClipboard = (t: string) => {
 const editProfile    = () => console.log('Edit profile');
 const changePassword = () => console.log('Change password');
 
-onMounted(getUserInfo);
+onMounted(async()=> {
+  getUserInfo
+  const res = await navbarService.getUserPermission();
+  console.log(res.data);
+});
 </script>
 
 <style scoped>

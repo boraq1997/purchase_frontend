@@ -70,7 +70,12 @@
                                 class="img-thumb"
                                 @click="openLightbox(allImages, idx)"
                             >
-                                <img :src="file.file_url" :alt="file.file_name" />
+                                <img 
+                                    :src="file.file_url" 
+                                    :alt="file.file_name" 
+                                    @error="(e) => (e.target as HTMLImageElement).src = './img-not-found.avif'"
+
+                                />
                                 <div class="thumb-overlay"><i class="pi pi-eye" /></div>
                                 <!-- <button class="thumb-delete" type="button" @click.stop="handleDeleteExistingFile(file.id)" title="حذف">
                                     <i class="fas fa-home" />
@@ -159,6 +164,8 @@
                     :alt="slotProps.item.name"
                     class="galleria-main-img"
                     :style="{ transform: `scale(${zoomLevel}) rotate(${rotation}deg)` }"
+                    @error="(e) => (e.target as HTMLImageElement).src = './img-not-found.avif'"
+
                 />
             </template>
 

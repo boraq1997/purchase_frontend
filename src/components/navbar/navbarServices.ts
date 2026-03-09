@@ -8,6 +8,10 @@ class navbarService {
     getUserProfileInfo() {
         return api.get('/me');
     }
+
+    getUserPermission() {
+        return api.get('/debug-permissions');
+    }
 }
 
 export default new navbarService();

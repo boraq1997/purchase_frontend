@@ -47,26 +47,23 @@
             @delete="confirmDelete"
         />
 
-        <!-- ─── Dialogs ────────────────────────────────────────────────────── -->
+        <!-- ─── Form Dialog ────────────────────────────────────────────────── -->
         <ProcurementFormDialog
             v-model:visible="addEditDialogVisible"
             :isEditMode="isEditMode"
             :form="procurementForm"
             :allPurchase="allPurchase"
-            :estimatesByPurchase="estimatesByPurchase"
+            :selectedPurchaseRequest="selectedPurchaseRequest"
             :selectedEstimateIds="selectedEstimateIds"
-            :selectedEstimates="selectedEstimates"
-            :currentStep="currentStep"
             :isSaving="isSaving"
-            :isLoadingEstimates="isLoadingEstimates"
-            @update:currentStep="currentStep = $event"
+            :isLoadingRequest="isLoadingRequest"
             @submit="submitProcurement"
             @reset="resetForm"
             @onPurchaseSelected="onPurchaseRequestSelected"
             @onEstimatesSelected="onEstimatesSelected"
-            @onItemToggled="onItemToggled"
         />
 
+        <!-- ─── Details Dialog ─────────────────────────────────────────────── -->
         <ProcurementDetailsDialog
             v-model:visible="detailsDialogVisible"
             :data="procurementData"
@@ -88,14 +85,13 @@ import ProcurementDetailsDialog from './components/ProcurementDetailsDialog.vue'
 import { useProcurements } from './composables/useProcurements';
 
 const {
-    isLoading, isSaving, isEditMode,
+    isLoading, isSaving, isEditMode, isLoadingRequest,
     allProcurements, filteredProcurements, allPurchase,
-    estimatesByPurchase, selectedEstimateIds, selectedEstimates,
+    selectedPurchaseRequest, selectedEstimateIds,
     procurementData, procurementForm, filters, statusCounts,
-    currentStep, isLoadingEstimates,
     addEditDialogVisible, detailsDialogVisible,
     fetchAll, openAddEditDialog, submitProcurement,
-    onPurchaseRequestSelected, onEstimatesSelected, onItemToggled,
+    onPurchaseRequestSelected, onEstimatesSelected,
     confirmDelete, showDetails, resetForm, resetFilters,
 } = useProcurements();
 

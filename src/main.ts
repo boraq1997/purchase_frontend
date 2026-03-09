@@ -67,7 +67,6 @@ app.use(PrimeVue, {
 app.use(ToastService);
 app.directive('tooltip', Tooltip);
 
-
 // Register the Toast component globally
 app.component('Toast', Toast);
 
@@ -79,6 +78,27 @@ app.directive('ripple', Ripple);
 
 // Register the Vue router for client-side navigation
 app.use(router);
+
+// main.ts — أضف هذا قبل app.mount
+
+const arabicDigits: Record<string, string> = {
+    '٠':'0','١':'1','٢':'2','٣':'3','٤':'4',
+    '٥':'5','٦':'6','٧':'7','٨':'8','٩':'9'
+};
+
+window.addEventListener('keydown', (e: KeyboardEvent) => {
+    const target = e.target as HTMLInputElement;
+    if (target.tagName !== 'INPUT') return;
+    if (!arabicDigits[e.key]) return;
+
+    e.preventDefault();
+    const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')?.set;
+    const start = target.selectionStart ?? 0;
+    const end = target.selectionEnd ?? 0;
+    const newVal = target.value.slice(0, start) + arabicDigits[e.key] + target.value.slice(end);
+    setter?.call(target, newVal);
+    target.dispatchEvent(new Event('input', { bubbles: true }));
+}, true);
 
 // Mount the application to the DOM element with ID 'app'
 app.mount('#app');

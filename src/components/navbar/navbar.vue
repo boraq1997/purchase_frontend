@@ -1,39 +1,32 @@
 <template>
-  <!-- Main header section with navigation bar -->
-  <header class="shadow-md" dir="rtl" >
-    <!-- PrimeVue Menubar for top navigation -->
+  <header class="shadow-md" dir="rtl">
     <Menubar v-if="!hideMenu" :model="topItems" class="!rounded-none" style="padding: 5px 50px;">
-      <!-- Start slot: Application branding/logo -->
       <template #start>
         <span class="ml-2 font-bold">
           مشتريات العتبة العباسية
         </span>
       </template>
 
-      <!-- Item slot: Custom rendering for menu items -->
       <template #item="{ item, props }">
-        <a
+        <div
           v-ripple
           v-bind="props.action"
-          class="flex align-items-center p-menuitem-link hover:text-primary"
+          class="flex align-items-center p-menuitem-link cursor-pointer"
           :class="{
+            'active-nav-item': item.active,
             'p-button-danger p-button-text': item.isDanger && !item.disabled,
             'p-disabled': item.disabled,
           }"
         >
           <span :class="[item.icon, 'p-menuitem-icon']" />
           <span class="p-menuitem-text">{{ item.label }}</span>
-          <!-- Display badge for items with a count (e.g., deleted users) -->
           <Badge v-if="item.badge" class="ml-auto" :value="item.badge" />
-          <!-- Indicator for submenus -->
           <span v-if="item.hasSubmenu" class="pi pi-angle-down ml-auto" />
-        </a>
+        </div>
       </template>
 
-      <!-- End slot: Search input and user avatar with dropdown menu -->
       <template #end>
         <div class="flex items-center gap-2">
-          <!-- User avatar with clickable menu -->
           <Avatar
             icon="pi pi-user"
             style="background-color: #dee9fc; color: #1a2551"
@@ -42,14 +35,12 @@
             aria-haspopup="true"
             aria-controls="overlay_menu"
           />
-          <!-- User options popup menu -->
           <Menu ref="menu" id="overlay_menu" :model="userOptions" :popup="true" />
         </div>
       </template>
     </Menubar>
   </header>
 
-  <!-- Settings drawer for application settings -->
   <Drawer
     v-model:visible="isSettingsDrawerVisible"
     header="الإعدادات"
@@ -63,13 +54,13 @@
     v-model:visible="isChangePasswordVisible"
     modal
     header="تغيير كلمة المرور"
-    :style="{width: '450px'}"
-    :closable=true
+    :style="{ width: '450px' }"
+    :closable="true"
     dir="rtl"
   >
     <changPasswordForm
-      @success="isChangePasswordVisible=false"
-      @cancel="isChangePasswordVisible=false"
+      @success="isChangePasswordVisible = false"
+      @cancel="isChangePasswordVisible = false"
     />
   </Dialog>
 
@@ -77,259 +68,239 @@
     v-model:visible="userProfileVisible"
     modal
     header="الملف الشخصي"
-    :style="{width: '75%'}"
+    :style="{ width: '75%' }"
     :closable="true"
     dir="rtl"
     maximizable
   >
-    <userProfile
-      @close="userProfileVisible = false"
-      />
+    <userProfile @close="userProfileVisible = false" />
   </Dialog>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, computed, watch, onUnmounted } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import Menubar from 'primevue/menubar';
 import Menu from 'primevue/menu';
 import Avatar from 'primevue/avatar';
 import Badge from 'primevue/badge';
 import Drawer from 'primevue/drawer';
-import AuthServices from '../auth/auth-service';
-import { useRoute } from 'vue-router';
 import Dialog from 'primevue/dialog';
+import AuthServices from '../auth/auth-service';
 import changPasswordForm from './components/changPasswordForm.vue';
-import { resolveMessages } from "../services/messageResolver";
-import { useToast } from "primevue/usetoast";
 import userProfile from './components/userProfile/userProfile.vue';
+import { resolveMessages } from '../services/messageResolver';
+import { useToast } from 'primevue/usetoast';
 import { hasPermission } from '../services/permission';
-// call services
 
-
-// === State & Services ===
-// Reference to the user menu component
-const menu = ref();
+// ── State ────────────────────────────────────────────────
+const menu                    = ref();
 const isChangePasswordVisible = ref(false);
-const userProfileVisible = ref(false);
-const toast = useToast();
-
-// Vue Router instance for navigation
-const router = useRouter();
-const route = useRoute();
-
-// Count of archived (deleted) users
-const deleteUsers = ref(0);
-
+const userProfileVisible      = ref(false);
 const isSettingsDrawerVisible = ref(false);
-// Interval ID for polling archived users count
-// let pollingInterval: number;
+const deleteUsers             = ref(0);
 
-// === Functions ===
-const hideMenu = computed(() => {
-  return route.path === '/' || route.path === '/login';
+const toast       = useToast();
+const router      = useRouter();
+const route       = useRoute();
+const currentPath = ref(route.path);
+
+watch(() => route.path, (newPath) => {
+  currentPath.value = newPath;
 });
 
-/**
- * @description Fetches the count of archived users and updates the state
- * @returns Promise resolving to the count of archived users
- */
-// const getDeleteUsersCount = async () => {
-//   try {
-//     const response = await UsersServices.getArchivedUsers();
-//     deleteUsers.value = response.data.data.data.length || 0;
-//   } catch (err) {
-//     console.error('Failed to fetch archived users count:', err);
-//   }
-// };
+// ── Helpers ──────────────────────────────────────────────
+const hideMenu = computed(() =>
+  route.path === '/' || route.path === '/login'
+);
 
+const isActive = (path: string) => currentPath.value === path;
 
-/**
- * @description Toggles the user profile dropdown menu
- * @param event - The click event triggering the menu toggle
- */
-const toggleUserMenu = (event: Event) => {
-  menu.value.toggle(event);
-};
+const toggleUserMenu = (event: Event) => menu.value.toggle(event);
 
-/**
- * @description Logs the user out and redirects to the login page
- */
-const handleLogout = async() => {
+// ── Logout ───────────────────────────────────────────────
+const handleLogout = async () => {
   try {
     await AuthServices.logout();
-    toast.add({
-      severity: "success",
-      summary: "رسالة نجاح",
-      detail: "تم تسجيل الخروج بنجاح",
-      life: 3000
-    });
-    router.push('/'); // Redirect to login page after logout
+    toast.add({ severity: 'success', summary: 'رسالة نجاح', detail: 'تم تسجيل الخروج بنجاح', life: 3000 });
+    router.push('/');
   } catch (err) {
     if (err && typeof err === 'object' && 'response' in err) {
       const axiosError = err as any;
-      const messageKey = axiosError.response?.message;
-      const message = resolveMessages(messageKey);
-
-      toast.add({
-        severity: "error",
-        summary: "رسالة خطاء",
-        detail: message,
-        life: 3000
-      })
+      const message = resolveMessages(axiosError.response?.message);
+      toast.add({ severity: 'error', summary: 'رسالة خطأ', detail: message, life: 3000 });
     } else {
-      toast.add({
-          severity: 'error', 
-          summary: 'خطاء', 
-          detail: 'حدث خطاء ما راجع الconsole الخاص بالمتصفح', 
-          life: 3000
-      })
-      console.log(err);
-    } 
-  } finally {
+      toast.add({ severity: 'error', summary: 'خطأ', detail: 'حدث خطأ ما، راجع الـ console', life: 3000 });
+      console.error(err);
+    }
   }
 };
 
-// === Computed Properties for Menus ===
-
-// Top navigation menu items
+// ── Top Navigation Items ─────────────────────────────────
 const topItems = computed(() => {
-  
-  const items = [];
+  const path = currentPath.value;
+  const items: any[] = [];
 
   items.push({
     label: 'الرئيسية',
     icon: 'fas fa-home',
-    command: () => router.push('/home')
-  })
+    active: path === '/home',
+    command: () => router.push('/home'),
+  });
 
   if (hasPermission('view-User')) {
     items.push({
       label: 'المستخدمين',
       icon: 'fas fa-users',
-      hasSubmenu: true, // Indicate submenu presence
+      active: path === '/users',
+      hasSubmenu: true,
       items: [
-          {
-              label: "عرض الكل",
-              icon: "fas fa-users",
-              command: ()=> router.push('/users')
-          },
-          {
-              label: `المحذوفات (${deleteUsers.value})`,
-              icon: 'fas fa-trash-can',
-              isDanger: true,
-              // disabled: deleteUsers.value === 0,
-              command: () => {
-                // if (deleteUsers.value > 0) {
-                //     router.push('/users/deleted');
-                // }
-              },
-          },
+        {
+          label: 'عرض الكل',
+          icon: 'fas fa-users',
+          active: path === '/users',
+          command: () => router.push('/users'),
+        },
+        {
+          label: `المحذوفات (${deleteUsers.value})`,
+          icon: 'fas fa-trash-can',
+          isDanger: true,
+          command: () => {},
+        },
       ],
     });
   }
 
   if (hasPermission('view-PurchaseRequest')) {
     items.push({
-      label: "طلبات الشراء",
+      label: 'طلبات الشراء',
       icon: 'fa-solid fa-cart-shopping',
-      command: ()=>router.push('/purchase-request')
+      active: path === '/purchase-request',
+      command: () => router.push('/purchase-request'),
     });
   }
 
   items.push({
-    label: "order",
-    icon: "fas fa-home",
-    command: ()=>router.push('/procuement')
+    label: 'المشتريات',
+    icon: 'fas fa-boxes-stacked',
+    active: path === '/procuement',
+    command: () => router.push('/procuement'),
   });
 
   if (hasPermission('view-Estimate')) {
     items.push({
-      label: "عروض الاسعار",
-      icon: "fas fa-receipt",
-      command: ()=>router.push('/estimate')
+      label: 'عروض الأسعار',
+      icon: 'fas fa-receipt',
+      active: path === '/estimate',
+      command: () => router.push('/estimate'),
     });
   }
-
-  
-
-    
 
   if (hasPermission('view-Vendors')) {
     items.push({
-      label: "الباعة",
-      icon: "fas fa-store",
-      command: ()=>router.push('./vendors')
+      label: 'الباعة',
+      icon: 'fas fa-store',
+      active: path === '/vendors',
+      command: () => router.push('/vendors'),
     });
   }
 
   items.push({
-    label: "المجموعات",
-    icon: "fas fa-users-viewfinder",
+    label: 'المجموعات',
+    icon: 'fas fa-users-viewfinder',
+    active: path === '/departments' || path === '/committees',
     hasSubmenu: true,
     items: [
       ...(hasPermission('view-Department') ? [{
-        label: 'الاقسام',
+        label: 'الأقسام',
         icon: 'fa-solid fa-layer-group',
-        command: () => router.push('/departments')
-      }]: []),
+        active: path === '/departments',
+        command: () => router.push('/departments'),
+      }] : []),
       ...(hasPermission('view-Committees') ? [{
-        label: "اللجان",
-        icon: "fa-solid fa-users-viewfinder",
-        command: ()=>router.push('/committees')
-      }]: [])
-    ]
-  })
+        label: 'اللجان',
+        icon: 'fa-solid fa-users-viewfinder',
+        active: path === '/committees',
+        command: () => router.push('/committees'),
+      }] : []),
+    ],
+  });
 
   items.push({
-    label: "النظام",
+    label: 'النظام',
     icon: 'fas fa-cogs',
+    active: path === '/units' || path === '/roles' || path === '/logs',
     hasSubmenu: true,
     items: [
-        {
-            label: "الوحدات",
-            icon: 'fa-solid fa-scale-unbalanced-flip',
-            command: () => router.push('/units')
-        },
-        ...(hasPermission('view-Role') ? [{
-            label: 'الصلاحيات',
-            icon: 'fas fa-user-shield',
-            command: () => router.push('/roles'),
-        }] : []),
-        {
-            label: "سجل النظام",
-            icon: "fa-solid fa-clock-rotate-left",
-            command: () => router.push('/logs')
-        },
-    ]
-})
+      {
+        label: 'الوحدات',
+        icon: 'fa-solid fa-scale-unbalanced-flip',
+        active: path === '/units',
+        command: () => router.push('/units'),
+      },
+      ...(hasPermission('view-Role') ? [{
+        label: 'الصلاحيات',
+        icon: 'fas fa-user-shield',
+        active: path === '/roles',
+        command: () => router.push('/roles'),
+      }] : []),
+      {
+        label: 'سجل النظام',
+        icon: 'fa-solid fa-clock-rotate-left',
+        active: path === '/logs',
+        command: () => router.push('/logs'),
+      },
+    ],
+  });
 
   return items;
 });
 
-// User profile dropdown menu items
+// ── User Menu Items ──────────────────────────────────────
 const userOptions = computed(() => [
-  { label: 'الملف الشخصي', icon: 'pi pi-user',command: ()=>{userProfileVisible.value = true}},
-  { label: 'كلمة المرور', icon: 'pi pi-lock-open',command: ()=>{isChangePasswordVisible.value = true;}},
-  {label: 'الإعدادات',icon: 'pi pi-cog', command: () => {isSettingsDrawerVisible.value = true;},},
+  {
+    label: 'الملف الشخصي',
+    icon: 'pi pi-user',
+    command: () => { userProfileVisible.value = true; },
+  },
+  {
+    label: 'كلمة المرور',
+    icon: 'pi pi-lock-open',
+    command: () => { isChangePasswordVisible.value = true; },
+  },
+  {
+    label: 'الإعدادات',
+    icon: 'pi pi-cog',
+    command: () => { isSettingsDrawerVisible.value = true; },
+  },
   { separator: true },
-  {label: 'تسجيل الخروج', icon: 'pi pi-sign-out',command: handleLogout,},
+  {
+    label: 'تسجيل الخروج',
+    icon: 'pi pi-sign-out',
+    class: 'logout-item',
+    command: handleLogout,
+  },
 ]);
 
-// === Lifecycle Hooks ===
-
-// On component mount: Fetch initial data and start polling
-onMounted(() => {
-  // Poll for archived users count every 30 seconds
-//   pollingInterval = window.setInterval(getDeleteUsersCount, 30000);
-});
-
-// On component unmount: Clear polling interval to prevent memory leaks
-onUnmounted(() => {
-//   clearInterval(pollingInterval);
-});
+// ── Lifecycle ────────────────────────────────────────────
+onUnmounted(() => {});
 </script>
 
 <style scoped>
-/* Scoped styles for the Navbar component */
+/* ── Active nav item ── */
+:deep(.p-menuitem-content:has(.active-nav-item)) {
+  border-bottom: 2px solid var(--p-primary-color);
+}
+
+:deep(.active-nav-item .p-menuitem-icon),
+:deep(.active-nav-item .p-menuitem-text) {
+  color: var(--p-primary-color) !important;
+  font-weight: 700;
+}
+
+/* ── Logout item ── */
+:deep(.logout-item .p-menu-item-icon),
+:deep(.logout-item .p-menu-item-label) {
+  color: #ef4444 !important;
+}
 </style>

@@ -46,7 +46,7 @@
             <div class="col-12 lg:col-8">
 
                 <!-- جدول المواد -->
-                <div class="surface-card border-round-xl p-4 shadow-2 mb-4">
+                <div class="surface-card border-round-xl p-4 shadow-2">
                     <h3 class="text-lg font-bold text-900 mb-4 flex align-items-center gap-2">
                         <i class="fas fa-boxes-stacked text-primary-500"/>
                         المواد
@@ -66,7 +66,7 @@
                         <Column style="width:90px">
                             <template #header><span class="text-600 text-sm">الوحدة</span></template>
                             <template #body="{ data: row }">
-                                <span class="text-500 text-sm">{{ unitLabel(row.unit) }}</span>
+                                <span class="text-500 text-sm">{{ row.unit?.name ?? '—' }}</span>
                             </template>
                         </Column>
                         <Column style="width:90px">
@@ -76,10 +76,17 @@
                                     :pt="{ root: { class: 'border-round-lg px-3 font-semibold' } }" />
                             </template>
                         </Column>
-                        <Column style="width:140px">
-                            <template #header><span class="text-600 text-sm">سعر الوحدة</span></template>
+                        <Column style="width:150px">
+                            <template #header><span class="text-600 text-sm">سعر الشراء</span></template>
                             <template #body="{ data: row }">
-                                <span class="font-medium text-900">{{ formatCurrency(row.unit_price) }}</span>
+                                <span class="font-medium text-900">{{ formatCurrency(row.purchase_price) }}</span>
+                                <span class="text-400 text-xs mr-1">د.ع</span>
+                            </template>
+                        </Column>
+                        <Column style="width:150px">
+                            <template #header><span class="text-600 text-sm">سعر العرض</span></template>
+                            <template #body="{ data: row }">
+                                <span class="font-medium text-700">{{ formatCurrency(row.estimate_price) }}</span>
                                 <span class="text-400 text-xs mr-1">د.ع</span>
                             </template>
                         </Column>
@@ -110,30 +117,6 @@
                         <div>
                             <span class="text-white font-bold text-2xl">{{ formatCurrency(data?.total_amount) }}</span>
                             <span class="text-blue-200 text-sm mr-2">دينار عراقي</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- عرض السعر المرتبط -->
-                <div v-if="data?.estimate" class="surface-card border-round-xl p-4 shadow-2">
-                    <h3 class="text-lg font-bold text-900 mb-3 flex align-items-center gap-2">
-                        <i class="fas fa-file-invoice-dollar text-primary-500"/>
-                        عرض السعر المرتبط
-                    </h3>
-                    <div class="grid">
-                        <div class="col-6">
-                            <div class="p-3 border-round-lg"
-                                style="background:linear-gradient(135deg,rgba(102,126,234,0.05),rgba(118,75,162,0.05))">
-                                <div class="text-500 text-xs mb-1">رقم عرض السعر</div>
-                                <div class="font-bold text-900">#{{ data.estimate.id }}</div>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="p-3 border-round-lg"
-                                style="background:linear-gradient(135deg,rgba(102,126,234,0.05),rgba(118,75,162,0.05))">
-                                <div class="text-500 text-xs mb-1">المبلغ التقديري</div>
-                                <div class="font-bold text-900">{{ formatCurrency(data.estimate.total_amount) }} د.ع</div>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -216,16 +199,10 @@ const statusBg    = computed(() => s.value.bg);
 const formatDate     = (d?: string | null) => d ? new Date(d).toLocaleDateString('ar-IQ', { year: 'numeric', month: 'long', day: 'numeric' }) : '—';
 const formatCurrency = (v: any) => parseFloat(v || '0').toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 
-const unitLabels: Record<string, string> = {
-    piece: 'قطعة', box: 'صندوق', carton: 'كارتون', pack: 'حزمة', set: 'طقم',
-    kg: 'كغ', g: 'غرام', ton: 'طن', meter: 'متر', cm: 'سم', roll: 'لفة', liter: 'لتر', ml: 'مل',
-};
-const unitLabel = (u?: string | null) => u ? (unitLabels[u] ?? u) : '—';
-
 const infoItems = computed(() => [
-    { icon: 'fas fa-hashtag',        label: 'رقم المرجع',      value: props.data?.reference_no ?? '—' },
-    { icon: 'fas fa-calendar-alt',   label: 'تاريخ الشراء',    value: formatDate(props.data?.purchase_date) },
-    { icon: 'fas fa-cart-shopping',  label: 'طلب الشراء',      value: props.data?.purchase_request?.request_number ?? '—' },
-    { icon: 'fas fa-boxes-stacked',  label: 'عدد المواد',      value: `${props.data?.items?.length ?? 0} مادة` },
+    { icon: 'fas fa-hashtag',        label: 'رقم المرجع',   value: props.data?.reference_no ?? '—' },
+    { icon: 'fas fa-calendar-alt',   label: 'تاريخ الشراء', value: formatDate(props.data?.purchase_date) },
+    { icon: 'fas fa-cart-shopping',  label: 'طلب الشراء',   value: props.data?.purchase_request?.request_number ?? '—' },
+    { icon: 'fas fa-boxes-stacked',  label: 'عدد المواد',   value: `${props.data?.items?.length ?? 0} مادة` },
 ]);
 </script>

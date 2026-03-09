@@ -2,8 +2,9 @@ import api from "../api/api";
 
 export interface ProcurementItem {
     id?: number;
-    estimate_id: number;
-    estimate_item_id: number;
+    request_item_id?: number | null;
+    estimate_id?: number | null;
+    estimate_item_id?: number | null;
     item_name: string;
     unit_id?: number | null;
     unit?: { id: number; name: string } | null;
@@ -14,16 +15,8 @@ export interface ProcurementItem {
     total_price?: number;
     difference?: number | null;
     notes?: string | null;
-    estimate?: {
-        id: number;
-        vendor: string;
-        total_amount: number;
-    };
-    estimate_item?: {
-        id: number;
-        item_name: string;
-        quantity: number;
-    };
+    estimate?: { id: number; vendor: string; total_amount: number };
+    estimate_item?: { id: number; item_name: string; quantity: number };
 }
 
 export interface Procurement {
@@ -37,6 +30,8 @@ export interface Procurement {
         id: number;
         request_number: string;
         title: string;
+        description?: string | null;
+        department?: { id: number; name: string } | null;
     };
     items?: ProcurementItem[];
     created_at?: string;
@@ -49,15 +44,17 @@ export interface ProcurementPayload {
     purchase_date?: string | null;
     status?: 'in_progress' | 'completed' | 'cancelled';
     notes?: string | null;
+    selected_estimate_ids?: number[];
     items: {
-        estimate_id: number;
-        estimate_item_id: number;
+        request_item_id?: number | null;
+        estimate_id?: number | null;
+        estimate_item_id?: number | null;
         item_name: string;
         unit_id?: number | null;
         quantity: number;
         unit_price?: number;
         purchase_price: number;
-        estimate_price: number;
+        estimate_price?: number;
         notes?: string | null;
     }[];
 }
@@ -78,8 +75,23 @@ class ProcurementService {
         return res.data.data ?? res.data;
     }
 
+    async createWithFiles(formData: FormData): Promise<Procurement> {
+        const res = await api.post('/procurements', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        return res.data.data ?? res.data;
+    }
+
     async update(id: number, payload: Partial<ProcurementPayload>): Promise<Procurement> {
         const res = await api.put(`/procurements/${id}`, payload);
+        return res.data.data ?? res.data;
+    }
+
+    async updateWithFiles(id: number, formData: FormData): Promise<Procurement> {
+        formData.append('_method', 'PUT');
+        const res = await api.post(`/procurements/${id}`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        });
         return res.data.data ?? res.data;
     }
 
@@ -90,12 +102,6 @@ class ProcurementService {
 
     async markAsCompleted(id: number): Promise<Procurement> {
         const res = await api.patch(`/procurements/${id}/complete`);
-        return res.data.data ?? res.data;
-    }
-
-    // جلب عروض الأسعار بناءً على طلب الشراء
-    async getEstimatesByPurchaseRequest(purchaseRequestId: number): Promise<any[]> {
-        const res = await api.get(`/purchase-requests/${purchaseRequestId}/estimates`);
         return res.data.data ?? res.data;
     }
 }

@@ -2,13 +2,13 @@
     <Dialog
         :visible="visible"
         @update:visible="emit('update:visible', $event)"
-        :style="{ width: '70vw', maxWidth: '1050px' }"
+        :style="{ width: '75vw', maxWidth: '1100px' }"
         modal
         @hide="emit('reset')"
         dir="rtl"
         :pt="{
             header:  { class: 'pb-3 border-bottom-1 border-200' },
-            content: { class: 'pt-4 pb-2' },
+            content: { class: 'pt-4 pb-2 overflow-y-auto', style: 'max-height:75vh' },
             footer:  { class: 'pt-3 border-top-1 border-200' },
         }"
     >
@@ -23,105 +23,81 @@
                     <h2 class="m-0 text-900 font-semibold text-xl">
                         {{ isEditMode ? 'تعديل عملية الشراء' : 'إضافة عملية شراء جديدة' }}
                     </h2>
-                    <p class="m-0 text-500 text-sm mt-1">
-                        {{ stepTitles[currentStep] }}
-                    </p>
+                    <p class="m-0 text-500 text-sm mt-1">أدخل بيانات عملية الشراء</p>
                 </div>
             </div>
         </template>
 
-        <!-- ─── Stepper Indicator ─────────────────────────────────────────── -->
-        <div class="flex align-items-center justify-content-center gap-2 mb-5">
-            <div v-for="(step, i) in steps" :key="i"
-                class="flex align-items-center gap-2">
-                <div class="flex align-items-center gap-2 cursor-pointer"
-                    @click="currentStep >= i ? emit('update:currentStep', i) : null">
-                    <div class="flex align-items-center justify-content-center border-round-full font-bold text-sm transition-all transition-duration-300"
-                        style="width:32px;height:32px"
-                        :style="{
-                            background: currentStep === i ? 'var(--primary-500)' : currentStep > i ? 'var(--green-500)' : 'var(--surface-200)',
-                            color: currentStep >= i ? '#fff' : 'var(--text-color-secondary)',
-                        }">
-                        <i v-if="currentStep > i" class="fas fa-check text-xs"/>
-                        <span v-else>{{ i + 1 }}</span>
-                    </div>
-                    <span class="text-sm font-medium"
-                        :class="currentStep === i ? 'text-primary-500' : currentStep > i ? 'text-green-500' : 'text-400'">
-                        {{ step }}
-                    </span>
-                </div>
-                <div v-if="i < steps.length - 1"
-                    class="border-top-1 transition-all transition-duration-300"
-                    style="width:40px"
-                    :style="{ borderColor: currentStep > i ? 'var(--green-500)' : 'var(--surface-300)' }"/>
-            </div>
-        </div>
+        <div class="flex flex-column gap-4">
 
-        <!-- ══════════════════════════════════════════════════════════════════
-             الخطوة ١ — اختيار طلب الشراء
-        ══════════════════════════════════════════════════════════════════ -->
-        <Transition name="slide-fade">
-        <div v-if="currentStep === 0" class="flex flex-column gap-4">
+            <!-- ══════════════════════════════════════════════════════════
+                 القسم ١ — بيانات الطلب
+            ══════════════════════════════════════════════════════════ -->
             <div class="surface-50 border-round-xl p-4 border-1 border-200">
-                <div class="flex align-items-center gap-2 mb-3">
-                    <i class="fas fa-cart-shopping text-primary-500"/>
-                    <span class="font-semibold text-700 text-sm">اختر طلب الشراء</span>
-                </div>
-                <FloatLabel variant="on">
-                    <Select
-                        id="purchase_request_id"
-                        :modelValue="form.purchase_request_id"
-                        @update:modelValue="emit('onPurchaseSelected', $event)"
-                        :options="allPurchase"
-                        optionLabel="title"
-                        optionValue="id"
-                        filter fluid
-                    >
-                        <template #value="{ value }">
-                            <div v-if="value" class="flex align-items-center gap-2">
-                                <i class="fas fa-cart-shopping text-sm text-primary-500"/>
-                                <span>{{ allPurchase.find(p => p.id === value)?.title }}</span>
-                                <small class="text-400">— {{ allPurchase.find(p => p.id === value)?.request_number }}</small>
-                            </div>
-                            <span v-else class="text-400">اختر طلب الشراء</span>
-                        </template>
-                        <template #option="{ option }">
-                            <div class="flex flex-column gap-1 py-1">
-                                <div class="flex align-items-center gap-2">
-                                    <i class="fas fa-cart-shopping text-sm text-primary-500"/>
-                                    <strong class="text-900">{{ option.title }}</strong>
-                                </div>
-                                <small class="text-500">
-                                    <i class="fas fa-hashtag ml-1"/>{{ option.request_number }}
-                                </small>
-                            </div>
-                        </template>
-                    </Select>
-                    <label for="purchase_request_id">طلب الشراء</label>
-                </FloatLabel>
-            </div>
+                <SectionTitle number="١" label="بيانات الطلب" />
 
-            <!-- معلومات إضافية -->
-            <div class="surface-50 border-round-xl p-4 border-1 border-200">
-                <div class="flex align-items-center gap-2 mb-3">
-                    <i class="fas fa-circle-info text-primary-500"/>
-                    <span class="font-semibold text-700 text-sm">معلومات إضافية</span>
-                </div>
-                <div class="grid">
-                    <div class="col-12 md:col-6">
+                <div class="grid mt-3">
+                    <!-- طلب الشراء -->
+                    <div class="col-12">
                         <FloatLabel variant="on">
-                            <InputText id="reference_no" v-model="form.reference_no" fluid />
-                            <label for="reference_no"><i class="fas fa-hashtag ml-1"/>رقم المرجع</label>
+                            <Select
+                                id="purchase_request_id"
+                                :modelValue="form.purchase_request_id"
+                                @update:modelValue="onPurchaseSelected"
+                                :options="allPurchase"
+                                optionLabel="title"
+                                optionValue="id"
+                                filter fluid
+                                :loading="isLoadingRequest"
+                            >
+                                <template #value="{ value }">
+                                    <div v-if="value" class="flex align-items-center gap-2">
+                                        <i class="fas fa-cart-shopping text-sm text-primary-500"/>
+                                        <span>{{ allPurchase.find(p => p.id === value)?.title }}</span>
+                                        <small class="text-400">
+                                            — {{ allPurchase.find(p => p.id === value)?.request_number }}
+                                        </small>
+                                    </div>
+                                    <span v-else class="text-400">اختر طلب الشراء</span>
+                                </template>
+                                <template #option="{ option }">
+                                    <div class="flex flex-column gap-1 py-1">
+                                        <div class="flex align-items-center gap-2">
+                                            <i class="fas fa-cart-shopping text-sm text-primary-500"/>
+                                            <strong class="text-900">{{ option.title }}</strong>
+                                        </div>
+                                        <small class="text-500">
+                                            <i class="fas fa-hashtag ml-1"/>{{ option.request_number }}
+                                        </small>
+                                    </div>
+                                </template>
+                            </Select>
+                            <label for="purchase_request_id">
+                                طلب الشراء <span class="text-red-400">*</span>
+                            </label>
                         </FloatLabel>
                     </div>
-                    <div class="col-12 md:col-6">
+
+                    <div class="col-12 md:col-4 mt-3">
+                        <FloatLabel variant="on">
+                            <InputText id="reference_no" v-model="form.reference_no" fluid />
+                            <label for="reference_no">
+                                <i class="fas fa-hashtag ml-1"/>رقم المرجع
+                            </label>
+                        </FloatLabel>
+                    </div>
+
+                    <div class="col-12 md:col-4 mt-3">
                         <FloatLabel variant="on">
                             <DatePicker id="purchase_date" v-model="purchaseDateModel"
                                 showIcon iconDisplay="input" fluid />
-                            <label for="purchase_date"><i class="fas fa-calendar-alt ml-1"/>تاريخ الشراء</label>
+                            <label for="purchase_date">
+                                <i class="fas fa-calendar-alt ml-1"/>تاريخ الشراء
+                            </label>
                         </FloatLabel>
                     </div>
-                    <div class="col-12 mt-3">
+
+                    <div class="col-12 md:col-4 mt-3">
                         <FloatLabel variant="on">
                             <Select id="status" v-model="form.status"
                                 :options="statusOptions" optionLabel="label" optionValue="value" fluid>
@@ -133,388 +109,550 @@
                                 </template>
                                 <template #value="{ value }">
                                     <div v-if="value" class="flex align-items-center gap-2">
-                                        <i :class="statusOptions.find(o=>o.value===value)?.icon"
-                                           :style="{ color: statusOptions.find(o=>o.value===value)?.color }"/>
-                                        <span>{{ statusOptions.find(o=>o.value===value)?.label }}</span>
+                                        <i :class="statusOptions.find(o => o.value === value)?.icon"
+                                           :style="{ color: statusOptions.find(o => o.value === value)?.color }"/>
+                                        <span>{{ statusOptions.find(o => o.value === value)?.label }}</span>
                                     </div>
                                 </template>
                             </Select>
                             <label for="status">الحالة</label>
                         </FloatLabel>
                     </div>
+
                     <div class="col-12 mt-3">
                         <FloatLabel variant="on">
-                            <Textarea id="notes" v-model="form.notes" rows="2" style="resize:none" fluid />
-                            <label for="notes"><i class="fas fa-note-sticky ml-1"/>الملاحظات</label>
+                            <Textarea id="notes" v-model="form.notes" rows="2"
+                                style="resize:none" fluid />
+                            <label for="notes">
+                                <i class="fas fa-note-sticky ml-1"/>الملاحظات
+                            </label>
                         </FloatLabel>
                     </div>
                 </div>
             </div>
-        </div>
-        </Transition>
 
-        <!-- ══════════════════════════════════════════════════════════════════
-             الخطوة ٢ — اختيار عروض الأسعار
-        ══════════════════════════════════════════════════════════════════ -->
-        <Transition name="slide-fade">
-        <div v-if="currentStep === 1" class="flex flex-column gap-4">
+            <!-- ══════════════════════════════════════════════════════════
+                 القسم ٢ — عروض الأسعار (اختياري، يظهر بعد اختيار الطلب)
+            ══════════════════════════════════════════════════════════ -->
+            <Transition name="slide-down">
+            <div v-if="form.purchase_request_id"
+                class="surface-50 border-round-xl p-4 border-1 border-200">
 
-            <!-- Loading -->
-            <div v-if="isLoadingEstimates"
-                class="flex align-items-center justify-content-center py-6 gap-3 text-400">
-                <i class="pi pi-spin pi-spinner text-2xl"/>
-                <span>جاري جلب عروض الأسعار...</span>
-            </div>
-
-            <!-- لا توجد عروض -->
-            <div v-else-if="!estimatesByPurchase.length"
-                class="flex flex-column align-items-center justify-content-center py-6 gap-2 text-400 surface-50 border-round-xl border-1 border-200">
-                <i class="fas fa-file-invoice-dollar text-3xl"/>
-                <span class="text-sm">لا توجد عروض أسعار مقبولة لهذا الطلب</span>
-            </div>
-
-            <!-- عروض الأسعار -->
-            <template v-else>
-                <div class="surface-50 border-round-xl p-4 border-1 border-200">
-                    <div class="flex align-items-center gap-2 mb-3">
-                        <i class="fas fa-file-invoice-dollar text-primary-500"/>
-                        <span class="font-semibold text-700 text-sm">اختر عروض الأسعار</span>
-                        <Badge :value="selectedEstimateIds.length" severity="secondary" />
+                <div class="flex align-items-center justify-content-between mb-3">
+                    <div class="flex align-items-center gap-2">
+                        <SectionTitle number="٢" label="عروض الأسعار" />
+                        <Badge v-if="selectedEstimateIds.length"
+                            :value="`${selectedEstimateIds.length} مختار`"
+                            severity="success" class="mr-1" />
                     </div>
+                    <span class="text-xs text-400 border-1 border-200 border-round-lg px-2 py-1">
+                        <i class="fas fa-circle-info ml-1"/>اختياري
+                    </span>
+                </div>
 
-                    <div class="flex flex-column gap-3">
-                        <div v-for="estimate in estimatesByPurchase" :key="estimate.id"
-                            class="p-3 border-round-xl border-2 cursor-pointer transition-all transition-duration-200"
-                            :class="selectedEstimateIds.includes(estimate.id)
-                                ? 'border-primary-400 surface-card'
-                                : 'border-200 surface-50 hover:border-primary-200'"
-                            @click="toggleEstimate(estimate.id)">
-                            <div class="flex align-items-center justify-content-between">
-                                <div class="flex align-items-center gap-3">
-                                    <Checkbox
-                                        :modelValue="selectedEstimateIds.includes(estimate.id)"
-                                        :binary="true"
-                                        @click.stop
-                                        @update:modelValue="toggleEstimate(estimate.id)"
-                                    />
-                                    <div>
-                                        <div class="font-semibold text-900">
-                                            عرض سعر #{{ estimate.id }}
-                                            <span class="text-500 font-normal text-sm mr-2">
-                                                — {{ estimate.vendor?.name ?? '—' }}
-                                            </span>
-                                        </div>
-                                        <div class="flex gap-3 mt-1">
-                                            <small class="text-400">
-                                                <i class="fas fa-boxes-stacked ml-1"/>
-                                                {{ estimate.estimate_items?.length ?? 0 }} مادة
-                                            </small>
-                                            <small class="text-400">
-                                                <i class="fas fa-calendar-alt ml-1"/>
-                                                {{ formatDate(estimate.estimate_date) }}
-                                            </small>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="text-left">
-                                    <div class="font-bold text-primary-600">
-                                        {{ formatCurrency(estimate.total_amount) }}
-                                    </div>
-                                    <small class="text-400">د.ع</small>
-                                </div>
-                            </div>
+                <!-- Loading -->
+                <div v-if="isLoadingRequest"
+                    class="flex align-items-center justify-content-center py-4 gap-2 text-400">
+                    <i class="pi pi-spin pi-spinner"/>
+                    <span class="text-sm">جاري جلب البيانات...</span>
+                </div>
 
-                            <!-- المواد في عرض السعر -->
-                            <div v-if="selectedEstimateIds.includes(estimate.id)"
-                                class="mt-3 pt-3 border-top-1 border-200 flex flex-wrap gap-2">
-                                <Chip v-for="item in estimate.estimate_items" :key="item.id"
-                                    :label="item.item_name"
-                                    class="text-xs border-round-lg"
-                                    style="background:var(--primary-50);color:var(--primary-700)" />
+                <!-- لا توجد عروض -->
+                <div v-else-if="!availableEstimates.length"
+                    class="flex align-items-center justify-content-center gap-2 py-3 text-400 text-sm">
+                    <i class="fas fa-file-invoice-dollar"/>
+                    <span>لا توجد عروض أسعار لهذا الطلب</span>
+                </div>
+
+                <!-- قائمة العروض -->
+                <div v-else class="flex flex-column gap-2">
+                    <div v-for="est in availableEstimates" :key="est.id"
+                        class="flex align-items-center justify-content-between p-3 border-round-xl border-2 cursor-pointer transition-all transition-duration-200"
+                        :class="selectedEstimateIds.includes(est.id)
+                            ? 'border-primary-400 surface-card shadow-1'
+                            : 'border-200 hover:border-primary-200'"
+                        @click="toggleEstimate(est.id)">
+                        <div class="flex align-items-center gap-3">
+                            <Checkbox
+                                :modelValue="selectedEstimateIds.includes(est.id)"
+                                :binary="true"
+                                @click.stop
+                                @update:modelValue="toggleEstimate(est.id)"
+                            />
+                            <div>
+                                <div class="font-semibold text-900 text-sm">
+                                    {{ est.vendor?.name ?? `عرض #${est.id}` }}
+                                </div>
+                                <small class="text-400">
+                                    <i class="fas fa-calendar-alt ml-1"/>
+                                    {{ formatDate(est.estimate_date) }}
+                                </small>
                             </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="font-bold text-primary-600 text-sm">
+                                {{ formatCurrency(est.total_amount) }}
+                            </div>
+                            <small class="text-400">د.ع</small>
                         </div>
                     </div>
                 </div>
-            </template>
-        </div>
-        </Transition>
+            </div>
+            </Transition>
 
-        <!-- ══════════════════════════════════════════════════════════════════
-             الخطوة ٣ — اختيار المواد وتحديد أسعار الشراء
-        ══════════════════════════════════════════════════════════════════ -->
-        <Transition name="slide-fade">
-        <div v-if="currentStep === 2" class="flex flex-column gap-4">
-
-            <div v-for="estimate in selectedEstimates" :key="estimate.id"
+            <!-- ══════════════════════════════════════════════════════════
+                 القسم ٣ — مواد الطلب وأسعار الشراء
+            ══════════════════════════════════════════════════════════ -->
+            <Transition name="slide-down">
+            <div v-if="form.purchase_request_id && !isLoadingRequest"
                 class="border-round-xl border-1 border-200 overflow-hidden">
 
-                <!-- رأس عرض السعر -->
                 <div class="flex align-items-center justify-content-between px-4 py-3 surface-card border-bottom-1 border-200">
                     <div class="flex align-items-center gap-2">
-                        <i class="fas fa-file-invoice-dollar text-primary-500"/>
-                        <span class="font-semibold text-700">عرض سعر #{{ estimate.id }}</span>
-                        <span class="text-500 text-sm">— {{ estimate.vendor?.name }}</span>
+                        <SectionTitle number="٣" label="المواد وأسعار الشراء" />
+                        <Badge :value="`${requestItems.length} مادة`" severity="secondary" />
                     </div>
-                    <Badge
-                        :value="`${selectedItemsCount(estimate.id)} / ${estimate.estimate_items?.length}`"
-                        severity="secondary"
-                    />
+                    <div v-if="totalAmount > 0" class="flex align-items-center gap-2">
+                        <span class="text-500 text-sm">الإجمالي:</span>
+                        <span class="font-bold text-primary-600">
+                            {{ formatCurrency(totalAmount) }}
+                        </span>
+                        <span class="text-400 text-xs">د.ع</span>
+                    </div>
                 </div>
 
-                <!-- جدول المواد -->
-                <DataTable :value="estimate.estimate_items ?? []" size="small"
+                <!-- لا توجد مواد -->
+                <div v-if="!requestItems.length"
+                    class="flex align-items-center justify-content-center gap-2 py-5 text-400 text-sm">
+                    <i class="fas fa-boxes-stacked"/>
+                    <span>لا توجد مواد في هذا الطلب</span>
+                </div>
+
+                <DataTable v-else :value="requestItems" size="small"
                     :pt="{ thead: { class: 'surface-100' }, tbody: { class: 'surface-0' } }">
 
-                    <!-- checkbox -->
-                    <Column style="width:48px">
-                        <template #body="{ data: item }">
-                            <Checkbox
-                                :modelValue="isItemSelected(item.id)"
-                                :binary="true"
-                                @update:modelValue="emit('onItemToggled', estimate.id, item, $event)"
-                            />
-                        </template>
-                    </Column>
-
-                    <!-- اسم المادة -->
+                    <!-- المادة -->
                     <Column>
                         <template #header><span class="text-600 text-sm">المادة</span></template>
                         <template #body="{ data: item }">
-                            <div class="flex align-items-center gap-2"
-                                :class="!isItemSelected(item.id) ? 'opacity-50' : ''">
-                                <i class="fas fa-box text-400 text-xs"/>
-                                <span class="font-medium text-900">{{ item.item_name }}</span>
+                            <div>
+                                <div class="font-medium text-900 text-sm">{{ item.item_name }}</div>
+                                <small v-if="item.specifications" class="text-400 text-xs">
+                                    {{ item.specifications }}
+                                </small>
                             </div>
+                        </template>
+                    </Column>
+
+                    <!-- الوحدة -->
+                    <Column style="width:80px">
+                        <template #header><span class="text-600 text-sm">الوحدة</span></template>
+                        <template #body="{ data: item }">
+                            <span class="text-500 text-sm">{{ item.unit?.name ?? '—' }}</span>
                         </template>
                     </Column>
 
                     <!-- الكمية -->
-                    <Column style="width:90px">
+                    <Column style="width:80px">
                         <template #header><span class="text-600 text-sm">الكمية</span></template>
                         <template #body="{ data: item }">
                             <Tag :value="`${item.quantity}`" severity="secondary"
-                                :class="!isItemSelected(item.id) ? 'opacity-50' : ''"
-                                :pt="{ root: { class: 'border-round-lg px-3' } }" />
+                                :pt="{ root: { class: 'border-round-lg px-2 font-semibold' } }" />
                         </template>
                     </Column>
 
-                    <!-- سعر عرض السعر -->
+                    <!-- السعر التقديري -->
                     <Column style="width:140px">
-                        <template #header><span class="text-600 text-sm">سعر العرض</span></template>
+                        <template #header><span class="text-600 text-sm">السعر التقديري</span></template>
                         <template #body="{ data: item }">
-                            <span class="font-medium text-700"
-                                :class="!isItemSelected(item.id) ? 'opacity-50' : ''">
-                                {{ formatCurrency(item.unit_price) }}
+                            <span class="text-500 text-sm">
+                                {{ formatCurrency(item.estimated_unit_price) }}
                                 <small class="text-400 mr-1">د.ع</small>
                             </span>
                         </template>
                     </Column>
 
-                    <!-- سعر الشراء -->
-                    <Column style="width:170px">
+                    <!-- سعر عرض السعر — يظهر فقط عند اختيار عرض أسعار -->
+                    <Column v-if="selectedEstimateIds.length" style="width:160px">
+                        <template #header><span class="text-600 text-sm">سعر العرض</span></template>
+                        <template #body="{ data: item }">
+                            <div v-if="getEstimateInfo(item)" class="flex flex-column">
+                                <span class="font-medium text-blue-700 text-sm">
+                                    {{ formatCurrency(getEstimateInfo(item)!.unit_price) }}
+                                    <small class="text-400 mr-1">د.ع</small>
+                                </span>
+                                <small class="text-400 text-xs">{{ getEstimateInfo(item)!.vendor }}</small>
+                            </div>
+                            <span v-else class="text-300 text-sm">—</span>
+                        </template>
+                    </Column>
+
+                    <!-- سعر الشراء الفعلي -->
+                    <Column style="width:180px">
                         <template #header>
-                            <span class="text-600 text-sm">سعر الشراء</span>
+                            <span class="text-600 text-sm">
+                                سعر الشراء <span class="text-red-400">*</span>
+                            </span>
                         </template>
                         <template #body="{ data: item }">
                             <InputNumber
-                                v-if="isItemSelected(item.id)"
-                                :modelValue="getItemPurchasePrice(item.id)"
-                                @update:modelValue="val => setItemPurchasePrice(item.id, val ?? 0)"
+                                :modelValue="getFormItem(item.id)?.purchase_price ?? 0"
+                                @update:modelValue="val => setFormItemPrice(item, val ?? 0)"
                                 :min="0" mode="decimal" :useGrouping="true"
-                                :inputStyle="{ width: '130px' }"
+                                :inputStyle="{ width: '145px' }"
                                 size="small"
                             />
-                            <span v-else class="text-300">—</span>
                         </template>
                     </Column>
 
-                    <!-- الفرق -->
-                    <Column style="width:120px">
+                    <!-- الفرق — يظهر فقط عند اختيار عرض أسعار -->
+                    <Column v-if="selectedEstimateIds.length" style="width:110px">
                         <template #header><span class="text-600 text-sm">الفرق</span></template>
                         <template #body="{ data: item }">
-                            <template v-if="isItemSelected(item.id)">
-                                <span :class="getDifferenceClass(item.id, item.unit_price)"
-                                    class="font-semibold text-sm">
-                                    {{ getDifferenceLabel(item.id, item.unit_price) }}
-                                </span>
-                            </template>
+                            <span v-if="getEstimateInfo(item)"
+                                :class="getDiffClass(item)"
+                                class="font-semibold text-sm">
+                                {{ getDiffLabel(item) }}
+                            </span>
                             <span v-else class="text-300">—</span>
                         </template>
                     </Column>
+
                 </DataTable>
             </div>
+            </Transition>
 
-            <!-- إجمالي -->
-            <div v-if="form.items.length"
-                class="flex justify-content-between align-items-center px-4 py-3 border-round-xl"
-                style="background:linear-gradient(135deg,#1e3a5f,#2d5986)">
-                <div class="flex align-items-center gap-2 text-white">
-                    <i class="fas fa-circle-check text-green-400"/>
-                    <span class="text-sm">{{ form.items.length }} مادة محددة</span>
-                </div>
-                <div>
-                    <span class="text-white font-bold text-xl">
-                        {{ totalAmount.toLocaleString() }}
+            <!-- placeholder قبل اختيار الطلب -->
+            <div v-if="!form.purchase_request_id"
+                class="flex flex-column align-items-center justify-content-center gap-2 py-6 text-400
+                       surface-50 border-round-xl border-1 border-200">
+                <i class="fas fa-boxes-stacked text-4xl"/>
+                <span class="text-sm">اختر طلب الشراء لعرض المواد وعروض الأسعار</span>
+            </div>
+
+            <!-- ══════════════════════════════════════════════════════════
+                 القسم ٤ — صور الفواتير
+            ══════════════════════════════════════════════════════════ -->
+            <Transition name="slide-down">
+            <div v-if="form.purchase_request_id"
+                class="surface-50 border-round-xl p-4 border-1 border-200">
+
+                <div class="flex align-items-center justify-content-between mb-3">
+                    <SectionTitle number="٤" label="صور الفواتير" />
+                    <span class="text-xs text-400 border-1 border-200 border-round-lg px-2 py-1">
+                        <i class="fas fa-circle-info ml-1"/>اختياري
                     </span>
-                    <span class="text-blue-200 text-sm mr-2">د.ع</span>
+                </div>
+
+                <!-- منطقة السحب والإفلات -->
+                <div class="border-2 border-dashed border-300 border-round-xl p-5 text-center cursor-pointer
+                            transition-all transition-duration-200 hover:border-primary-400 hover:surface-card"
+                    @click="triggerFileInput"
+                    @dragover.prevent
+                    @drop.prevent="onDrop">
+                    <input ref="fileInputRef" type="file"
+                        accept="image/jpeg,image/png" multiple class="hidden"
+                        @change="onFileChange" />
+                    <i class="fas fa-cloud-arrow-up text-4xl text-400 mb-3 block"/>
+                    <p class="text-600 text-sm m-0">
+                        اسحب الصور هنا أو
+                        <span class="text-primary-500 font-semibold">تصفح الملفات</span>
+                    </p>
+                    <p class="text-400 text-xs mt-1 m-0">JPG, PNG — حد أقصى 5MB لكل صورة</p>
+                </div>
+
+                <!-- معاينة الصور -->
+                <div v-if="invoiceFiles.length" class="flex flex-wrap gap-3 mt-3">
+                    <div v-for="(file, idx) in invoiceFiles" :key="idx"
+                        class="relative border-round-xl overflow-hidden border-1 border-200 flex-shrink-0"
+                        style="width:100px;height:100px">
+                        <img :src="file.preview" class="w-full h-full" style="object-fit:cover"/>
+                        <!-- overlay حذف -->
+                        <div class="absolute top-0 left-0 w-full h-full flex align-items-center justify-content-center
+                                    opacity-0 hover:opacity-100 transition-all transition-duration-200"
+                            style="background:rgba(0,0,0,0.5)">
+                            <Button icon="fas fa-trash" severity="danger" size="small" rounded
+                                @click.stop="removeFile(idx)" />
+                        </div>
+                        <!-- اسم الملف -->
+                        <div class="absolute bottom-0 right-0 left-0 px-1 py-1"
+                            style="background:rgba(0,0,0,0.55)">
+                            <p class="text-white text-xs m-0 overflow-hidden white-space-nowrap text-overflow-ellipsis">
+                                {{ file.name }}
+                            </p>
+                        </div>
+                    </div>
                 </div>
             </div>
+            </Transition>
 
-            <!-- empty -->
-            <div v-else
-                class="flex flex-column align-items-center justify-content-center gap-2 py-5 text-400 surface-50 border-round-xl border-1 border-200">
-                <i class="fas fa-boxes-stacked text-3xl"/>
-                <span class="text-sm">اختر المواد من عروض الأسعار أعلاه</span>
-            </div>
-        </div>
-        </Transition>
+        </div><!-- /flex flex-column -->
 
         <!-- ─── Footer ────────────────────────────────────────────────────── -->
         <template #footer>
-            <div class="flex justify-content-between align-items-center w-full">
-                <Button v-if="currentStep > 0"
-                    label="السابق" icon="fas fa-arrow-right"
-                    severity="secondary" variant="outlined"
+            <div class="flex justify-content-end gap-2">
+                <Button label="إلغاء" icon="fas fa-times"
+                    severity="secondary" variant="outlined" class="border-round-lg"
+                    @click="emit('update:visible', false)" />
+                <Button
+                    :label="isEditMode ? 'تحديث' : 'حفظ'"
+                    icon="fas fa-floppy-disk"
+                    :loading="isSaving"
+                    :disabled="!canSubmit"
                     class="border-round-lg"
-                    @click="emit('update:currentStep', currentStep - 1)"
+                    @click="handleSubmit"
                 />
-                <div v-else/>
-
-                <div class="flex gap-2">
-                    <Button label="إلغاء" icon="fas fa-times"
-                        severity="secondary" variant="outlined"
-                        class="border-round-lg"
-                        @click="emit('update:visible', false)"
-                    />
-                    <Button v-if="currentStep < 2"
-                        label="التالي" icon="fas fa-arrow-left" iconPos="right"
-                        class="border-round-lg"
-                        :disabled="!canGoNext"
-                        @click="emit('update:currentStep', currentStep + 1)"
-                    />
-                    <Button v-else
-                        :label="isEditMode ? 'تحديث' : 'حفظ'"
-                        icon="fas fa-floppy-disk"
-                        :loading="isSaving"
-                        :disabled="!form.items.length"
-                        class="border-round-lg"
-                        @click="emit('submit')"
-                    />
-                </div>
             </div>
         </template>
     </Dialog>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
-import Dialog from 'primevue/dialog';
-import Button from 'primevue/button';
-import Select from 'primevue/select';
-import FloatLabel from 'primevue/floatlabel';
-import InputText from 'primevue/inputtext';
+import { computed, ref, watch } from 'vue';
+import Dialog      from 'primevue/dialog';
+import Button      from 'primevue/button';
+import Select      from 'primevue/select';
+import FloatLabel  from 'primevue/floatlabel';
+import InputText   from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
-import Textarea from 'primevue/textarea';
-import DatePicker from 'primevue/datepicker';
-import DataTable from 'primevue/datatable';
-import Column from 'primevue/column';
-import Badge from 'primevue/badge';
-import Checkbox from 'primevue/checkbox';
-import Chip from 'primevue/chip';
-import Tag from 'primevue/tag';
+import Textarea    from 'primevue/textarea';
+import DatePicker  from 'primevue/datepicker';
+import DataTable   from 'primevue/datatable';
+import Column      from 'primevue/column';
+import Badge       from 'primevue/badge';
+import Checkbox    from 'primevue/checkbox';
+import Tag         from 'primevue/tag';
 import type { ProcurementPayload } from '../procurementService';
 
-const statusOptions = [
-    { label: 'جارية',  value: 'in_progress', icon: 'fas fa-spinner',      color: 'var(--yellow-500)' },
-    { label: 'مكتملة', value: 'completed',   icon: 'fas fa-circle-check', color: 'var(--green-500)'  },
-    { label: 'ملغاة',  value: 'cancelled',   icon: 'fas fa-circle-xmark', color: 'var(--red-500)'    },
-];
+// ─── مكوّن مساعد لعنوان القسم ─────────────────────────────────────────────
+const SectionTitle = {
+    props: ['number', 'label'],
+    template: `
+        <div class="flex align-items-center gap-2">
+            <div class="flex align-items-center justify-content-center border-round-lg flex-shrink-0"
+                style="width:26px;height:26px;background:var(--primary-100)">
+                <span class="font-bold text-primary-600 text-xs">{{ number }}</span>
+            </div>
+            <span class="font-semibold text-700">{{ label }}</span>
+        </div>
+    `,
+};
 
-const steps      = ['طلب الشراء', 'عروض الأسعار', 'المواد والأسعار'];
-const stepTitles = ['اختر طلب الشراء والمعلومات الأساسية', 'اختر عروض الأسعار المراد الشراء منها', 'حدد المواد وأدخل أسعار الشراء'];
-
+// ─── Props ────────────────────────────────────────────────────────────────
 const props = defineProps<{
     visible: boolean;
     isEditMode: boolean;
     form: ProcurementPayload;
     allPurchase: any[];
-    estimatesByPurchase: any[];
+    selectedPurchaseRequest: any | null;  // الطلب المختار كاملاً
     selectedEstimateIds: number[];
-    selectedEstimates: any[];
-    currentStep: number;
     isSaving: boolean;
-    isLoadingEstimates?: boolean;
+    isLoadingRequest?: boolean;
 }>();
 
 const emit = defineEmits<{
     'update:visible':      [boolean];
-    'update:currentStep':  [number];
-    'submit':              [];
+    'submit':              [invoiceFiles: File[]];
     'reset':               [];
-    'onPurchaseSelected':  [number];
-    'onEstimatesSelected': [number[]];
-    'onItemToggled':       [estimateId: number, item: any, checked: boolean];
+    'onPurchaseSelected':  [id: number];
+    'onEstimatesSelected': [ids: number[]];
 }>();
 
-const purchaseDateModel = computed({
-    get: () => props.form.purchase_date ? new Date(props.form.purchase_date) : null,
-    set: (v: Date | null) => { props.form.purchase_date = v?.toISOString().split('T')[0] ?? null; },
-});
+// ─── Status options ───────────────────────────────────────────────────────
+const statusOptions = [
+    { label: 'جاري الشراء',  value: 'in_progress', icon: 'fas fa-spinner',      color: 'var(--yellow-500)' },
+    { label: 'تم الشراء',    value: 'completed',   icon: 'fas fa-circle-check', color: 'var(--green-500)'  },
+    { label: 'إلغاء الشراء', value: 'cancelled',   icon: 'fas fa-circle-xmark', color: 'var(--red-500)'    },
+];
 
-const totalAmount = computed(() =>
-    props.form.items.reduce((s, i) => s + (Number(i.purchase_price) * Number(i.quantity)), 0)
+// ─── Derived data from selectedPurchaseRequest ────────────────────────────
+const requestItems = computed<any[]>(() =>
+    props.selectedPurchaseRequest?.items ?? []
 );
 
-const canGoNext = computed(() => {
-    if (props.currentStep === 0) return !!props.form.purchase_request_id;
-    if (props.currentStep === 1) return props.selectedEstimateIds.length > 0;
-    return true;
+const availableEstimates = computed<any[]>(() =>
+    props.selectedPurchaseRequest?.estimates ?? []
+);
+
+// ─── Date model ───────────────────────────────────────────────────────────
+const purchaseDateModel = computed({
+    get: () => props.form.purchase_date ? new Date(props.form.purchase_date) : null,
+    set: (v: Date | null) => {
+        props.form.purchase_date = v?.toISOString().split('T')[0] ?? null;
+    },
 });
 
-const toggleEstimate = (estimateId: number) => {
-    const current = [...props.selectedEstimateIds];
-    const idx = current.indexOf(estimateId);
-    if (idx === -1) current.push(estimateId);
-    else current.splice(idx, 1);
-    emit('onEstimatesSelected', current);
+// ─── Estimate toggle ──────────────────────────────────────────────────────
+const toggleEstimate = (id: number) => {
+    const ids = [...props.selectedEstimateIds];
+    const idx = ids.indexOf(id);
+    idx === -1 ? ids.push(id) : ids.splice(idx, 1);
+    emit('onEstimatesSelected', ids);
 };
 
-const isItemSelected = (estimateItemId: number) =>
-    props.form.items.some(i => i.estimate_item_id === estimateItemId);
+// ─── Form items helpers ───────────────────────────────────────────────────
+const getFormItem = (requestItemId: number) =>
+    props.form.items.find(i => i.request_item_id === requestItemId);
 
-const getItemPurchasePrice = (estimateItemId: number) =>
-    props.form.items.find(i => i.estimate_item_id === estimateItemId)?.purchase_price ?? 0;
-
-const setItemPurchasePrice = (estimateItemId: number, val: number) => {
-    const item = props.form.items.find(i => i.estimate_item_id === estimateItemId);
-    if (item) item.purchase_price = val;
+const setFormItemPrice = (requestItem: any, price: number) => {
+    const existing = props.form.items.find(i => i.request_item_id === requestItem.id);
+    if (existing) {
+        existing.purchase_price = price;
+    } else {
+        const info = getEstimateInfo(requestItem);
+        props.form.items.push({
+            request_item_id:  requestItem.id,
+            estimate_id:      info?.estimate_id ?? null,
+            estimate_item_id: info?.estimate_item_id ?? null,
+            item_name:        requestItem.item_name,
+            unit_id:          requestItem.unit?.id ?? null,
+            quantity:         requestItem.quantity,
+            unit_price:       Number(requestItem.estimated_unit_price ?? 0),
+            purchase_price:   price,
+            estimate_price:   Number(info?.unit_price ?? 0),
+            notes:            null,
+        });
+    }
 };
 
-const selectedItemsCount = (estimateId: number) =>
-    props.form.items.filter(i => i.estimate_id === estimateId).length;
-
-const getDifferenceClass = (estimateItemId: number, estimatePrice: number) => {
-    const purchase = getItemPurchasePrice(estimateItemId);
-    const diff = purchase - Number(estimatePrice);
-    if (diff > 0) return 'text-red-500';
-    if (diff < 0) return 'text-green-500';
-    return 'text-400';
+// ─── Estimate info لمادة معينة ────────────────────────────────────────────
+// يبحث في item.estimate[] عن أي عرض سعر مختار
+const getEstimateInfo = (requestItem: any): {
+    unit_price: number;
+    vendor: string;
+    estimate_id: number;
+    estimate_item_id: number;
+} | null => {
+    if (!props.selectedEstimateIds.length) return null;
+    const match = (requestItem.estimate ?? []).find((ei: any) =>
+        props.selectedEstimateIds.includes(ei.estimate?.id)
+    );
+    if (!match) return null;
+    return {
+        unit_price:       Number(match.unit_price),
+        vendor:           match.estimate?.vendor?.name ?? '—',
+        estimate_id:      match.estimate?.id,
+        estimate_item_id: match.id,
+    };
 };
 
-const getDifferenceLabel = (estimateItemId: number, estimatePrice: number) => {
-    const purchase = getItemPurchasePrice(estimateItemId);
-    const diff = purchase - Number(estimatePrice);
-    if (diff === 0) return '—';
-    return `${diff > 0 ? '+' : ''}${diff.toLocaleString()}`;
+// ─── مزامنة estimate_price في form.items عند تغيير العروض المختارة ────────
+watch(() => props.selectedEstimateIds, () => {
+    props.form.items.forEach(formItem => {
+        const reqItem = requestItems.value.find(r => r.id === formItem.request_item_id);
+        if (!reqItem) return;
+        const info = getEstimateInfo(reqItem);
+        formItem.estimate_price   = info ? info.unit_price : 0;
+        formItem.estimate_id      = info?.estimate_id ?? null;
+        formItem.estimate_item_id = info?.estimate_item_id ?? null;
+    });
+}, { deep: true });
+
+// ─── بناء form.items تلقائياً عند جلب مواد الطلب ─────────────────────────
+watch(requestItems, (items) => {
+    // احذف المواد القديمة وأعد البناء
+    props.form.items.splice(0);
+    items.forEach(requestItem => {
+        props.form.items.push({
+            request_item_id:  requestItem.id,
+            estimate_id:      null,
+            estimate_item_id: null,
+            item_name:        requestItem.item_name,
+            unit_id:          requestItem.unit?.id ?? null,
+            quantity:         requestItem.quantity,
+            unit_price:       Number(requestItem.estimated_unit_price ?? 0),
+            purchase_price:   0,
+            estimate_price:   0,
+            notes:            null,
+        });
+    });
+});
+
+// ─── Difference helpers ───────────────────────────────────────────────────
+const getDiffClass = (requestItem: any) => {
+    const formItem = getFormItem(requestItem.id);
+    const info     = getEstimateInfo(requestItem);
+    if (!formItem || !info || formItem.purchase_price === 0) return 'text-400';
+    const diff = formItem.purchase_price - info.unit_price;
+    return diff > 0 ? 'text-red-500' : diff < 0 ? 'text-green-500' : 'text-400';
 };
 
-const formatDate     = (d?: string | null) => d ? new Date(d).toLocaleDateString('ar-IQ', { year: 'numeric', month: 'short', day: 'numeric' }) : '—';
-const formatCurrency = (v: any) => parseFloat(v || '0').toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+const getDiffLabel = (requestItem: any) => {
+    const formItem = getFormItem(requestItem.id);
+    const info     = getEstimateInfo(requestItem);
+    if (!formItem || !info || formItem.purchase_price === 0) return '—';
+    const diff = formItem.purchase_price - info.unit_price;
+    if (diff === 0) return '=';
+    return `${diff > 0 ? '▲' : '▼'} ${Math.abs(diff).toLocaleString()}`;
+};
+
+// ─── Total ────────────────────────────────────────────────────────────────
+const totalAmount = computed(() =>
+    props.form.items.reduce((s, i) =>
+        s + (Number(i.purchase_price) * Number(i.quantity)), 0)
+);
+
+// ─── Invoice files ────────────────────────────────────────────────────────
+const fileInputRef = ref<HTMLInputElement | null>(null);
+const invoiceFiles = ref<{ file: File; name: string; preview: string }[]>([]);
+
+const triggerFileInput = () => fileInputRef.value?.click();
+
+const addFiles = (files: FileList | null) => {
+    if (!files) return;
+    Array.from(files).forEach(file => {
+        if (file.size > 5 * 1024 * 1024) return;
+        invoiceFiles.value.push({
+            file,
+            name:    file.name,
+            preview: URL.createObjectURL(file),
+        });
+    });
+};
+
+const onFileChange = (e: Event) =>
+    addFiles((e.target as HTMLInputElement).files);
+const onDrop = (e: DragEvent) =>
+    addFiles(e.dataTransfer?.files ?? null);
+const removeFile = (idx: number) => {
+    URL.revokeObjectURL(invoiceFiles.value[idx].preview);
+    invoiceFiles.value.splice(idx, 1);
+};
+
+watch(() => props.visible, (val) => {
+    if (!val) {
+        invoiceFiles.value.forEach(f => URL.revokeObjectURL(f.preview));
+        invoiceFiles.value = [];
+    }
+});
+
+// ─── Submit ───────────────────────────────────────────────────────────────
+const canSubmit = computed(() =>
+    !!props.form.purchase_request_id && props.form.items.length > 0
+);
+
+const onPurchaseSelected = (id: number) => emit('onPurchaseSelected', id);
+
+const handleSubmit = () =>
+    emit('submit', invoiceFiles.value.map(f => f.file));
+
+// ─── Formatters ───────────────────────────────────────────────────────────
+const formatDate = (d?: string | null) => d
+    ? new Date(d).toLocaleDateString('ar-IQ', {
+        year: 'numeric', month: 'short', day: 'numeric',
+      })
+    : '—';
+
+const formatCurrency = (v: any) =>
+    parseFloat(v || '0').toLocaleString('en-US', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+    });
 </script>
 
 <style scoped>
-.slide-fade-enter-active { transition: all 0.25s ease-out; }
-.slide-fade-leave-active { transition: all 0.2s ease-in; }
-.slide-fade-enter-from,
-.slide-fade-leave-to { opacity: 0; transform: translateX(10px); }
+.slide-down-enter-active { transition: all 0.3s ease-out; }
+.slide-down-leave-active { transition: all 0.2s ease-in; }
+.slide-down-enter-from   { opacity: 0; transform: translateY(-8px); }
+.slide-down-leave-to     { opacity: 0; transform: translateY(-8px); }
 </style>
