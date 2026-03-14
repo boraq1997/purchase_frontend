@@ -184,7 +184,7 @@ export function useEstimates() {
                 formData.append('status', estimateForm.status ?? '');
                 formData.append('notes', estimateForm.notes ?? '');
 
-                estimateForm.items.forEach((item, i) => {
+                (estimateForm.items ?? []).forEach((item, i) => {
                     formData.append(`items[${i}][request_item_id]`, String(item.request_item_id));
                     formData.append(`items[${i}][item_name]`,       item.item_name ?? '');
                     formData.append(`items[${i}][unit_price]`,      String(item.unit_price));
@@ -211,7 +211,7 @@ export function useEstimates() {
                 formData.append('status',         estimateForm.status ?? '');
                 formData.append('notes',          estimateForm.notes ?? '');
 
-                estimateForm.items.forEach((item, i) => {
+                (estimateForm.items ?? []).forEach((item, i) => {
                     formData.append(`items[${i}][request_item_id]`, String(item.request_item_id));
                     formData.append(`items[${i}][item_name]`,       item.item_name ?? '');
                     formData.append(`items[${i}][unit_price]`,      String(item.unit_price));

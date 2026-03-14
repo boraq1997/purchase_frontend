@@ -194,7 +194,7 @@
                     </span>
                 </template>
                 <template #body="{data}">
-                    <Button v-if="hasPermission('view-Committees')" icon="fa-solid fa-users-viewfinder" class="ml-1" severity="secondary" rounded variant="outlined" aria-label="all committees" @click="getUserCommittees(data.committees)" v-tooltip="{ value: 'عرض اللجان التي ينتمي اليها المستخدم', showDelay: 1000, hideDelay: 300 }"/>
+                    <Button v-if="hasPermission('view-Committee')" icon="fa-solid fa-users-viewfinder" class="ml-1" severity="secondary" rounded variant="outlined" aria-label="all committees" @click="getUserCommittees(data.committees)" v-tooltip="{ value: 'عرض اللجان التي ينتمي اليها المستخدم', showDelay: 1000, hideDelay: 300 }"/>
                     <Button v-if="hasPermission('edit-User')" icon="fas fa-user-edit" class="ml-1" severity="secondary" rounded variant="outlined" aria-label="edit" @click="openAddEditUserDialog(data)" v-tooltip="{ value: 'تعديل بيانات المستخدم', showDelay: 1000, hideDelay: 300 }" />
                     <Button v-if="hasPermission('delete-User')" icon="fas fa-user-minus" severity="danger" rounded variant="outlined" aria-label="delete" @click.stop="confirmDeleteUser(data)" v-tooltip="{ value: 'حذف بيانات المستخدم', showDelay: 1000, hideDelay: 300 }" />
                 </template>
@@ -516,11 +516,11 @@ const allRoles = ref<any[]>([]); // List of roles
 const addEditUsersDialogVisible = ref(false); // Visibility of add/edit user dialog
 const userCommitteeDialogVisible = ref(false); // Visibility of user committees dialog
 
-const filters = reactive({
+const filters = ref({
     global: {value: null, matchMode: FilterMatchMode.CONTAINS}, // Global search filters for users table
 })
 
-const committeesFilters = reactive({
+const committeesFilters = ref({
     global: {value: null, matchMode: FilterMatchMode.CONTAINS}, // Global search filters for committees table
 })
 

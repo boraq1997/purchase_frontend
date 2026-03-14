@@ -207,6 +207,9 @@ import Button from 'primevue/button';
 import api from '../../api/api';
 
 interface LightboxItem { src: string; name: string; }
+interface FileWithPreview extends File {
+    preview?: string;
+}
 
 const props = defineProps<{ existingFiles?: any[] }>();
 
@@ -225,7 +228,7 @@ const totalSize        = ref('0 B');
 const totalSizePercent = ref(0);
 const MAX_SIZE_BYTES   = 5 * 1024 * 1024;
 const previewUrls      = ref<Record<string, string>>({});
-const newFiles         = ref<File[]>([]);
+const newFiles         = ref<FileWithPreview[]>([]);
 
 // ─── Lightbox ─────────────────────────────────────────────────────────────────
 const lightboxOpen  = ref(false);
@@ -248,8 +251,8 @@ const allImages = computed<LightboxItem[]>(() =>
 
 const allNewImages = computed<LightboxItem[]>(() =>
     newFiles.value
-        .filter(f => previewUrls.value[f.name + f.size])
-        .map(f => ({ src: previewUrls.value[f.name + f.size], name: f.name }))
+        .filter(f => !!f.preview)
+        .map(f => ({ src: f.preview as string, name: f.name }))
 );
 
 // ─── Watchers ─────────────────────────────────────────────────────────────────

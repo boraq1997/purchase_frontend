@@ -18,11 +18,12 @@ export interface EstimateItemInput {
     quantity?: number;
     unit_price: number;
     notes?: string | null;
+    item_name?: string;
 }
 
 export interface EstimatePayload {
     vendor_id?: number;
-    estimate_date: Date | null;
+    estimate_date: Date | string | null;
     status?: "pending" | "accepted" | "rejected";
     notes?: string | null;
     items?: EstimateItemInput[];
@@ -69,6 +70,12 @@ export interface Estimate {
 
     created_at?: string;
     updated_at?: string;
+
+    images?: {
+        id: number;
+        file_url: string;
+        file_name: string;
+    }[];
 }
 
 // src/services/estimateService.ts
@@ -83,7 +90,7 @@ class EstimateService {
     */
     async createWithItems(
         purchaseRequestId: number,
-        payload: EstimatePayload
+        payload: EstimatePayload | FormData
     ): Promise<Estimate> {
         const res = await api.post(
             `/purchase-requests/${purchaseRequestId}/estimates/with-items`,
@@ -142,7 +149,7 @@ class EstimateService {
     | Update estimate
     |--------------------------------------------------------------------------
     */
-    async update(id: number, payload: FormData): Promise<Estimate> {
+    async update(id: number, payload: Partial<EstimatePayload> | FormData): Promise<Estimate> {
         const res = await api.post(`/estimates/${id}`, payload, {
             headers: { 'Content-Type': 'multipart/form-data' }
         });

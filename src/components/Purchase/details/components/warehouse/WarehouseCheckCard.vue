@@ -2,7 +2,7 @@
 import Card from 'primevue/card';
 import Tag from 'primevue/tag';
 import { computed } from 'vue';
-import type { RequestItem } from '../../../interfaces/item.interfaces';
+import type { PurchaseItem as RequestItem } from '../../../interfaces/purchase.interfaces';
 
 const props = defineProps<{
     item: RequestItem | null;
@@ -134,7 +134,7 @@ const currentAvailability = computed(() =>
                         <div class="flex align-items-center justify-content-center border-round-lg bg-primary-50 p-2">
                             <i class="pi pi-user text-primary text-xs" />
                         </div>
-                        <span>{{ wh.checked_by?.name || 'غير محدد' }}</span>
+                        <span> {{ typeof wh.checked_by === 'object' ? wh.checked_by.name : 'غير محدد' }}</span>
                     </div>
 
                     <Tag

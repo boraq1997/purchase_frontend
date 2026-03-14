@@ -44,8 +44,6 @@ import WarehouseCheckCard from './components/warehouse/WarehouseCheckCard.vue';
 import EstimatesCard from './components/estimates/EstimatesCard.vue';
 import PurchaseFormDialog from '../create/PurchaseFormDialog.vue';
 import RequestActionsDialog from '../actions/RequestActionsDialog.vue';
-import Badge from 'primevue/badge';
-import OverlayBadge from 'primevue/overlaybadge';
 /**
  * Services
  * Used to re-fetch the purchase request from the backend after updates
@@ -54,7 +52,8 @@ import OverlayBadge from 'primevue/overlaybadge';
  * Type definitions
  */
 import type { PurchaseRequest } from '../interfaces/purchase.interfaces';
-import { RequestItem } from '../interfaces/item.interfaces'
+import type { PurchaseItem as RequestItem } from '../interfaces/purchase.interfaces';
+
 import { hasAnyPermission, hasPermission } from '../../services/permission';
 import purchaseRequestsService from '../services/purchaseRequests.service';
 
@@ -87,8 +86,8 @@ const images = computed(() => {
     if (!props.request?.images) return []
 
     return props.request.images.map((img: any) => ({
-        itemImageSrc: img.file_url,
-        thumbnailImageSrc: img.file_url,
+        itemImageSrc: img.url,
+        thumbnailImageSrc: img.url,
         alt: img.file_name ?? 'image'
     }))
 })
@@ -652,16 +651,16 @@ const tabs = [
                 :src="slotProps.item.itemImageSrc"
                 :alt="slotProps.item.alt"
                 style="width: 100%; display: block; max-height: 80vh; object-fit: contain;"
-                @error="(e) => (e.target.src = './img-not-found.avif')"
-            />
+                @error="(e: Event) => {const t = e.target as HTMLImageElement; if (t) t.src = './image-not-found.avif'}"
+            />{{ console.log(slotProps.item) }}
         </template>
         <template #thumbnail="slotProps">
             <img
                 :src="slotProps.item.thumbnailImageSrc"
                 :alt="slotProps.item.alt"
                 style="display: block; width: 100px; height: 60px; object-fit: cover;"
-                @error="(e) => (e.target.src = './missing.avif')"
-            />
+                @error="(e: Event) => {const t = e.target as HTMLImageElement; if (t) t.src = './missing.avif'}"
+            />{{ console.log(slotProps.item) }}
         </template>
     </Galleria>
 

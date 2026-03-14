@@ -29,11 +29,9 @@ import {ref, onMounted, onUnmounted}from 'vue';
 import navbar from './components/navbar/navbar.vue';
 // Import PrimeVue Toast component for displaying notifications
 import Toast from 'primevue/toast';
-
 // Import PrimeVue ConfirmDialog component for confirmation dialogs
 import ConfirmDialog from 'primevue/confirmdialog';
 import ScrollTop from 'primevue/scrolltop';
-
 // Import RouterView from vue-router to render the current route's component
 import { RouterView } from 'vue-router';
 
@@ -42,6 +40,7 @@ const showBackToTop = ref(false);
 const handleScroll = () => {
   showBackToTop.value = window.scrollY > 300;
 };
+
 
 onMounted(() => {
     window.addEventListener('scroll', handleScroll);

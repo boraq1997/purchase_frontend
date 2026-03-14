@@ -43,8 +43,10 @@ export default {
     return response.data;
 },
 
-  async update(id: ID, data: Partial<PurchaseRequest> | FormData): Promise<PurchaseRequest> {
-    data.append('_method', 'PUT'); 
+  async update(id: number, data: Partial<PurchaseRequest> | FormData): Promise<PurchaseRequest> {
+    if (data instanceof FormData) {
+      data.append('_method', 'PUT');
+    }
     const response = await api.post(`${API_BASE_URL}/${id}`, data, {
         headers: {
             'Content-Type': 'multipart/form-data',

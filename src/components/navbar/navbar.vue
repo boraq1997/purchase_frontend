@@ -26,10 +26,12 @@
       </template>
 
       <template #end>
+        
         <div class="flex items-center gap-2">
+          <Button label="طلب جديد" variant="outlined" size="small" @click="showPurchaseDialog = true" />
           <Avatar
             icon="pi pi-user"
-            style="background-color: #dee9fc; color: #1a2551"
+            style="background-color: #dee9fc; color: #1a2551; flex-shrink: 0;"
             shape="circle"
             @click="toggleUserMenu"
             aria-haspopup="true"
@@ -75,6 +77,12 @@
   >
     <userProfile @close="userProfileVisible = false" />
   </Dialog>
+
+  <PurchaseRequestDialog
+    v-model:visible="showPurchaseDialog"
+    @submitted="showPurchaseDialog = false"
+    @updated="showPurchaseDialog = false"
+  />
 </template>
 
 <script setup lang="ts">
@@ -92,6 +100,8 @@ import userProfile from './components/userProfile/userProfile.vue';
 import { resolveMessages } from '../services/messageResolver';
 import { useToast } from 'primevue/usetoast';
 import { hasPermission } from '../services/permission';
+import Button from 'primevue/button';
+import PurchaseRequestDialog from '../Purchase/create/PurchaseFormDialog.vue';
 
 // ── State ────────────────────────────────────────────────
 const menu                    = ref();
@@ -104,6 +114,7 @@ const toast       = useToast();
 const router      = useRouter();
 const route       = useRoute();
 const currentPath = ref(route.path);
+const showPurchaseDialog = ref(false);
 
 watch(() => route.path, (newPath) => {
   currentPath.value = newPath;
@@ -114,7 +125,6 @@ const hideMenu = computed(() =>
   route.path === '/' || route.path === '/login'
 );
 
-const isActive = (path: string) => currentPath.value === path;
 
 const toggleUserMenu = (event: Event) => menu.value.toggle(event);
 
@@ -196,7 +206,7 @@ const topItems = computed(() => {
     });
   }
 
-  if (hasPermission('view-Vendors')) {
+  if (hasPermission('view-Vendor')) {
     items.push({
       label: 'الباعة',
       icon: 'fas fa-store',
@@ -217,7 +227,7 @@ const topItems = computed(() => {
         active: path === '/departments',
         command: () => router.push('/departments'),
       }] : []),
-      ...(hasPermission('view-Committees') ? [{
+      ...(hasPermission('view-Committee') ? [{
         label: 'اللجان',
         icon: 'fa-solid fa-users-viewfinder',
         active: path === '/committees',
@@ -302,5 +312,10 @@ onUnmounted(() => {});
 :deep(.logout-item .p-menu-item-icon),
 :deep(.logout-item .p-menu-item-label) {
   color: #ef4444 !important;
+}
+
+.flex.items-center {
+    align-items: center;
+    gap: 0.5rem;        /* تباعد موحد */
 }
 </style>

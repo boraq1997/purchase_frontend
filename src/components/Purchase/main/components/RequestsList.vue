@@ -10,7 +10,7 @@
 import type { PurchaseRequest } from '../../interfaces/purchase.interfaces';
 import RequestCard from './RequestCard.vue';
 
-const _props = defineProps<{
+defineProps<{
     requests: PurchaseRequest[];
     loading: boolean;
 }>();

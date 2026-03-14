@@ -197,7 +197,7 @@
 
         <template #footer>
             <Button label="إغلاق" icon="fas fa-times" severity="secondary" outlined class="px-5" @click="emit('update:visible', false)" />
-            <Button label="طباعة" icon="pi pi-print" class="px-5" @click="window.print()" />
+            <Button label="طباعة" icon="pi pi-print" class="px-5" @click="handlePrint()" />
         </template>
     </Dialog>
 </template>
@@ -224,6 +224,9 @@ const props = defineProps<{
 const emit = defineEmits<{
     'update:visible': [value: boolean];
 }>();
+
+const handlePrint = () => window.print();
+
 
 const vendorDetails = computed(() => [
     { icon: 'fas fa-user-tie', label: 'اسم المورد', value: props.estimateData?.vendor?.name || 'غير متوفر' },

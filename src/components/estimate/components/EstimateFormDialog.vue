@@ -229,7 +229,7 @@
                                     <template #chip="{ value }">
                                         <div class="flex align-items-center gap-1">
                                             <i class="fas fa-box text-xs"/>
-                                            <span class="text-sm">{{ availableItems.find(i => i.id === value)?.item_name }}</span>
+                                            <span class="text-sm">{{ availableItems.find((i: any) => i.id === value)?.item_name }}</span>
                                         </div>
                                     </template>
                                     <template #footer>

@@ -17,6 +17,7 @@ import Pagination from './components/Pagination.vue';
 import PurchaseDetailsDialog from '../details/index.vue';
 import Button from 'primevue/button';
 import Breadcrumb from "primevue/breadcrumb";
+import Card from 'primevue/card';
 
 // Types
 import type { PurchaseRequest } from '../interfaces/purchase.interfaces';
@@ -56,8 +57,8 @@ const filters = reactive({
     status_type: null as string | null,
     priority: null as string | null,
     search: '',
-    date_from: null as string | null,
-    date_to: null as string | null,
+    date_from: null as Date | null,
+    date_to: null as Date | null,
 });
 
 // حالة التحميل
@@ -138,21 +139,27 @@ onMounted(() => {
                 label="إضافة طلب جديد"
                 icon="fas fa-plus"
                 @click="openAddDialog"
-                class="mt-5 mb-0"
+                class="mt-5 mb-0 mb-3"
             />
         <!-- FILTER PANEL -->
-        <FilterPanel
-            :filters="filters"
-            class="mb-3"
-            @update:filters="(newFilters) => {
-                Object.assign(filters, newFilters)
-            }" />
+         <Card>
+            <template #content>
+                <FilterPanel
+                    :filters="filters"
+                    @update:filters="(newFilters) => {
+                        Object.assign(filters, newFilters)
+                    }" 
+                />
+            </template>
+         </Card>
+        
 
         <!-- REQUESTS LIST -->
         <RequestsList 
             :requests="requests"
             :loading="loading"
             @open-details="openDetails"
+            class="mt-5"
         />
 
         <!-- PAGINATION -->

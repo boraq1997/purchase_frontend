@@ -57,6 +57,9 @@ export interface PurchaseItem {
   report_status?: ReportStatus;
   estimated_unit_price?: number;
   total_estimated_price?: number;
+  needs_assessment?: NeedsAssessment | null;
+  warehouse_check?: WarehouseCheck | null;
+  estimate?: Estimate[];
 }
 
 /** تقييم لجنة بيان الحاجة للمادة */
@@ -72,7 +75,7 @@ export interface NeedsAssessment {
   notes?: string;
   committee_member?: User;
   created_at?: string;
-  assessed_by?: ID;
+  assessed_by?: User | ID;
   assessment_state?: string;
   admin_decision?: string;
   admin_comment?: string;
@@ -90,7 +93,7 @@ export interface WarehouseCheck {
   recommendation?: string;
   committee_member?: User;
   created_at?: string;
-  checked_by?: ID;
+  checked_by?: User | ID;
   checkedBy?: User;
 }
 

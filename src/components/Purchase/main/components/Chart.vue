@@ -5,7 +5,6 @@
 
 import { computed } from 'vue';
 import type { PurchaseRequest } from '../../interfaces/purchase.interfaces';
-import Chart from 'primevue/chart';
 
 const props = defineProps<{
     requests: PurchaseRequest[];
@@ -111,30 +110,12 @@ const cards = computed(() => [
         <div
             v-for="card in cards"
             :key="card.key"
-            class="premium-card"
+            class="premium-card surface-card"
             :style="{ '--accent': card.accent }"
         >
             <!-- Top accent line -->
-            <div class="accent-line"></div>
 
             <div class="card-body">
-
-                <!-- Top row: icon + chart -->
-                <div class="top-row">
-                    <div class="icon-wrap" :style="{ background: card.accent + '14', borderColor: card.accent + '30' }">
-                        <i :class="card.icon" :style="{ color: card.accent }"></i>
-                    </div>
-                    <div class="chart-ring">
-                        <Chart
-                            type="doughnut"
-                            :data="card.chart.data"
-                            :options="card.chart.options"
-                            class="ring-chart"
-                        />
-                        <span class="ring-pct" :style="{ color: card.accent }">{{ card.percentage }}%</span>
-                    </div>
-                </div>
-
                 <!-- Count -->
                 <div class="count-row">
                     <span class="count-num">{{ card.count }}</span>
@@ -154,12 +135,6 @@ const cards = computed(() => [
                 <div class="footer-bar">
                     <span class="footer-text">النسبة من الإجمالي</span>
                     <span class="footer-pct" :style="{ color: card.accent }">{{ card.percentage }}%</span>
-                </div>
-                <div class="thin-bar">
-                    <div
-                        class="thin-fill"
-                        :style="{ width: card.percentage + '%', background: card.accent }"
-                    ></div>
                 </div>
 
             </div>
@@ -188,10 +163,8 @@ const cards = computed(() => [
     border-radius: 16px;
     overflow: hidden;
     cursor: pointer;
-    background: #18181b !important;
     transition: transform 0.3s cubic-bezier(.22,.68,0,1.2), box-shadow 0.3s ease;
     box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-    color: #fff !important;
 }
 
 .premium-card:hover {

@@ -311,7 +311,7 @@
 /* =============================
    Imports
 ============================= */
-import { ref, reactive, computed, onMounted, onUnmounted } from "vue";
+import { ref, computed, onMounted, onUnmounted } from "vue";
 import { useToast } from "primevue/usetoast";
 import { useConfirm } from "primevue/useconfirm";
 import Breadcrumb from "primevue/breadcrumb";
@@ -368,7 +368,7 @@ const departmentForm = ref<Department>({
   users: [],
 });
 
-const handleShourtcut = (event) => {
+const handleShourtcut = (event: KeyboardEvent) => {
   if (event.ctrlKey && event.key === 's') {
     event.preventDefault();
     openAddEditDepartmentDialog()
@@ -376,10 +376,10 @@ const handleShourtcut = (event) => {
 }
 
 // Filters
-const filters = reactive({
+const filters = ref({
   global: { value: null, matchMode: FilterMatchMode.CONTAINS },
 });
-const userFilters = reactive({
+const userFilters = ref({
   global: { value: null, matchMode: FilterMatchMode.CONTAINS },
 });
 

@@ -28,7 +28,7 @@
         <!-- ============================= -->
         <div class="flex justify-between mb-3">
             <Button 
-                v-if="hasPermission('create-Committees')"
+                v-if="hasPermission('create-Committee')"
                 class="mr-3" 
                 label="لجنة جديدة" 
                 icon="fas fa-plus" 
@@ -127,8 +127,8 @@
                 <template #header><i class="fas fa-cogs text-gray-500"></i></template>
                 <template #body="{data}">
                     <Button icon="fas fa-users" class="ml-1" severity="secondary" rounded variant="outlined" aria-label="all users" @click="openUsersDialog(data)" />
-                    <Button v-if="hasPermission('edit-Committees')" icon="fas fa-edit" class="ml-1" severity="secondary" rounded variant="outlined" aria-label="edit" @click="openAddEditCommitteeDialog(data)" />
-                    <Button v-if="hasPermission('delete-Committees')" icon="fas fa-trash-alt" severity="danger" rounded variant="outlined" aria-label="delete" @click.stop="confirmDeleteCommittee(data)" />
+                    <Button v-if="hasPermission('edit-Committee')" icon="fas fa-edit" class="ml-1" severity="secondary" rounded variant="outlined" aria-label="edit" @click="openAddEditCommitteeDialog(data)" />
+                    <Button v-if="hasPermission('delete-Committee')" icon="fas fa-trash-alt" severity="danger" rounded variant="outlined" aria-label="delete" @click.stop="confirmDeleteCommittee(data)" />
                 </template>
             </Column>
         </DataTable>
@@ -263,7 +263,7 @@
  *  Imports
  * =============================
  */
-import { ref, reactive, computed, onMounted } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useToast } from "primevue/usetoast";
 import { useConfirm } from "primevue/useconfirm";
 import { FilterMatchMode } from "@primevue/core/api";
@@ -330,10 +330,10 @@ const breadcrumbItems = ref([
  *  Filters and Computed
  * =============================
  */
-const filters = reactive({
+const filters = ref({
     global: { value: null, matchMode: FilterMatchMode.CONTAINS },
 });
-const userFilters = reactive({
+const userFilters = ref({
     global: { value: null, matchMode: FilterMatchMode.CONTAINS },
 });
 

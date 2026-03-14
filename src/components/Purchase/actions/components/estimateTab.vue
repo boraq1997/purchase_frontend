@@ -24,18 +24,6 @@ const toast = useToast();
 const allVendors = ref<any[]>([]);
 
 const newEstimateForms = ref<Array<any>>([]);
-// const expandedEstimates = ref<any[]>([]);
-// Computed: تتبع المواد التي لها عروض سعر
-// const itemsWithEstimates = computed(() => {
-//     const itemIds = new Set<number>();
-//     props.purchaseRequest?.items?.forEach((item: any) => {
-//         if (item.estimate && item.estimate.length > 0) itemIds.add(item.id);
-//     });
-//     newEstimateForms.value.forEach(form => {
-//         form.itemsDetails?.forEach((it: any) => itemIds.add(it.id));
-//     });
-//     return itemIds;
-// });
 
 function addNewEstimateForm() {
     newEstimateForms.value.push({
@@ -123,7 +111,7 @@ watch(newEstimateForms, (forms) => {
 async function getAllVendors() {
   try {
     const response = await VendorsService.getAll();
-    allVendors.value = response;
+    allVendors.value = Array.isArray(response) ? response : (response as any).data ?? [];
   } catch (err: any) {
     console.log(err)
     toast.add({
@@ -412,11 +400,7 @@ onMounted(()=>{
               <Tag
                 :value="statusMap[data.status]?.label"
                 :severity="statusMap[data.status]?.severity"
-                :icon="{
-                  pending: 'pi pi-clock',
-                  accepted: 'pi pi-check',
-                  rejected: 'pi pi-times'
-                }[data.status]"
+                :icon="({ pending: 'pi pi-clock', accepted: 'pi pi-check', rejected: 'pi pi-times' } as Record<string, string>)[data.status] ?? 'pi pi-circle'"
               />
             </template>
           </Column>

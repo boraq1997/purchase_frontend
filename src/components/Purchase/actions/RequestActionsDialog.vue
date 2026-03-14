@@ -10,7 +10,7 @@ import TabPanel from 'primevue/tabpanel';
 import AdminDecisionTab from './components/adminDecisionTab.vue';
 import warehouseTab from './components/warehouseTab.vue';
 import estimateTab from './components/estimateTab.vue';
-import { hasAnyPermission, hasPermission } from '../../services/permission';
+import { hasAnyPermission } from '../../services/permission';
 import printReport from './components/printReport.vue';
 
 const props = defineProps<{

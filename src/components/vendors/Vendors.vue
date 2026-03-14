@@ -22,9 +22,9 @@
         </div>
 
         <!-- Add Vendor Button -->
-        <div class="flex justify-between mb-3">
+        <div class="flex justify-between mb-3 mr-3">
             <Button
-                v-if="hasPermission('create-Vendors')"
+                v-if="hasPermission('create-Vendor')"
                 label="بائع جديد"
                 icon="fas fa-plus"
                 @click="openAddEditVendorDialog()"
@@ -122,7 +122,7 @@
                 <template #body="{data}">
                     <!-- Edit Vendor Button -->
                     <Button
-                        v-if="hasPermission('edit-Vendors')"
+                        v-if="hasPermission('edit-Vendor')"
                         icon="fa-solid fa-pen-to-square" 
                         class="ml-1" 
                         severity="secondary" 
@@ -145,7 +145,7 @@
                     />
                     <!-- Delete Vendor Button -->
                     <Button 
-                        v-if="hasPermission('delete-Vendors')"
+                        v-if="hasPermission('delete-Vendor')"
                         icon="fas fa-minus" 
                         class="ml-1" 
                         severity="danger" 
@@ -327,12 +327,12 @@
                                                         v-for="(item, index) in estimate.estimate_items" 
                                                         :key="item.id"
                                                         class="p-3 border-round mb-2 hover:surface-100 transition-colors transition-duration-200"
-                                                        :class="index % 2 === 0 ? 'surface-50' : 'surface-0'"
+                                                        :class="index ?? 0% 2 === 0 ? 'surface-50' : 'surface-0'"
                                                     >
                                                         <!-- Item Details -->
                                                         <div class="flex align-items-start justify-content-between mb-2">
                                                             <div class="flex align-items-start gap-2 flex-1">
-                                                                <Badge :value="index + 1" class="mt-1" />
+                                                                <Badge :value="index ?? 0 + 1" class="mt-1" />
                                                                 <div>
                                                                     <div class="font-semibold text-900 mb-1">
                                                                         {{ item.item_name }}
@@ -406,7 +406,7 @@
 /* =========================================================
 Vue & PrimeVue Core Imports
 ========================================================= */
-import { ref, reactive, onMounted } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useToast } from "primevue/usetoast";
 import { useConfirm } from "primevue/useconfirm";
 import { FilterMatchMode } from "@primevue/core/api";
@@ -480,7 +480,7 @@ const showAllEstimatesDialogVisible = ref(false);
 /* =========================================================
 DataTable Filters
 ========================================================= */
-const filters = reactive({
+const filters = ref({
     global: { value: null, matchMode: FilterMatchMode.CONTAINS },
 });
 

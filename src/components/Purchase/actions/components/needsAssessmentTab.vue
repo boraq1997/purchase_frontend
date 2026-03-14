@@ -12,6 +12,7 @@ import Divider from 'primevue/divider';
 import committeesOpinionsService from '../../services/committeesOpinions.service';
 import { useToast } from "primevue/usetoast";
 import FloatLabel from 'primevue/floatlabel';
+import type { NeedsAssessment } from '../../interfaces/purchase.interfaces';
 
 const toast = useToast();
 
@@ -81,9 +82,14 @@ const save = async() => {
     };
     try {
         if (selectedAssessment.value) {
-            await committeesOpinionsService.updateNeedsAssessment(selectedAssessment.value.id, payload);
+            await committeesOpinionsService.updateNeedsAssessment(
+                selectedAssessment.value.id,
+                { ...payload, id: selectedAssessment.value.id } as unknown as NeedsAssessment
+            );
         } else {
-            await committeesOpinionsService.saveNeedsAssessment(payload);
+            await committeesOpinionsService.saveNeedsAssessment(
+                { ...payload, id: 0 } as unknown as NeedsAssessment
+            );
         }
         toast.add({
             severity: "success",

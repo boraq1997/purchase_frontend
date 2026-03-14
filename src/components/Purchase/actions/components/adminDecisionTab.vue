@@ -87,9 +87,11 @@ async function submitDecision() {
     };
 
     if (typeof purchaseRequestsService.updateStatus === 'function') {
-      await purchaseRequestsService.updateStatus(props.id, payload.status, payload.note);
+      if (payload.status) {
+        await purchaseRequestsService.updateStatus(props.id, payload.status, payload.note);
+      }
     } else {
-      await purchaseRequestsService.update(props.id, { status_type: payload.status, notes: payload.note });
+      await purchaseRequestsService.update(props.id, { status_type: payload.status ?? undefined } as any);
     }
 
     toast.add({ severity: 'success', summary: 'تم الحفظ', detail: 'تم حفظ قرار الإدارة بنجاح', life: 2500 });

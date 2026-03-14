@@ -184,6 +184,8 @@
 <script lang="ts" setup>
 import { computed } from 'vue';
 import Dialog from 'primevue/dialog';
+import Tag from 'primevue/tag';
+import Button from 'primevue/button';
 
 const props = defineProps<{
   modelValue: boolean;
@@ -195,65 +197,31 @@ const showDetailsDialog = computed({
   get: () => props.modelValue,
   set: v => emit('update:modelValue', v),
 });
-const log = computed(() => props.selectedLog!);
 
-const isRecent = computed(() =>
-  !!log.value?.created_at && Date.now() - new Date(log.value.created_at).getTime() < 600_000
-);
-const hasSubject = computed(() =>
-  log.value?.subject?.id != null || log.value?.subject?.identifier != null
-);
-
-const statusLabel = computed(() =>
-  ({ success:'ناجح', failed:'فشل', error:'خطأ', pending:'انتظار' }[log.value?.status] ?? log.value?.status)
-);
-const statusIcon = computed(() =>
-  ({ success:'fa-circle-check', failed:'fa-circle-xmark', error:'fa-triangle-exclamation', pending:'fa-clock' }[log.value?.status] ?? 'fa-circle-question')
-);
-const severityLabel = computed(() =>
-  ({ info:'معلومات', warning:'تحذير', error:'خطأ', critical:'حرج', debug:'تصحيح' }[log.value?.severity] ?? log.value?.severity)
-);
-const severityIcon = computed(() =>
-  ({ info:'fa-circle-info', warning:'fa-triangle-exclamation', error:'fa-circle-xmark', critical:'fa-skull-crossbones', debug:'fa-bug' }[log.value?.severity] ?? 'fa-circle-question')
-);
-
-const roleChipClass = computed(() =>
-  ({ Admin:'role-admin', Manager:'role-manager', User:'role-user', System:'role-system' }[log.value?.actor?.role] ?? 'role-default')
-);
-
-const parsedMeta = computed(() => {
-  const m = log.value?.metadata;
-  if (!m) return [];
-  return Object.entries(m).map(([k, v]) => {
-    const isNull = v == null;
-    const isNum  = typeof v === 'number';
-    const isBool = typeof v === 'boolean';
-    const isArr  = Array.isArray(v);
-    return {
-      key: k,
-      display: isNull ? 'null' : isArr ? `[ ${(v as any[]).length} items ]` : String(v),
-      type: isNull ? 'val-null' : isNum ? 'val-num' : isBool ? 'val-bool' : isArr ? 'val-arr' : 'val-str',
-    };
-  });
+// Helper functions - مضافة هنا بدلاً من activity.vue
+const getStatusStyles = (status: string) => ({
+  bg: status === 'success' ? 'bg-green-100' : status === 'failed' ? 'bg-red-100' : 'bg-yellow-100',
+  text: status === 'success' ? 'text-green-600' : status === 'failed' ? 'text-red-600' : 'text-yellow-600',
 });
 
-const initials = (n: string) =>
-  (n ?? '').split(' ').slice(0,2).map((w:string) => w[0]).join('').toUpperCase();
-const formatShortDate = (d: string) =>
-  new Date(d).toLocaleDateString('ar-IQ', { year:'numeric', month:'short', day:'numeric' });
-const formatFull = (d: string) =>
-  new Date(d).toLocaleString('ar-IQ', { year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit' });
-const formatRelative = (d: string) => {
-  const m = Math.floor((Date.now() - new Date(d).getTime()) / 60000);
-  if (m < 1) return 'الآن';
-  if (m < 60) return `${m}د`;
-  const h = Math.floor(m/60);
-  if (h < 24) return `${h}س`;
-  return `${Math.floor(h/24)}ي`;
+const getSeverityStyles = (sev: string) => ({
+  bg: sev === 'danger' ? 'bg-red-100' : sev === 'warning' ? 'bg-yellow-100' : 'bg-blue-100',
+  text: sev === 'danger' ? 'text-red-600' : sev === 'warning' ? 'text-yellow-600' : 'text-blue-600',
+});
+
+const getSeverityLabel = (severity: string): string => {
+  const labels: Record<string, string> = {
+    info: 'معلومات', warning: 'تحذير', error: 'خطأ', critical: 'حرج', debug: 'تصحيح',
+  };
+  return labels[severity] ?? severity;
 };
-const copyReqId = () => {
-  const id = log.value?.metadata?.request_id;
-  if (id) navigator.clipboard.writeText(id);
+
+const formatFullDate = (d?: string): string => {
+  if (!d) return '—';
+  return new Date(d).toLocaleDateString('ar-IQ', {
+    year: 'numeric', month: 'long', day: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  });
 };
 </script>
 

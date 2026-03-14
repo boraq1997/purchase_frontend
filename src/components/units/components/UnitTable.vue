@@ -142,7 +142,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import { ref } from 'vue'
 import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
 import { FilterMatchMode } from '@primevue/core/api'
@@ -171,7 +171,7 @@ const emit = defineEmits<{
     'add': []
 }>()
 
-const filters = reactive({
+const filters = ref({
     global: { value: null, matchMode: FilterMatchMode.CONTAINS },
 })
 

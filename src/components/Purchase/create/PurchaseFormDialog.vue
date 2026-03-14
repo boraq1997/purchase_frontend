@@ -228,7 +228,7 @@ LOAD DEPARTMENTS
 const loadDepartments = async () => {
     try {
         const res = await DepartmentService.getAll();
-        departments.value = Array.isArray(res) ? res : res.data;
+        departments.value = Array.isArray(res) ? res : (res as any).data ?? [];
 
         if (!departments.value || departments.value.length === 0) {
             toast.add({ severity: 'warn', summary: 'تنبيه', detail: 'لا توجد أقسام متاحة', life: 3000 });
@@ -481,7 +481,7 @@ async function submit() {
             life: 2500
         });
 
-        emit(isEditMode.value ? 'updated' : 'submitted', res.data);
+        emit(isEditMode.value ? 'updated' : 'submitted', (res as any).data ?? res);
         emit('update:visible', false);
         resetForm();
 
@@ -555,16 +555,17 @@ onMounted(()=>{
         <Card>
             <template #content>
                 <Message
-        v-if="validationMessages.length"
-        severity="error"
-        class="mb-3"
-        :closable="true"
-        @close="validationMessages = []"
-    >
-        <ul class="m-0 pr-3">
-            <li v-for="(msg, i) in validationMessages" :key="i">{{ msg }}</li>
-        </ul>
-    </Message>
+                    v-if="validationMessages.length"
+                    severity="error"
+                    class="mb-3"
+                    :closable="true"
+                    @close="validationMessages = []"
+                >
+                    <ul class="m-0 pr-3">
+                        <li v-for="(msg, i) in validationMessages" :key="i">{{ msg }}</li>
+                    </ul>
+                </Message>
+                
                 <FloatLabel variant="on" class="mt-3">
                     <InputText
                         v-model="form.title"
@@ -633,22 +634,6 @@ onMounted(()=>{
                             </label>
                         </FloatLabel>
                     </div>
-                </div>
-
-                <Divider />
-
-                <div class="mt-2">
-                    <div class="flex align-items-center gap-2 mb-3">
-                        <i class="fas fa-paperclip text-gray-500 text-lg" />
-                        <h3 class="text-xl font-bold m-0">المرفقات</h3>
-                        <span class="text-sm text-gray-400">(اختياري)</span>
-                    </div>
-
-                    <UploadFile @update:files="onFilesUpdated" :existing-files="existingFiles" />
-                    <small v-if="formErrors.images" class="p-error flex align-items-center gap-1 mt-1">
-                        <i class="pi pi-exclamation-circle text-xs" />
-                        {{ formErrors.images }}
-                    </small>
                 </div>
 
                 <Divider />
@@ -750,7 +735,21 @@ onMounted(()=>{
                     </template>
                 </Card>
 
-                
+                <Divider />
+
+                <div class="mt-2">
+                    <div class="flex align-items-center gap-2 mb-3">
+                        <i class="fas fa-paperclip text-gray-500 text-lg" />
+                        <h3 class="text-xl font-bold m-0">المرفقات</h3>
+                        <span class="text-sm text-gray-400">(اختياري)</span>
+                    </div>
+
+                    <UploadFile @update:files="onFilesUpdated" :existing-files="existingFiles" />
+                    <small v-if="formErrors.images" class="p-error flex align-items-center gap-1 mt-1">
+                        <i class="pi pi-exclamation-circle text-xs" />
+                        {{ formErrors.images }}
+                    </small>
+                </div>
 
             </template>
 

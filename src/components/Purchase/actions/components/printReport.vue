@@ -10,9 +10,9 @@
     <!-- Background Radial Glows -->
     <div class="fixed inset-0 pointer-events-none z-0">
       <div class="absolute top-0 left-0 w-96 h-96 rounded-full opacity-10 blur-3xl"
-           style="background: radial-gradient(circle, #3b82f6, transparent)"></div>
+          style="background: radial-gradient(circle, #3b82f6, transparent)"></div>
       <div class="absolute bottom-0 right-0 w-96 h-96 rounded-full opacity-10 blur-3xl"
-           style="background: radial-gradient(circle, #a855f7, transparent)"></div>
+          style="background: radial-gradient(circle, #a855f7, transparent)"></div>
     </div>
 
     <!-- Loading State -->
@@ -45,7 +45,7 @@
     <div v-else-if="purchaseRequest" class="relative z-10 max-w-7xl mx-auto flex flex-col gap-6">
 
       <!-- ═══════════════════════════════════════════════════════════
-           HEADER SECTION
+      HEADER SECTION
       ═══════════════════════════════════════════════════════════ -->
       <Card class="shadow-2xl border-0 overflow-hidden"
             style="background: linear-gradient(135deg, #1e40af 0%, #6d28d9 100%)">
@@ -289,7 +289,7 @@
 
           <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 pt-2">
             <Card
-              v-for="(estimate, idx) in purchaseRequest.estimates"
+              v-for="estimate in purchaseRequest.estimates"
               :key="estimate.id"
               class="border border-slate-700 transition-all duration-300 hover:-translate-y-1 hover:shadow-amber-900/30 hover:shadow-lg"
               style="background: #1e293b"
@@ -359,7 +359,7 @@
 
           <div class="flex flex-col gap-4 pt-2">
             <Card
-              v-for="(proc, idx) in purchaseRequest.procurements"
+              v-for="proc in purchaseRequest.procurements"
               :key="proc.id"
               class="border border-slate-700 transition-all duration-300 hover:-translate-x-1 hover:shadow-purple-900/30 hover:shadow-lg"
               style="background: #1e293b"
@@ -372,7 +372,7 @@
 
                     <!-- Icon -->
                     <div class="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg"
-                         style="background: linear-gradient(135deg, #a855f7, #7c3aed)">
+                        style="background: linear-gradient(135deg, #a855f7, #7c3aed)">
                       <i class="pi pi-shopping-bag text-white text-2xl"></i>
                     </div>
 

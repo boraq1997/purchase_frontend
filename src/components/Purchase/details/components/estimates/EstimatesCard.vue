@@ -3,25 +3,35 @@ import Card from 'primevue/card';
 import Tag from 'primevue/tag';
 import Divider from 'primevue/divider';
 import { computed } from 'vue';
-import type { RequestItem } from '../../../interfaces/item.interfaces';
+import type { PurchaseItem as RequestItem } from '../../../interfaces/purchase.interfaces';
 
 const props = defineProps<{ item: RequestItem | null }>();
 
 const estimates = computed(() => props.item?.estimate ?? []);
 
+// دالة مساعدة لاستخراج total_amount بغض النظر عن شكل البيانات
+const getTotal = (est: any): number =>
+    parseFloat(est.total_amount ?? est.estimate?.total_amount ?? '0') || 0;
+
+const getVendor = (est: any) =>
+    est.vendor ?? est.estimate?.vendor ?? null;
+
+const getUnitPrice = (est: any): number =>
+    parseFloat(est.unit_price ?? est.estimated_unit_price ?? est.estimate?.unit_price ?? '0') || 0;
+
 const lowestPrice = computed(() => {
     if (!estimates.value.length) return null;
-    return Math.min(...estimates.value.map(e => parseFloat(e.estimate.total_amount) || Infinity));
+    return Math.min(...estimates.value.map((e: any) => getTotal(e) || Infinity));
 });
 
 const highestPrice = computed(() => {
     if (!estimates.value.length) return null;
-    return Math.max(...estimates.value.map(e => parseFloat(e.estimate.total_amount) || 0));
+    return Math.max(...estimates.value.map((e: any) => getTotal(e)));
 });
 
 const averagePrice = computed(() => {
     if (!estimates.value.length) return 0;
-    const sum = estimates.value.reduce((acc, e) => acc + parseFloat(e.estimate.total_amount || '0'), 0);
+    const sum = estimates.value.reduce((acc: number, e: any) => acc + getTotal(e), 0);
     return Math.round(sum / estimates.value.length);
 });
 
@@ -30,7 +40,7 @@ const priceDifference = computed(() => {
     return highestPrice.value - lowestPrice.value;
 });
 
-const isBest = (est: any) => parseFloat(est.estimate.total_amount) === lowestPrice.value;
+const isBest = (est: any) => getTotal(est) === lowestPrice.value;
 </script>
 
 <template>
@@ -197,13 +207,11 @@ const isBest = (est: any) => parseFloat(est.estimate.total_amount) === lowestPri
                                 />
                                 <div
                                     class="flex align-items-center gap-2 border-round-xl px-4 py-2 shadow-1"
-                                    :class="isBest(est)
-                                        ? 'bg-green-500'
-                                        : 'bg-primary'"
+                                    :class="isBest(est) ? 'bg-green-500' : 'bg-primary'"
                                 >
                                     <i class="pi pi-dollar text-white text-lg" />
                                     <span class="text-white text-xl font-bold">
-                                        {{ parseFloat(est.estimate.total_amount)?.toLocaleString() ?? '—' }}
+                                        {{ getTotal(est).toLocaleString() ?? '—' }}
                                     </span>
                                     <span class="text-white-alpha-70 text-xs font-medium">IQD</span>
                                 </div>
@@ -235,7 +243,7 @@ const isBest = (est: any) => parseFloat(est.estimate.total_amount) === lowestPri
                                             <div class="flex flex-column gap-1 min-w-0 flex-1">
                                                 <span class="text-xs text-color-secondary font-semibold">اسم المحل</span>
                                                 <span class="text-sm font-bold text-900 white-space-nowrap overflow-hidden text-overflow-ellipsis">
-                                                    {{ est.estimate.vendor?.name ?? '—' }}
+                                                    {{ getVendor(est)?.name ?? '—' }}
                                                 </span>
                                             </div>
                                         </div>
@@ -250,15 +258,15 @@ const isBest = (est: any) => parseFloat(est.estimate.total_amount) === lowestPri
                                             <div class="flex flex-column gap-1 min-w-0 flex-1">
                                                 <span class="text-xs text-color-secondary font-semibold">رقم الهاتف</span>
                                                 <div class="flex gap-1 flex-wrap">
-                                                    <a :href="`tel:${est.estimate.vendor?.phone1}`"
+                                                    <a :href="`tel:${getVendor(est)?.phone1}`"
                                                        class="text-sm font-bold text-green-600 no-underline">
-                                                        {{ est.estimate.vendor?.phone1 ?? '—' }}
+                                                        {{ getVendor(est)?.phone1 ?? '—' }}
                                                     </a>
-                                                    <span v-if="est.estimate.vendor?.phone2" class="text-color-secondary">·</span>
-                                                    <a v-if="est.estimate.vendor?.phone2"
-                                                       :href="`tel:${est.estimate.vendor?.phone2}`"
+                                                    <span v-if="getVendor(est)?.phone2" class="text-color-secondary">·</span>
+                                                    <a v-if="getVendor(est)?.phone2"
+                                                       :href="`tel:${getVendor(est)?.phone2}`"
                                                        class="text-sm font-bold text-green-600 no-underline">
-                                                        {{ est.estimate.vendor?.phone2 }}
+                                                        {{ getVendor(est)?.phone2 }}
                                                     </a>
                                                 </div>
                                             </div>
@@ -273,9 +281,9 @@ const isBest = (est: any) => parseFloat(est.estimate.total_amount) === lowestPri
                                             </div>
                                             <div class="flex flex-column gap-1 min-w-0 flex-1">
                                                 <span class="text-xs text-color-secondary font-semibold">البريد الإلكتروني</span>
-                                                <a :href="`mailto:${est.estimate.vendor?.email}`"
+                                                <a :href="`mailto:${getVendor(est)?.email}`"
                                                    class="text-sm font-bold text-purple-600 no-underline white-space-nowrap overflow-hidden text-overflow-ellipsis">
-                                                    {{ est.estimate.vendor?.email ?? '—' }}
+                                                    {{ getVendor(est)?.email ?? '—' }}
                                                 </a>
                                             </div>
                                         </div>
@@ -290,7 +298,7 @@ const isBest = (est: any) => parseFloat(est.estimate.total_amount) === lowestPri
                                             <div class="flex flex-column gap-1 min-w-0 flex-1">
                                                 <span class="text-xs text-color-secondary font-semibold">العنوان</span>
                                                 <span class="text-sm font-bold text-900">
-                                                    {{ est.estimate.vendor?.address ?? '—' }}
+                                                    {{ getVendor(est)?.address ?? '—' }}
                                                 </span>
                                             </div>
                                         </div>
@@ -322,7 +330,7 @@ const isBest = (est: any) => parseFloat(est.estimate.total_amount) === lowestPri
                                                 <span class="text-xs text-cyan-700 font-bold">السعر المفرد</span>
                                                 <div class="flex align-items-baseline gap-1">
                                                     <span class="text-3xl font-bold text-cyan-700 line-height-1">
-                                                        {{ parseFloat(est.estimated_unit_price ?? est.unit_price)?.toLocaleString() ?? '—' }}
+                                                        {{ getUnitPrice(est).toLocaleString() ?? '—' }}
                                                     </span>
                                                     <span class="text-cyan-600 text-xs font-semibold">IQD</span>
                                                 </div>
@@ -340,7 +348,7 @@ const isBest = (est: any) => parseFloat(est.estimate.total_amount) === lowestPri
                                                 <span class="text-xs text-indigo-700 font-bold">السعر الكلي</span>
                                                 <div class="flex align-items-baseline gap-1">
                                                     <span class="text-3xl font-bold text-indigo-700 line-height-1">
-                                                        {{ parseFloat(est.estimate.total_amount)?.toLocaleString() ?? '—' }}
+                                                        {{ getTotal(est).toLocaleString() ?? '—' }}
                                                     </span>
                                                     <span class="text-indigo-600 text-xs font-semibold">IQD</span>
                                                 </div>

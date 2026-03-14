@@ -192,9 +192,9 @@ const statusMap: Record<string, { label: string; color: string; bg: string }> = 
 };
 
 const s           = computed(() => statusMap[props.data?.status ?? ''] ?? statusMap.in_progress);
-const statusLabel = computed(() => s.value.label);
-const statusColor = computed(() => s.value.color);
-const statusBg    = computed(() => s.value.bg);
+const statusLabel = computed(() => s.value?.label ?? '');
+const statusColor = computed(() => s.value?.color ?? '');
+const statusBg    = computed(() => s.value?.bg ?? '');
 
 const formatDate     = (d?: string | null) => d ? new Date(d).toLocaleDateString('ar-IQ', { year: 'numeric', month: 'long', day: 'numeric' }) : '—';
 const formatCurrency = (v: any) => parseFloat(v || '0').toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });

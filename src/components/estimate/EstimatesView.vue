@@ -57,7 +57,6 @@
             :allVendors="allVendors"
             :allPurchase="allPurchase"
             :vendorForm="vendorForm"
-            :showAddVendorForm="showAddVendorForm"
             :isSavingVendor="isSavingVendor"
             :isSaving="isSaving"
             :totalEstimateAmount="totalEstimateAmount"

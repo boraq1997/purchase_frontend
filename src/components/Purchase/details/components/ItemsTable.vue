@@ -12,13 +12,11 @@ import { defineProps, defineEmits } from 'vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Tag from 'primevue/tag';
-import Chip from 'primevue/chip';
 import Button from 'primevue/button';              // optional
 
 
 // Types
-import type { RequestItem } from '../../interfaces/item.interfaces';
-
+import type { PurchaseItem as RequestItem } from '../../interfaces/purchase.interfaces';
 // Props
 const props = defineProps<{
     items: RequestItem[];
@@ -28,14 +26,6 @@ const props = defineProps<{
 const emit = defineEmits<{
     (e: 'select-item', item: RequestItem): void;
 }>();
-
-// Maps for status colors
-const needsStatusColor: Record<string, string> = {
-    needed: 'info',
-    not_needed: 'warn',
-    modified: 'success',
-};
-
 
 
 const warehouseAvailabilityColor: Record<string, string> = {

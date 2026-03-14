@@ -367,7 +367,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive, onMounted } from "vue";
+import { ref, onMounted } from "vue";
 import { useToast } from "primevue/usetoast";
 import activityService, { type ActivityLog, type ActivityLogFilters } from "./activityService";
 import { FilterMatchMode } from "@primevue/core/api";
@@ -382,7 +382,6 @@ import Message from "primevue/message";
 import Tag from 'primevue/tag';
 import Dialog from "primevue/dialog";
 import FloatLabel from 'primevue/floatlabel';
-import Card from 'primevue/card';
 
 const toast = useToast();
 const isLoading = ref(true);
@@ -393,7 +392,7 @@ const selectedLog = ref<ActivityLog | null>(null);
 const showDetailsDialog = ref(false);
 const currentPage = ref(1);
 
-const globalFilters = reactive({
+const globalFilters = ref({
     global: { value: null, matchMode: FilterMatchMode.CONTAINS },
 });
 

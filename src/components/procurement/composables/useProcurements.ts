@@ -81,7 +81,7 @@ export function useProcurements() {
     const fetchPurchaseList = async () => {
         try {
             const res = await purchaseRequestsService.getAll();
-            allPurchase.value = res.data ?? res;
+            allPurchase.value = Array.isArray(res) ? res : (res as any).data ?? res;
         } catch {}
     };
 

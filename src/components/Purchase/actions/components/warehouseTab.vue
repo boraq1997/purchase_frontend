@@ -12,6 +12,7 @@ import Divider from 'primevue/divider';
 import committeesOpinionsService from '../../services/committeesOpinions.service';
 import Tag from 'primevue/tag';
 import FloatLabel from 'primevue/floatlabel';
+import type { WarehouseCheck } from '../../interfaces/purchase.interfaces';
 
 const toast = useToast();
 
@@ -91,7 +92,8 @@ const save = async () => {
     };
 
     try {
-        await committeesOpinionsService.saveWarehouseCheck(payload);
+        await committeesOpinionsService.saveWarehouseCheck({ ...payload, id: 0, condition: 'new' } as unknown as WarehouseCheck);
+
 
         toast.add({
             severity: "success",

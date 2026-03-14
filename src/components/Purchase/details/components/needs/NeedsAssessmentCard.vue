@@ -4,20 +4,19 @@
  */
 import Card from 'primevue/card';
 import Tag from 'primevue/tag';
-import Divider from 'primevue/divider';
 
 /**
  * Vue Composition API helpers
  * - computed: used to create reactive derived state
  * - defineProps: used to strongly type incoming component props
  */
-import { computed, defineProps } from 'vue';
+import { computed } from 'vue';
 
 /**
  * Type definition representing a request item
  * Includes related data such as needs assessment information
  */
-import type { RequestItem } from '../../../interfaces/item.interfaces';
+import type { PurchaseItem as RequestItem } from '../../../interfaces/purchase.interfaces';
 
 /**
  * Component props definition
@@ -219,7 +218,7 @@ const currentUrgency = computed(() =>
                     <div class="card-footer-custom">
                         <div class="footer-user-info">
                             <i class="pi pi-user"></i>
-                            <span>{{ na.assessed_by?.name || 'غير محدد' }}</span>
+                            <span> {{ typeof na.assessed_by === 'object' ? na.assessed_by?.name : 'غير محدد' }}</span>
                         </div>
                     </div>
                 </template>

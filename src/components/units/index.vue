@@ -81,9 +81,7 @@ import { useToast } from 'primevue/usetoast'
 import Breadcrumb from "primevue/breadcrumb";
 import Card from 'primevue/card'
 import Button from 'primevue/button'
-import Divider from 'primevue/divider'
 import Paginator from 'primevue/paginator'
-import Toast from 'primevue/toast'
 
 import UnitFilters from './components/UnitFilters.vue'
 import UnitTable from './components/UnitTable.vue'
@@ -98,14 +96,12 @@ const toast = useToast()
 const units       = ref<Unit[]>([])
 const meta        = ref<{ current_page: number; last_page: number; per_page: number; total: number } | null>(null)
 const tableLoading = ref(false)
-const deleteLoading = ref(false)
 
 const search      = ref('')
 const currentPage = ref(1)
 const perPage     = ref(15)
 
 const showForm    = ref(false)
-const showDelete  = ref(false)
 const selectedUnit = ref<Unit | null>(null)
 const unitFormRef  = ref<InstanceType<typeof UnitForm> | null>(null)
 
@@ -175,12 +171,6 @@ async function onFormSubmit(data: CreateUnitPayload | UpdateUnitPayload) {
     } finally {
         unitFormRef.value?.setLoading(false)
     }
-}
-
-// ── Delete ─────────────────────────────────────────────
-function openDelete(unit: Unit) {
-    selectedUnit.value = unit
-    showDelete.value = true
 }
 
 // ── Init ───────────────────────────────────────────────

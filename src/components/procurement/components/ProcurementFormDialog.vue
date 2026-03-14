@@ -31,7 +31,7 @@
         <div class="flex flex-column gap-4">
 
             <!-- ══════════════════════════════════════════════════════════
-                 القسم ١ — بيانات الطلب
+                القسم ١ — بيانات الطلب
             ══════════════════════════════════════════════════════════ -->
             <div class="surface-50 border-round-xl p-4 border-1 border-200">
                 <SectionTitle number="١" label="بيانات الطلب" />
@@ -615,8 +615,8 @@ const onFileChange = (e: Event) =>
 const onDrop = (e: DragEvent) =>
     addFiles(e.dataTransfer?.files ?? null);
 const removeFile = (idx: number) => {
-    URL.revokeObjectURL(invoiceFiles.value[idx].preview);
-    invoiceFiles.value.splice(idx, 1);
+    const file = invoiceFiles.value[idx];
+    if (file) URL.revokeObjectURL(file.preview)
 };
 
 watch(() => props.visible, (val) => {

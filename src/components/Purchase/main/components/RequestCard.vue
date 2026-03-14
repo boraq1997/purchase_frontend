@@ -11,7 +11,7 @@ import Tag from "primevue/tag";
 import Chip from "primevue/chip";
 import Button from "primevue/button";
 
-const _props = defineProps<{
+defineProps<{
     request: PurchaseRequest;
 }>();
 
