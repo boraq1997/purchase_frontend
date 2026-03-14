@@ -51,106 +51,215 @@
                 </div>
             </template>
 
-            <!-- ===== CONTENT ===== -->
-            <template #content="{ files, removeFileCallback }">
-                <div v-if="deletableFiles.length > 0 || files.length > 0" class="flex flex-column gap-3 p-2">
+           <!-- ===== CONTENT ===== -->
+<template #content="{ files, removeFileCallback }">
+    <div v-if="deletableFiles.length > 0 || files.length > 0" class="flex flex-column gap-3 pt-2">
 
-                    <!-- الصور المحفوظة -->
-                    <template v-if="deletableFiles.length > 0">
-                        <div class="flex align-items-center gap-2">
-                            <Tag value="محفوظة" severity="success" icon="pi pi-check-circle" />
-                            <Badge :value="deletableFiles.length" severity="success" />
+        <!-- ── الصور المحفوظة ── -->
+        <template v-if="deletableFiles.length > 0">
+            <div class="flex align-items-center gap-2 mb-1">
+                <Tag value="محفوظة" severity="success" icon="pi pi-check-circle" />
+                <Badge :value="deletableFiles.length" severity="success" />
+            </div>
+
+            <div class="flex flex-column gap-1">
+                <div
+                    v-for="(file, idx) in deletableFiles"
+                    :key="file.id"
+                    class="flex align-items-center gap-3 p-2 border-round cursor-pointer file-row"
+                    style="border: 1px solid var(--surface-border); background: var(--surface-section);"
+                >
+                    <!-- الصورة المصغرة -->
+                    <div
+                        style="width: 48px; height: 48px; border-radius: 8px; overflow: hidden; flex-shrink: 0; cursor: zoom-in;"
+                        @click="openLightbox(allImages, idx)"
+                    >
+                        <img
+                            :src="file.file_url"
+                            :alt="file.file_name"
+                            style="width: 100%; height: 100%; object-fit: cover; display: block;"
+                            @error="(e) => (e.target as HTMLImageElement).src = './img-not-found.avif'"
+                        />
+                    </div>
+
+                    <!-- البيانات -->
+                    <div class="flex flex-column gap-1 flex-1 min-w-0">
+                        <!-- اسم الملف -->
+                        <span
+                            class="font-medium text-sm"
+                            style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px;"
+                            v-tooltip="file.file_name"
+                        >
+                            {{ file.file_name }}
+                        </span>
+
+                        <div class="flex align-items-center gap-2 flex-wrap">
+                            <!-- الامتداد -->
+                            <Tag
+                                :value="getExtension(file.file_name)"
+                                severity="secondary"
+                                style="font-size: 0.65rem; padding: 1px 6px;"
+                            />
+                            <!-- الحجم -->
+                            <span style="font-size: 0.72rem; color: var(--text-color-secondary);">
+                                <i class="pi pi-database" style="font-size: 0.65rem;" />
+                                {{ formatSize(file.file_size) }}
+                            </span>
+                            <!-- النوع -->
+                            <span style="font-size: 0.72rem; color: var(--text-color-secondary);">
+                                <i class="pi pi-image" style="font-size: 0.65rem;" />
+                                {{ file.file_type }}
+                            </span>
                         </div>
-                        <div class="flex flex-wrap gap-2">
-                            <div
-                                v-for="(file, idx) in deletableFiles"
-                                :key="file.id"
-                                style="position: relative; width: 80px; height: 80px; border-radius: 10px; overflow: hidden; cursor: pointer;"
-                                @click="openLightbox(allImages, idx)"
-                            >
-                                <img
-                                    :src="file.file_url"
-                                    :alt="file.file_name"
-                                    style="width: 100%; height: 100%; object-fit: cover; display: block;"
-                                    @error="(e) => (e.target as HTMLImageElement).src = './img-not-found.avif'"
-                                />
-                                <!-- overlay -->
-                                <div class="thumb-overlay"><i class="pi pi-eye" /></div>
-                                <!-- زر الحذف -->
-                                <Button
-                                    icon="pi pi-times"
-                                    severity="danger"
-                                    rounded
-                                    size="small"
-                                    style="position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; font-size: 0.55rem;"
-                                    class="thumb-delete-btn"
-                                    @click.stop="handleDeleteExistingFile(file.id)"
-                                />
-                            </div>
-                        </div>
-                    </template>
+                    </div>
 
-                    <Divider v-if="deletableFiles.length > 0 && files.length > 0" />
-
-                    <!-- الصور الجديدة -->
-                    <template v-if="files.length > 0">
-                        <div class="flex align-items-center gap-2">
-                            <Tag value="جديدة" severity="info" icon="pi pi-plus-circle" />
-                            <Badge :value="files.length" severity="info" />
-                        </div>
-                        <div class="flex flex-wrap gap-2">
-                            <div
-                                v-for="(file, index) of files"
-                                :key="file.name + file.size"
-                                style="position: relative; width: 80px; height: 80px; border-radius: 10px; overflow: hidden; cursor: pointer; background: var(--surface-hover);"
-                                @click="openLightboxFromFile(index)"
-                            >
-                                <img
-                                    v-if="previewUrls[file.name + file.size]"
-                                    :src="previewUrls[file.name + file.size]"
-                                    :alt="file.name"
-                                    style="width: 100%; height: 100%; object-fit: cover; display: block;"
-                                />
-                                <div v-else class="flex align-items-center justify-content-center w-full h-full">
-                                    <i class="pi pi-image" style="font-size: 1.4rem; color: var(--text-color-secondary);" />
-                                </div>
-                                <div class="thumb-overlay"><i class="pi pi-eye" /></div>
-                                <Button
-                                    icon="pi pi-times"
-                                    severity="danger"
-                                    rounded
-                                    size="small"
-                                    style="position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; font-size: 0.55rem;"
-                                    class="thumb-delete-btn"
-                                    @click.stop="onRemoveTemplatingFile(file, removeFileCallback, index)"
-                                />
-                                <Tag
-                                    :value="formatSize(file.size)"
-                                    style="position: absolute; bottom: 3px; right: 3px; font-size: 0.5rem; padding: 1px 4px;"
-                                    severity="secondary"
-                                />
-                            </div>
-                        </div>
-                    </template>
-
-                </div>
-            </template>
-
-            <!-- ===== EMPTY STATE ===== -->
-            <template #empty>
-                <div v-if="deletableFiles.length === 0" class="flex flex-column align-items-center gap-2 py-5">
-                    <i class="pi pi-cloud-upload" style="font-size: 2.5rem; color: var(--text-color-secondary);" />
-                    <span style="font-size: 0.85rem; color: var(--text-color-secondary); font-weight: 600;">
-                        اسحب الصور هنا أو اضغط إضافة
-                    </span>
-                    <div class="flex gap-2">
-                        <Tag value="JPG" severity="secondary" />
-                        <Tag value="PNG" severity="secondary" />
-                        <Tag value="JPEG" severity="secondary" />
-                        <Tag value="max 5MB" severity="warning" />
+                    <!-- الأزرار -->
+                    <div class="flex align-items-center gap-1 flex-shrink-0">
+                        <Button
+                            icon="pi pi-eye"
+                            severity="info"
+                            variant="text"
+                            rounded
+                            size="small"
+                            v-tooltip="'معاينة'"
+                            @click="openLightbox(allImages, idx)"
+                        />
+                        <a :href="file.file_url" :download="file.file_name" @click.stop>
+                            <Button
+                                icon="pi pi-download"
+                                severity="secondary"
+                                variant="text"
+                                rounded
+                                size="small"
+                                v-tooltip="'تنزيل'"
+                            />
+                        </a>
+                        <Button
+                            icon="pi pi-trash"
+                            severity="danger"
+                            variant="text"
+                            rounded
+                            size="small"
+                            v-tooltip="'حذف'"
+                            @click.stop="handleDeleteExistingFile(file.id)"
+                        />
                     </div>
                 </div>
-            </template>
+            </div>
+        </template>
+
+        <Divider v-if="deletableFiles.length > 0 && files.length > 0" />
+
+        <!-- ── الصور الجديدة ── -->
+        <template v-if="files.length > 0">
+            <div class="flex align-items-center gap-2 mb-1">
+                <Tag value="جديدة - في انتظار الرفع" severity="info" icon="pi pi-upload" />
+                <Badge :value="files.length" severity="info" />
+            </div>
+
+            <div class="flex flex-column gap-1">
+                <div
+                    v-for="(file, index) of files"
+                    :key="file.name + file.size"
+                    class="flex align-items-center gap-3 p-2 border-round file-row"
+                    style="border: 1px solid var(--surface-border); background: var(--surface-section);"
+                >
+                    <!-- الصورة المصغرة -->
+                    <div
+                        style="width: 48px; height: 48px; border-radius: 8px; overflow: hidden; flex-shrink: 0; background: var(--surface-hover); cursor: zoom-in;"
+                        @click="openLightboxFromFile(index)"
+                    >
+                        <img
+                            v-if="previewUrls[file.name + file.size]"
+                            :src="previewUrls[file.name + file.size]"
+                            :alt="file.name"
+                            style="width: 100%; height: 100%; object-fit: cover; display: block;"
+                        />
+                        <div v-else class="flex align-items-center justify-content-center w-full h-full">
+                            <i class="pi pi-image" style="font-size: 1.2rem; color: var(--text-color-secondary);" />
+                        </div>
+                    </div>
+
+                    <!-- البيانات -->
+                    <div class="flex flex-column gap-1 flex-1 min-w-0">
+                        <span
+                            class="font-medium text-sm"
+                            style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px;"
+                            v-tooltip="file.name"
+                        >
+                            {{ file.name }}
+                        </span>
+
+                        <div class="flex align-items-center gap-2 flex-wrap">
+                            <!-- الامتداد -->
+                            <Tag
+                                :value="getExtension(file.name)"
+                                severity="secondary"
+                                style="font-size: 0.65rem; padding: 1px 6px;"
+                            />
+                            <!-- الحجم -->
+                            <span style="font-size: 0.72rem; color: var(--text-color-secondary);">
+                                <i class="pi pi-database" style="font-size: 0.65rem;" />
+                                {{ formatSize(file.size) }}
+                            </span>
+                            <!-- النوع -->
+                            <span style="font-size: 0.72rem; color: var(--text-color-secondary);">
+                                <i class="pi pi-image" style="font-size: 0.65rem;" />
+                                {{ file.type }}
+                            </span>
+                            <!-- حالة: في انتظار الرفع -->
+                            <Tag
+                                value="في الانتظار"
+                                severity="warn"
+                                icon="pi pi-clock"
+                                style="font-size: 0.65rem; padding: 1px 6px;"
+                            />
+                        </div>
+                    </div>
+
+                    <!-- الأزرار -->
+                    <div class="flex align-items-center gap-1 flex-shrink-0">
+                        <Button
+                            icon="pi pi-eye"
+                            severity="info"
+                            variant="text"
+                            rounded
+                            size="small"
+                            v-tooltip="'معاينة'"
+                            @click="openLightboxFromFile(index)"
+                        />
+                        <Button
+                            icon="pi pi-trash"
+                            severity="danger"
+                            variant="text"
+                            rounded
+                            size="small"
+                            v-tooltip="'إزالة'"
+                            @click.stop="onRemoveTemplatingFile(file, removeFileCallback, index)"
+                        />
+                    </div>
+                </div>
+            </div>
+        </template>
+
+    </div>
+</template>
+
+<!-- ===== EMPTY STATE ===== -->
+<template #empty>
+    <div v-if="deletableFiles.length === 0" class="flex flex-column align-items-center gap-2 py-5">
+        <i class="pi pi-cloud-upload" style="font-size: 2.5rem; color: var(--text-color-secondary);" />
+        <span style="font-size: 0.85rem; color: var(--text-color-secondary); font-weight: 600;">
+            اسحب الصور هنا أو اضغط إضافة
+        </span>
+        <div class="flex gap-2">
+            <Tag value="JPG" severity="secondary" />
+            <Tag value="PNG" severity="secondary" />
+            <Tag value="JPEG" severity="secondary" />
+            <Tag value="max 5MB" severity="warning" />
+        </div>
+    </div>
+</template>
         </FileUpload>
 
         <!-- ===== GALLERIA ===== -->
@@ -283,7 +392,7 @@ const allImages = computed<LightboxItem[]>(() =>
 const allNewImages = computed<LightboxItem[]>(() =>
     newFiles.value
         .filter(f => !!previewUrls.value[f.name + f.size])
-        .map(f => ({ src: previewUrls.value[f.name + f.size], name: f.name }))
+        .map(f => ({ src: previewUrls.value[f.name + f.size] as string, name: f.name }))
 );
 
 const progressBarColor = computed(() => {
@@ -406,6 +515,11 @@ const formatSize = (bytes: number): string => {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
 };
+
+const getExtension = (filename: string): string => {
+    const parts = filename?.split('.');
+    return parts?.length > 1 ? parts.pop()!.toUpperCase() : 'FILE';
+};
 </script>
 
 <style scoped>
@@ -435,5 +549,12 @@ div:hover > .thumb-overlay {
 div:hover > .thumb-delete-btn {
     opacity: 1;
     transform: scale(1);
+}
+
+.file-row {
+    transition: background 0.15s;
+}
+.file-row:hover {
+    background: var(--surface-hover) !important;
 }
 </style>

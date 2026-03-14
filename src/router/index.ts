@@ -39,9 +39,39 @@ const routes = [
     },
     {
         path: '/purchase-request',
-        name: 'purchase-request',
-        component: () => import('../components/Purchase/main/index.vue'),
-        meta: { title: 'طلبات الشراء' }
+        children: [
+            {
+                path: "",
+                component: () => import('../components/Purchase/main/index.vue'),
+                name: 'purchase-request',
+                meta: { title: 'طلبات الشراء' }
+            },
+            {
+                path: 'completed',
+                component: ()=>import('../components/Purchase/main/index.vue'),
+                name: "purchase-request-completed",
+                meta: {title: 'ارشيف الطلبات'}
+            },
+            {
+                path: "pending",
+                component: ()=>import('../components/Purchase/main/index.vue'),
+                name: "purchase-request-pending",
+                meta: {title: "الطلبات المعلقة"}
+            },
+            {
+                path: "approved",
+                component: ()=>import('../components/Purchase/main/index.vue'),
+                name: "purchase-request-approved",
+                meta: {title: "الطلبات الموافق عليها"}
+            },
+            {
+                path: "rejected",
+                component: ()=>import('../components/Purchase/main/index.vue'),
+                name: "purchase-request-rejected",
+                meta: {title: "الطلبات المرفوضة"}
+            }
+        ],
+        
     },
     {
         path: '/warehouse',

@@ -182,13 +182,27 @@ const topItems = computed(() => {
   }
 
   if (hasPermission('view-PurchaseRequest')) {
-    items.push({
-      label: 'طلبات الشراء',
-      icon: 'fa-solid fa-cart-shopping',
-      active: path === '/purchase-request',
-      command: () => router.push('/purchase-request'),
-    });
-  }
+  items.push({
+    label: 'طلبات الشراء',
+    icon: 'fa-solid fa-cart-shopping',
+    active: path.startsWith('/purchase-request'), // ← startsWith بدل ===
+    hasSubmenu: true,
+    items: [
+      {
+        label: "كل الطلبات",
+        icon: "fas fa-bolt",
+        active: path === '/purchase-request',
+        command: () => router.push('/purchase-request'),
+      },
+      {
+        label: "الارشيف",
+        icon: "fa-regular fa-file-zipper",
+        active: path === '/purchase-request/completed', // ← أضفنا active
+        command: () => router.push('/purchase-request/completed'), // ← كان مفقوداً
+      }
+    ]
+  });
+}
 
   items.push({
     label: 'المشتريات',

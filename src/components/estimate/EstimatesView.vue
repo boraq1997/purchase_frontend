@@ -2,7 +2,10 @@
     <div class="card flex justify-center mt-3 mb-3">
         <Breadcrumb :home="breadcrumbHome" :model="breadcrumbItems" />
     </div>
+    
     <div class="p-4 lg:p-6" dir="rtl">
+        <EstimateStatsCards :total="allEstimate.length" :counts="statusCounts" :percentages="statusPercentages" />
+
         <div class="mb-5">
             
             <Button v-if="hasPermission('create-Estimate')" icon="fas fa-plus" label="إضافة عرض جديد" class="mt-4" @click="openAddEditDialog()" />
@@ -17,9 +20,12 @@
             </div>
         </div>
 
-        <EstimateStatsCards :total="allEstimate.length" :counts="statusCounts" :percentages="statusPercentages" />
 
-        <EstimateFilters v-model="filters" :departments="allDepartments" :hasDepartment="hasDepartment" @reset="resetFilters" />
+        <Card class="mb-5">
+            <template #content>
+                <EstimateFilters v-model="filters" :departments="allDepartments" :hasDepartment="hasDepartment" @reset="resetFilters" />
+            </template>
+        </Card>
 
         <!-- Cards Grid -->
         <div class="grid">
@@ -79,6 +85,7 @@ import { onMounted, ref } from 'vue';
 import Breadcrumb from 'primevue/breadcrumb';
 import Button from 'primevue/button';
 import Paginator from 'primevue/paginator';
+import Card from 'primevue/card';
 
 import EstimateStatsCards from './components/EstimateStatsCards.vue';
 import EstimateFilters from './components/EstimateFilters.vue';

@@ -84,10 +84,9 @@ const displayPurchaseFiles = ref(false)
 
 const images = computed(() => {
     if (!props.request?.images) return []
-
     return props.request.images.map((img: any) => ({
-        itemImageSrc: img.url,
-        thumbnailImageSrc: img.url,
+        itemImageSrc: img.file_url,       // ← الاسم الصحيح من الـ API
+        thumbnailImageSrc: img.file_url,  // ← الاسم الصحيح من الـ API
         alt: img.file_name ?? 'image'
     }))
 })

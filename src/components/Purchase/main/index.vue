@@ -8,6 +8,9 @@
 // ============================================================================
 
 import { ref, reactive, onMounted, watch } from 'vue';
+import {useRoute} from 'vue-router';
+import PurchaseFormDialog from '../create/PurchaseFormDialog.vue';
+import { hasPermission } from '../../services/permission';
 
 // Components
 import Chart from './components/Chart.vue';
@@ -30,6 +33,7 @@ import purchaseRequestsService from '../services/purchaseRequests.service';
 
 const detailsDialogVisible = ref(false);
 const selectedRequest = ref<PurchaseRequest | null>(null);
+const route = useRoute();
 
 function openDetails(request: PurchaseRequest) {
     selectedRequest.value = request;
@@ -72,10 +76,13 @@ async function loadRequests() {
     loading.value = true;
 
     try {
+        const routeStatusFilter = route.path === '/purchase-request/completed' ? 'completed' : null;
+
         const response = await purchaseRequestsService.getAll({
             page: pagination.page,
             per_page: pagination.perPage,
             ...filters,
+            status_type: routeStatusFilter ?? filters.status_type,
         });
 
         // response هو الكائن الكامل القادم من API
@@ -89,8 +96,7 @@ async function loadRequests() {
     loading.value = false;
 }
 
-import PurchaseFormDialog from '../create/PurchaseFormDialog.vue';
-import { hasPermission } from '../../services/permission';
+
 
 const addDialogVisible = ref(false);
 
@@ -103,10 +109,10 @@ function openAddDialog() {
 // ============================================================================
 
 // إعادة جلب البيانات عند تغيير الفلاتر
-watch(filters, () => {
+watch(() => route.path, () => {
     pagination.page = 1;
     loadRequests();
-}, { deep: true });
+});
 
 // تغيير الصفحة
 watch(() => pagination.page, () => {

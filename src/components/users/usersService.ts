@@ -41,8 +41,11 @@ class UserService {
   private baseUrl = '/users';
 
   // Fetch all users
-  getAllUsers(): Promise<User[]> {
-    return api.get(this.baseUrl).then(res => res.data.data);
+  getAllUsers(params: any = {}): Promise<User[]> {
+      const clean = Object.fromEntries(
+          Object.entries(params).filter(([, v]) => v !== null && v !== '')
+      );
+      return api.get(this.baseUrl, { params: clean }).then(res => res.data.data);
   }
 
   // Fetch single user by ID
