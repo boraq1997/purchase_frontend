@@ -122,7 +122,7 @@ const routes = [
     {
         path: '/reportsPrint/:id',
         name: 'RportPage',
-        component: ()=>import('../components/report/print/ReportPagePrint.vue'),
+        component: ()=>import('../components/report/components/print/ReportPagePrint.vue'),
         meta: {
             layout: 'blank',
         }
