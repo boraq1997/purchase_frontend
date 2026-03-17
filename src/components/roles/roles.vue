@@ -93,15 +93,19 @@
                                     icon="fas fa-edit"
                                     variant="outlined"
                                     severity="secondary"
+                                    size="small"
                                     @click="openAddEditRole(role)"
-                                    v-if="hasPermission('Role-edit')"
+                                    v-if="hasPermission('edit-Role')"
+                                    rounded
                                 />
                                 <Button
                                     icon="fas fa-trash-alt"
                                     variant="outlined"
                                     severity="danger"
+                                    size="small"
                                     @click="confirmDeleteRole(role)"
-                                    v-if="hasPermission('Role-delete')"
+                                    v-if="hasPermission('delete-Role')"
+                                    rounded
                                 />
                                 
                                 <!-- Role Name -->

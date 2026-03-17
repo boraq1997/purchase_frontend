@@ -1,18 +1,17 @@
 <template>
-    <div class="card flex justify-center mt-3 mb-3">
+    <div class="card flex justify-center mt-3">
         <Breadcrumb :home="breadcrumbHome" :model="breadcrumbItems" />
     </div>
 
-    <div class="p-4 lg:p-6" dir="rtl">
-
+    <div class="p-4 lg:p-4" dir="rtl">
+            
         <!-- ─── Header ──────────────────────────────────────────────────── -->
-        <div class="flex align-items-center justify-content-between mb-5 flex-wrap gap-3">
-            <div>
-                <h1 class="text-2xl font-bold text-900 m-0">عمليات الشراء</h1>
-                <p class="text-500 text-sm mt-1 m-0">إدارة ومتابعة عمليات الشراء</p>
-            </div>
-            <Button icon="fas fa-plus" label="إضافة عملية شراء" @click="openAddEditDialog()" />
+         <div class="mb-5">
+            <h1 class="text-2xl font-bold text-900 m-0">عمليات الشراء</h1>
+            <p class="text-500 text-sm mt-1 m-0">إدارة ومتابعة عمليات الشراء</p>
         </div>
+        <Button icon="fas fa-plus" label="إضافة عملية شراء" @click="openAddEditDialog()" class="mb-5" />
+            
 
         <!-- ─── Loading ───────────────────────────────────────────────────── -->
         <div v-if="isLoading"

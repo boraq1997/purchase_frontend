@@ -391,47 +391,48 @@
 
 <script setup lang="ts">
 import { onMounted } from 'vue'
-import axios from 'axios'
+import api from '../api/api'
 import { ref } from 'vue'
 
 const props = defineProps<{
-  purchaseRequestId: number
+    purchaseRequestId: number
 }>()
 
 const emit = defineEmits(['close'])
 
 const data = ref<any>({
-  purchaseRequest: {},
-  items: [],
-  estimates: [],
-  procurements: [],
-  financial: {},
-  generatedAt: '',
-  generatedBy: '',
+    purchaseRequest: {},
+    items: [],
+    estimates: [],
+    procurements: [],
+    financial: {},
+    generatedAt: '',
+    generatedBy: '',
 })
 
 const loading = ref(true)
 const error = ref('')
 
 const fmt = (n: any) => {
-  const num = parseFloat(n)
-  if (isNaN(num)) return '0'
-  return num.toLocaleString('en-US')
+    const num = parseFloat(n)
+    if (isNaN(num)) return '0'
+    return num.toLocaleString('en-US')
 }
 
 const printReport = () => {
-  window.print()
+    window.print()
 }
 
 onMounted(async () => {
-  try {
-    const res = await axios.get(`/api/reports/generate/${props.purchaseRequestId}`)
-    data.value = res.data.data
-  } catch (e: any) {
-    error.value = e.message
-  } finally {
-    loading.value = false
-  }
+    try {
+        const res = await api.get(`/reports/generate/1`)
+        console.log(res)
+        data.value = res.data.data
+    } catch (e: any) {
+        error.value = e.message
+    } finally {
+        loading.value = false
+    }
 })
 </script>
 

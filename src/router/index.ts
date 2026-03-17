@@ -8,6 +8,10 @@ const routes = [
         meta: { title: 'تسجيل الدخول' }
     },
     {
+        path: '/repo',
+        component: ()=>import('../components/test/print.vue'),
+    },
+    {
         path: '/home',
         name: 'home',
         component: () => import('../components/home/home.vue'),
@@ -110,6 +114,12 @@ const routes = [
         meta: { title: 'سجل النشاطات' }
     },
     {
+        path: '/reports',
+        name: 'reports',
+        component: () => import('../components/report/index.vue'),
+        meta: { title: 'التقارير' }
+    },
+    {
         path: '/500',
         name: 'ServerError',
         component: () => import('../components/errors/internalServerError.vue'),
@@ -127,6 +137,7 @@ const routes = [
         component: () => import('../components/errors/notFoundPage.vue'),
         meta: { title: '404 - الصفحة غير موجودة' }
     },
+    
 ];
 
 const router = createRouter({
