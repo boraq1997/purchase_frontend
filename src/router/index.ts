@@ -120,6 +120,14 @@ const routes = [
         meta: { title: 'التقارير' }
     },
     {
+        path: '/reportsPrint/:id',
+        name: 'RportPage',
+        component: ()=>import('../components/report/print/ReportPagePrint.vue'),
+        meta: {
+            layout: 'blank',
+        }
+    },
+    {
         path: '/500',
         name: 'ServerError',
         component: () => import('../components/errors/internalServerError.vue'),

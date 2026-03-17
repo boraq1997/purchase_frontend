@@ -207,6 +207,12 @@ const reportService = {
     destroy(reportId: number) {
         return http.delete(`/reports/${reportId}`).then(r => r.data)
     },
+    // جلب طلبات الشراء التي ليس لها تقرير
+    getAvailablePurchaseRequests() {
+        return http.get('/purchase-requests', {
+            params: { without_report: true }
+        })
+    },
 }
 
 export default reportService

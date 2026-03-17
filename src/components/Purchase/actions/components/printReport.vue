@@ -1,434 +1,696 @@
 <template>
-  <div>
-    <!-- ── زر الطباعة (يُخفى عند الطباعة) ── -->
-    <div class="no-print controls-bar">
-      <button class="btn-print" @click="printReport">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
-          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="6 9 6 2 18 2 18 9"/>
-          <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
-          <rect x="6" y="14" width="12" height="8"/>
-        </svg>
-        طباعة التقرير
-      </button>
-      <button class="btn-close" @click="$emit('close')">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
-          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-        </svg>
-        إغلاق
-      </button>
+  <div dir="rtl">
+
+    <!-- ── شريط التحكم (يُخفى عند الطباعة) ── -->
+    <div class="no-print flex align-items-center gap-2 mb-4">
+      <Button
+        label="طباعة التقرير"
+        icon="pi pi-print"
+        @click="printReport"
+        :loading="loading"
+      />
     </div>
 
+    <!-- ── حالة التحميل ── -->
+    <div v-if="loading" class="flex align-items-center justify-content-center py-8">
+      <ProgressSpinner style="width:50px;height:50px" />
+    </div>
+
+    <!-- ── رسالة خطأ ── -->
+    <Message v-if="error" severity="error" :closable="false">
+      {{ error }}
+    </Message>
+
     <!-- ── محتوى التقرير ── -->
-    <div id="print-area" dir="rtl">
+    <div v-if="!loading && data" id="print-area">
 
-      <!-- HEADER -->
-      <div class="rpt-header">
-        <div class="rpt-header-org">العتبة العباسية المقدسة &nbsp;·&nbsp; نظام إدارة المشتريات</div>
-        <div class="rpt-header-title">تقرير طلب شراء شامل</div>
-        <div class="rpt-header-meta">
-          <span><b>رقم الطلب:</b> {{ data.purchaseRequest.request_number }}</span>
-          <span><b>تاريخ الإصدار:</b> {{ data.generatedAt }}</span>
-          <span><b>أصدره:</b> {{ data.generatedBy }}</span>
-        </div>
-      </div>
-      <div class="rpt-accent"></div>
-
-      <!-- ١ - تفاصيل طلب الشراء -->
-      <section class="rpt-section">
-        <div class="rpt-sec-head">١ — تفاصيل طلب الشراء</div>
-        <div class="rpt-sec-body">
-          <table class="t-info">
-            <tbody>
-              <tr>
-                <td class="lbl">رقم الطلب</td>
-                <td class="bold">{{ data.purchaseRequest.request_number }}</td>
-                <td class="lbl">الحالة</td>
-                <td><span :class="'badge b-' + data.purchaseRequest.status_type">{{ data.purchaseRequest.status_label }}</span></td>
-              </tr>
-              <tr>
-                <td class="lbl">عنوان الطلب</td>
-                <td class="bold" colspan="3">{{ data.purchaseRequest.title }}</td>
-              </tr>
-              <tr v-if="data.purchaseRequest.description">
-                <td class="lbl">الوصف</td>
-                <td colspan="3">{{ data.purchaseRequest.description }}</td>
-              </tr>
-              <tr>
-                <td class="lbl">القسم الطالب</td>
-                <td>{{ data.purchaseRequest.department?.name ?? '—' }}</td>
-                <td class="lbl">اللجنة</td>
-                <td>{{ data.purchaseRequest.committee?.name ?? '—' }}</td>
-              </tr>
-              <tr>
-                <td class="lbl">مقدم الطلب</td>
-                <td>{{ data.purchaseRequest.creator?.name ?? '—' }}</td>
-                <td class="lbl">تاريخ الطلب</td>
-                <td>{{ data.purchaseRequest.created_at ?? '—' }}</td>
-              </tr>
-              <tr>
-                <td class="lbl">التكلفة التقديرية</td>
-                <td class="bold ltr">{{ fmt(data.purchaseRequest.total_estimated_cost) }} IQD</td>
-                <td class="lbl">الأولوية</td>
-                <td><span :class="'badge b-' + data.purchaseRequest.priority">{{ data.purchaseRequest.priority_label }}</span></td>
-              </tr>
-              <tr v-if="data.purchaseRequest.rejected_reason">
-                <td class="lbl" style="color:#c62828;font-weight:bold;">سبب الرفض</td>
-                <td colspan="3" style="color:#c62828;">{{ data.purchaseRequest.rejected_reason }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <!-- ٢ - المواد -->
-      <section class="rpt-section">
-        <div class="rpt-sec-head">٢ — المواد المطلوبة مع رأي المخازن وعروض الأسعار</div>
-        <div class="rpt-sec-body">
-          <div v-if="!data.items?.length" class="no-data">لا توجد مواد</div>
-          <div v-for="(item, idx) in data.items" :key="item.id" class="item-box">
-            <div class="item-head">
-              <div class="item-head-title">{{ idx + 1 }}. {{ item.item_name }}</div>
-              <div class="item-head-meta">
-                الكمية: {{ item.quantity }}{{ item.unit ? ' ' + item.unit : '' }}
-                &nbsp;|&nbsp;
-                التكلفة التقديرية: <span class="ltr">{{ fmt(item.total_estimated_price) }} IQD</span>
+      <!-- ══════════════════════════════════════
+           HEADER
+      ══════════════════════════════════════ -->
+      <Card class="mb-4 print-header-card">
+        <template #content>
+          <div class="flex align-items-center justify-content-between flex-wrap gap-3">
+            <div>
+              <div class="text-color-secondary text-sm mb-1">نظام إدارة المشتريات</div>
+              <div class="text-2xl font-bold text-900 mb-2">تقرير طلب شراء شامل</div>
+              <div class="flex flex-wrap gap-4 text-sm text-color-secondary">
+                <span>
+                  <i class="pi pi-hashtag ml-1" />
+                  رقم الطلب: <strong class="text-900">{{ data.purchase_request.request_number }}</strong>
+                </span>
+                <span>
+                  <i class="pi pi-calendar ml-1" />
+                  تاريخ الإصدار: <strong class="text-900">{{ data.generated_at }}</strong>
+                </span>
+                <span>
+                  <i class="pi pi-user ml-1" />
+                  أصدره: <strong class="text-900">{{ data.generated_by }}</strong>
+                </span>
               </div>
             </div>
-            <div class="item-body">
-              <div v-if="item.specifications" class="specs">
-                <b>المواصفات:</b> {{ item.specifications }}
+            <div class="flex flex-column align-items-end gap-2">
+              <Tag
+                :value="data.purchase_request.status_label"
+                :severity="statusSeverity(data.purchase_request.status_type)"
+                class="text-sm px-3 py-2"
+              />
+              <Tag
+                :value="data.purchase_request.priority_label"
+                :severity="prioritySeverity(data.purchase_request.priority)"
+                class="text-sm px-3 py-2"
+              />
+            </div>
+          </div>
+        </template>
+      </Card>
+
+      <!-- ══════════════════════════════════════
+           ١. تفاصيل طلب الشراء
+      ══════════════════════════════════════ -->
+      <Panel class="mb-4" :toggleable="false">
+        <template #header>
+          <div class="flex align-items-center gap-2">
+            <i class="pi pi-file-edit text-primary" />
+            <span class="font-bold">١ — تفاصيل طلب الشراء</span>
+          </div>
+        </template>
+
+        <div class="grid row-gap-3">
+          <div class="col-12 md:col-6">
+            <div class="flex flex-column gap-3">
+
+              <div class="flex flex-column gap-1">
+                <span class="text-xs text-color-secondary font-semibold uppercase" style="letter-spacing:.04em">رقم الطلب</span>
+                <span class="font-bold text-900">{{ data.purchase_request.request_number }}</span>
               </div>
 
-              <!-- رأي المخازن -->
-              <div class="sub">
-                <div class="sub-title">رأي المخازن</div>
-                <div v-if="!item.warehouse_check" class="no-data">لم يتم الفحص بعد</div>
-                <table v-else class="t-info" style="margin-top:0">
-                  <tbody>
-                    <tr>
-                      <td class="lbl" style="width:120px">حالة التوفر</td>
-                      <td style="width:140px"><span :class="'badge b-' + item.warehouse_check.availability">{{ item.warehouse_check.availability_label }}</span></td>
-                      <td class="lbl" style="width:120px">الكمية المتوفرة</td>
-                      <td class="bold">{{ item.warehouse_check.available_quantity }}</td>
-                    </tr>
-                    <tr>
-                      <td class="lbl">حالة المادة</td>
-                      <td>{{ item.warehouse_check.item_condition || '—' }}</td>
-                      <td class="lbl">التوصية</td>
-                      <td class="bold">{{ item.warehouse_check.recommendation_label }}</td>
-                    </tr>
-                    <tr v-if="item.warehouse_check.notes">
-                      <td class="lbl">ملاحظات</td>
-                      <td colspan="3">{{ item.warehouse_check.notes }}</td>
-                    </tr>
-                    <tr>
-                      <td class="lbl">فُحص بواسطة</td>
-                      <td>{{ item.warehouse_check.checked_by }}</td>
-                      <td class="lbl">تاريخ الفحص</td>
-                      <td>{{ item.warehouse_check.checked_at }}</td>
-                    </tr>
-                  </tbody>
-                </table>
+              <div class="flex flex-column gap-1">
+                <span class="text-xs text-color-secondary font-semibold uppercase" style="letter-spacing:.04em">عنوان الطلب</span>
+                <span class="font-bold text-900">{{ data.purchase_request.title }}</span>
               </div>
 
-              <!-- تقييم الحاجة -->
-              <div v-if="item.needs_assessment" class="sub" style="margin-top:10px">
-                <div class="sub-title">تقييم الحاجة</div>
-                <table class="t-info" style="margin-top:0">
-                  <tbody>
-                    <tr>
-                      <td class="lbl" style="width:120px">مستوى الإلحاح</td>
-                      <td style="width:140px"><span :class="'badge b-' + item.needs_assessment.urgency_level">{{ item.needs_assessment.urgency_label }}</span></td>
-                      <td class="lbl" style="width:120px">حالة الحاجة</td>
-                      <td>{{ item.needs_assessment.needs_status_label }}</td>
-                    </tr>
-                    <tr>
-                      <td class="lbl">الكمية بعد التقييم</td>
-                      <td>{{ item.needs_assessment.quantity_needed_after_assessment ?? '—' }}</td>
-                      <td class="lbl">قرار الإدارة</td>
-                      <td><span :class="'badge b-' + (item.needs_assessment.admin_decision || 'pending')">{{ item.needs_assessment.admin_decision || '—' }}</span></td>
-                    </tr>
-                    <tr v-if="item.needs_assessment.reason">
-                      <td class="lbl">السبب</td>
-                      <td colspan="3">{{ item.needs_assessment.reason }}</td>
-                    </tr>
-                    <tr v-if="item.needs_assessment.recommended_action">
-                      <td class="lbl">الإجراء المقترح</td>
-                      <td colspan="3">{{ item.needs_assessment.recommended_action }}</td>
-                    </tr>
-                    <tr>
-                      <td class="lbl">قيّم بواسطة</td>
-                      <td>{{ item.needs_assessment.assessed_by }}</td>
-                      <td class="lbl">تاريخ التقييم</td>
-                      <td>{{ item.needs_assessment.assessed_at }}</td>
-                    </tr>
-                  </tbody>
-                </table>
+              <div v-if="data.purchase_request.description" class="flex flex-column gap-1">
+                <span class="text-xs text-color-secondary font-semibold uppercase" style="letter-spacing:.04em">الوصف</span>
+                <span class="text-700">{{ data.purchase_request.description }}</span>
               </div>
 
-              <!-- عروض الأسعار للمادة -->
-              <div v-if="item.estimate_items?.length" class="sub" style="margin-top:10px">
-                <div class="sub-title">عروض الأسعار لهذه المادة</div>
-                <table class="t-data">
-                  <thead>
-                    <tr>
-                      <th class="tc" style="width:5%">#</th>
-                      <th>المورد</th>
-                      <th class="tc" style="width:10%">الكمية</th>
-                      <th class="tr" style="width:18%">سعر الوحدة</th>
-                      <th class="tr" style="width:18%">الإجمالي</th>
-                      <th class="tc" style="width:14%">الحالة</th>
-                      <th class="tc" style="width:13%">التاريخ</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="(ei, i) in item.estimate_items" :key="i" :class="i % 2 === 0 ? 'odd' : 'even'">
-                      <td class="tc">{{ i + 1 }}</td>
-                      <td>{{ ei.estimate?.vendor?.name ?? '—' }}</td>
-                      <td class="tc">{{ ei.quantity }}</td>
-                      <td class="tr ltr">{{ fmt(ei.unit_price) }}</td>
-                      <td class="tr ltr bold">{{ fmt(ei.total_price) }}</td>
-                      <td class="tc"><span :class="'badge b-' + (ei.estimate?.status || 'pending')">{{ ei.estimate?.status_label ?? '—' }}</span></td>
-                      <td class="tc">{{ ei.estimate?.estimate_date ?? '—' }}</td>
-                    </tr>
-                  </tbody>
-                </table>
+              <div class="grid">
+                <div class="col-6 flex flex-column gap-1">
+                  <span class="text-xs text-color-secondary font-semibold uppercase" style="letter-spacing:.04em">القسم الطالب</span>
+                  <span class="text-700">{{ data.purchase_request.department?.name ?? '—' }}</span>
+                </div>
+                <div class="col-6 flex flex-column gap-1">
+                  <span class="text-xs text-color-secondary font-semibold uppercase" style="letter-spacing:.04em">اللجنة</span>
+                  <span class="text-700">{{ data.purchase_request.committee?.name ?? '—' }}</span>
+                </div>
+                <div class="col-6 flex flex-column gap-1 mt-2">
+                  <span class="text-xs text-color-secondary font-semibold uppercase" style="letter-spacing:.04em">مقدم الطلب</span>
+                  <span class="text-700">{{ data.purchase_request.creator?.name ?? '—' }}</span>
+                </div>
+                <div class="col-6 flex flex-column gap-1 mt-2">
+                  <span class="text-xs text-color-secondary font-semibold uppercase" style="letter-spacing:.04em">تاريخ الطلب</span>
+                  <span class="text-700">{{ data.purchase_request.created_at ?? '—' }}</span>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <div class="col-12 md:col-6">
+            <div class="flex flex-column gap-3">
+
+              <div class="flex flex-column gap-1">
+                <span class="text-xs text-color-secondary font-semibold uppercase" style="letter-spacing:.04em">الحالة</span>
+                <Tag :value="data.purchase_request.status_label" :severity="statusSeverity(data.purchase_request.status_type)" />
+              </div>
+
+              <div class="flex flex-column gap-1">
+                <span class="text-xs text-color-secondary font-semibold uppercase" style="letter-spacing:.04em">الأولوية</span>
+                <Tag :value="data.purchase_request.priority_label" :severity="prioritySeverity(data.purchase_request.priority)" />
+              </div>
+
+              <div class="flex flex-column gap-1">
+                <span class="text-xs text-color-secondary font-semibold uppercase" style="letter-spacing:.04em">التكلفة التقديرية</span>
+                <span class="font-bold text-primary text-xl">{{ fmt(data.purchase_request.total_estimated_cost) }} د.ع</span>
+              </div>
+
+              <div v-if="data.purchase_request.rejected_reason" class="flex flex-column gap-1">
+                <span class="text-xs text-red-500 font-semibold uppercase" style="letter-spacing:.04em">سبب الرفض</span>
+                <span class="text-red-600">{{ data.purchase_request.rejected_reason }}</span>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </Panel>
+
+      <!-- ══════════════════════════════════════
+           ٢. المواد المطلوبة
+      ══════════════════════════════════════ -->
+      <Panel class="mb-4" :toggleable="false">
+        <template #header>
+          <div class="flex align-items-center gap-2">
+            <i class="pi pi-box text-primary" />
+            <span class="font-bold">٢ — المواد المطلوبة مع رأي المخازن وعروض الأسعار</span>
+          </div>
+        </template>
+
+        <div v-if="!data.items?.length" class="text-center text-color-secondary py-4">
+          <i class="pi pi-inbox text-4xl mb-2 block" />
+          لا توجد مواد
+        </div>
+
+        <div v-else class="flex flex-column gap-4">
+          <div
+            v-for="(item, idx) in data.items"
+            :key="item.id"
+            class="surface-50 border-round-xl border-1 border-200 overflow-hidden"
+          >
+            <!-- رأس المادة -->
+            <div class="flex align-items-center justify-content-between flex-wrap gap-2 px-4 py-3 surface-100 border-bottom-1 border-200">
+              <div class="flex align-items-center gap-2">
+                <Badge :value="String(idx + 1)" severity="info" />
+                <span class="font-bold text-900">{{ item.item_name }}</span>
+              </div>
+              <div class="flex align-items-center gap-3 text-sm text-color-secondary">
+                <span>
+                  الكمية: <strong class="text-900">{{ item.quantity }}</strong>
+                  <span v-if="item.unit"> {{ item.unit.name }}</span>
+                </span>
+                <Divider layout="vertical" style="height:1rem" />
+                <span>
+                  التكلفة التقديرية:
+                  <strong class="text-primary">{{ fmt(item.total_estimated_price) }} د.ع</strong>
+                </span>
+              </div>
+            </div>
+
+            <div class="p-4">
+
+              <!-- المواصفات -->
+              <div v-if="item.specifications"
+                class="flex align-items-start gap-2 p-3 border-round border-1 border-200 surface-card mb-4">
+                <i class="pi pi-list-check text-primary mt-1 flex-shrink-0" />
+                <div>
+                  <div class="text-xs text-color-secondary font-semibold mb-1">المواصفات</div>
+                  <span class="text-700 text-sm">{{ item.specifications }}</span>
+                </div>
+              </div>
+
+              <div class="grid row-gap-3">
+
+                <!-- رأي المخازن -->
+                <div class="col-12 md:col-6">
+                  <div class="surface-card border-round-lg border-1 border-200 p-3 h-full">
+                    <div class="flex align-items-center gap-2 mb-3">
+                      <i class="pi pi-warehouse text-blue-500" />
+                      <span class="font-semibold text-sm">رأي المخازن</span>
+                    </div>
+
+                    <div v-if="!item.warehouse_check" class="text-color-secondary text-sm">
+                      <i class="pi pi-minus-circle ml-1" />لم يتم الفحص بعد
+                    </div>
+
+                    <div v-else class="flex flex-column gap-2">
+                      <div class="flex align-items-center justify-content-between">
+                        <span class="text-sm text-color-secondary">حالة التوفر</span>
+                        <Tag :value="item.warehouse_check.availability_label" :severity="availabilitySeverity(item.warehouse_check.availability)" />
+                      </div>
+                      <div class="flex align-items-center justify-content-between">
+                        <span class="text-sm text-color-secondary">الكمية المتوفرة</span>
+                        <strong>{{ item.warehouse_check.available_quantity }}</strong>
+                      </div>
+                      <div v-if="item.warehouse_check.item_condition" class="flex align-items-center justify-content-between">
+                        <span class="text-sm text-color-secondary">حالة المادة</span>
+                        <span class="text-sm">{{ item.warehouse_check.item_condition }}</span>
+                      </div>
+                      <div class="flex align-items-center justify-content-between">
+                        <span class="text-sm text-color-secondary">التوصية</span>
+                        <span class="text-sm font-semibold">{{ item.warehouse_check.recommendation_label }}</span>
+                      </div>
+                      <div v-if="item.warehouse_check.notes"
+                        class="text-sm text-color-secondary border-top-1 border-200 pt-2 mt-1">
+                        {{ item.warehouse_check.notes }}
+                      </div>
+                      <div class="text-xs text-color-secondary mt-1">
+                        فحص بواسطة: {{ item.warehouse_check.checked_by }}
+                        <span v-if="item.warehouse_check.checked_at"> — {{ item.warehouse_check.checked_at }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- تقييم الحاجة -->
+                <div class="col-12 md:col-6">
+                  <div class="surface-card border-round-lg border-1 border-200 p-3 h-full">
+                    <div class="flex align-items-center gap-2 mb-3">
+                      <i class="pi pi-chart-bar text-purple-500" />
+                      <span class="font-semibold text-sm">تقييم الحاجة</span>
+                    </div>
+
+                    <div v-if="!item.needs_assessment" class="text-color-secondary text-sm">
+                      <i class="pi pi-minus-circle ml-1" />لم يُقيَّم بعد
+                    </div>
+
+                    <div v-else class="flex flex-column gap-2">
+                      <div class="flex align-items-center justify-content-between">
+                        <span class="text-sm text-color-secondary">مستوى الإلحاح</span>
+                        <Tag :value="item.needs_assessment.urgency_label" :severity="urgencySeverity(item.needs_assessment.urgency_level)" />
+                      </div>
+                      <div class="flex align-items-center justify-content-between">
+                        <span class="text-sm text-color-secondary">حالة الحاجة</span>
+                        <span class="text-sm font-semibold">{{ item.needs_assessment.needs_status_label }}</span>
+                      </div>
+                      <div class="flex align-items-center justify-content-between">
+                        <span class="text-sm text-color-secondary">الكمية بعد التقييم</span>
+                        <strong>{{ item.needs_assessment.quantity_needed_after_assessment ?? '—' }}</strong>
+                      </div>
+                      <div class="flex align-items-center justify-content-between">
+                        <span class="text-sm text-color-secondary">قرار الإدارة</span>
+                        <Tag
+                          :value="item.needs_assessment.admin_decision_label"
+                          :severity="adminDecisionSeverity(item.needs_assessment.admin_decision)"
+                        />
+                      </div>
+                      <div v-if="item.needs_assessment.reason" class="text-sm border-top-1 border-200 pt-2 mt-1">
+                        <span class="text-color-secondary">السبب: </span>{{ item.needs_assessment.reason }}
+                      </div>
+                      <div v-if="item.needs_assessment.recommended_action" class="text-sm">
+                        <span class="text-color-secondary">الإجراء المقترح: </span>{{ item.needs_assessment.recommended_action }}
+                      </div>
+                      <div class="text-xs text-color-secondary mt-1">
+                        قيّمه: {{ item.needs_assessment.assessed_by }}
+                        <span v-if="item.needs_assessment.assessed_at"> — {{ item.needs_assessment.assessed_at }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- عروض الأسعار للمادة -->
+                <div v-if="item.estimate_items?.length" class="col-12">
+                  <div class="surface-card border-round-lg border-1 border-200 p-3">
+                    <div class="flex align-items-center gap-2 mb-3">
+                      <i class="pi pi-tag text-orange-500" />
+                      <span class="font-semibold text-sm">عروض الأسعار ({{ item.estimate_items.length }})</span>
+                    </div>
+                    <DataTable
+                      :value="item.estimate_items"
+                      size="small"
+                      striped-rows
+                      class="p-datatable-sm"
+                    >
+                      <Column header="المورد">
+                        <template #body="{ data: ei }">{{ ei.estimate?.vendor?.name ?? '—' }}</template>
+                      </Column>
+                      <Column field="quantity" header="الكمية" style="width:7rem" />
+                      <Column header="سعر الوحدة" style="width:10rem">
+                        <template #body="{ data: ei }">{{ fmt(ei.unit_price) }} د.ع</template>
+                      </Column>
+                      <Column header="الإجمالي" style="width:10rem">
+                        <template #body="{ data: ei }">
+                          <strong>{{ fmt(ei.total_price) }} د.ع</strong>
+                        </template>
+                      </Column>
+                      <Column header="الحالة" style="width:8rem">
+                        <template #body="{ data: ei }">
+                          <Tag
+                            v-if="ei.estimate"
+                            :value="ei.estimate.status_label"
+                            :severity="statusSeverity(ei.estimate.status)"
+                          />
+                        </template>
+                      </Column>
+                      <Column header="التاريخ" style="width:9rem">
+                        <template #body="{ data: ei }">
+                          <span class="text-sm text-color-secondary">{{ ei.estimate?.estimate_date ?? '—' }}</span>
+                        </template>
+                      </Column>
+                    </DataTable>
+                  </div>
+                </div>
+
               </div>
             </div>
           </div>
         </div>
-      </section>
+      </Panel>
 
-      <!-- ٣ - ملخص عروض الأسعار -->
-      <section class="rpt-section page-break">
-        <div class="rpt-sec-head">٣ — ملخص عروض الأسعار</div>
-        <div class="rpt-sec-body">
-          <div v-if="!data.estimates?.length" class="no-data">لا توجد عروض أسعار</div>
-          <div v-for="(est, idx) in data.estimates" :key="est.id" class="item-box" style="margin-bottom:12px">
-            <div class="item-head">
-              <div class="item-head-title">
-                عرض رقم {{ idx + 1 }}
-                &nbsp;<span :class="'badge b-' + est.status">{{ est.status_label }}</span>
+      <!-- ══════════════════════════════════════
+           ٣. ملخص عروض الأسعار
+      ══════════════════════════════════════ -->
+      <Panel class="mb-4" :toggleable="false">
+        <template #header>
+          <div class="flex align-items-center gap-2">
+            <i class="pi pi-file-invoice text-primary" />
+            <span class="font-bold">٣ — ملخص عروض الأسعار</span>
+          </div>
+        </template>
+
+        <div v-if="!data.estimates?.length" class="text-center text-color-secondary py-4">
+          <i class="pi pi-inbox text-4xl mb-2 block" />
+          لا توجد عروض أسعار
+        </div>
+
+        <div v-else class="flex flex-column gap-4">
+          <div
+            v-for="(est, idx) in data.estimates"
+            :key="est.id"
+            class="surface-50 border-round-xl border-1 border-200 overflow-hidden"
+            :class="est.status === 'accepted' ? 'border-green-300' : ''"
+          >
+            <!-- رأس عرض السعر -->
+            <div class="flex align-items-center justify-content-between flex-wrap gap-2 px-4 py-3 surface-100 border-bottom-1 border-200">
+              <div class="flex align-items-center gap-2">
+                <Badge :value="String(idx + 1)" severity="secondary" />
+                <span class="font-bold text-900">{{ est.vendor?.name ?? `عرض #${est.id}` }}</span>
+                <Tag :value="est.status_label" :severity="statusSeverity(est.status)" />
               </div>
-              <div class="item-head-meta">
-                الإجمالي: <span class="ltr bold">{{ fmt(est.total_amount) }} IQD</span>
-                &nbsp;|&nbsp; التاريخ: {{ est.estimate_date ?? '—' }}
+              <div class="flex align-items-center gap-3 text-sm">
+                <span class="text-color-secondary">
+                  <i class="pi pi-calendar ml-1" />{{ est.estimate_date ?? '—' }}
+                </span>
+                <span class="font-bold text-xl text-primary">{{ fmt(est.total_amount) }} د.ع</span>
               </div>
             </div>
-            <div class="item-body">
-              <div v-if="est.vendor" class="vendor">
-                <span><b>المورد:</b> {{ est.vendor.name }}</span>
-                <span style="margin-right:16px"><b>هاتف:</b> {{ est.vendor.phone1 }}</span>
-                <span v-if="est.vendor.email" style="margin-right:16px"><b>البريد:</b> {{ est.vendor.email }}</span>
-                <span v-if="est.vendor.address" style="margin-right:16px"><b>العنوان:</b> {{ est.vendor.address }}</span>
+
+            <div class="p-4">
+
+              <!-- بيانات المورد -->
+              <div v-if="est.vendor" class="flex flex-wrap gap-4 text-sm text-color-secondary mb-3 p-3 surface-card border-round border-1 border-200">
+                <span><i class="pi pi-phone ml-1" />{{ est.vendor.phone1 }}</span>
+                <span v-if="est.vendor.email"><i class="pi pi-envelope ml-1" />{{ est.vendor.email }}</span>
+                <span v-if="est.vendor.address"><i class="pi pi-map-marker ml-1" />{{ est.vendor.address }}</span>
               </div>
-              <div v-if="est.notes" class="specs" style="margin-bottom:6px"><b>ملاحظات:</b> {{ est.notes }}</div>
-              <table v-if="est.items?.length" class="t-data">
-                <thead>
-                  <tr>
-                    <th class="tc" style="width:5%">#</th>
-                    <th>المادة</th>
-                    <th class="tc" style="width:10%">الكمية</th>
-                    <th class="tr" style="width:22%">سعر الوحدة (IQD)</th>
-                    <th class="tr" style="width:22%">الإجمالي (IQD)</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="(ei, i) in est.items" :key="i" :class="i % 2 === 0 ? 'odd' : 'even'">
-                    <td class="tc">{{ i + 1 }}</td>
-                    <td>{{ ei.item_name }}</td>
-                    <td class="tc">{{ ei.quantity }}</td>
-                    <td class="tr ltr">{{ fmt(ei.unit_price) }}</td>
-                    <td class="tr ltr bold">{{ fmt(ei.total_price) }}</td>
-                  </tr>
-                </tbody>
-                <tfoot>
-                  <tr>
-                    <td colspan="4" class="tc">المجموع الكلي</td>
-                    <td class="tr ltr bold">{{ fmt(est.total_amount) }} IQD</td>
-                  </tr>
-                </tfoot>
-              </table>
+
+              <!-- ملاحظات -->
+              <div v-if="est.notes" class="flex align-items-start gap-2 text-sm text-color-secondary mb-3">
+                <i class="pi pi-comment mt-1 flex-shrink-0" />
+                <span>{{ est.notes }}</span>
+              </div>
+
+              <!-- جدول المواد -->
+              <DataTable
+                v-if="est.items?.length"
+                :value="est.items"
+                size="small"
+                striped-rows
+                class="p-datatable-sm"
+              >
+                <Column field="item_name" header="المادة" />
+                <Column field="quantity" header="الكمية" style="width:7rem" />
+                <Column header="سعر الوحدة" style="width:10rem">
+                  <template #body="{ data: ei }">{{ fmt(ei.unit_price) }} د.ع</template>
+                </Column>
+                <Column header="الإجمالي" style="width:10rem">
+                  <template #body="{ data: ei }">
+                    <strong class="text-primary">{{ fmt(ei.total_price) }} د.ع</strong>
+                  </template>
+                </Column>
+              </DataTable>
+
+              <!-- مجموع عرض السعر -->
+              <div class="flex align-items-center justify-content-between mt-3 p-3 surface-100 border-round border-1 border-200">
+                <span class="font-semibold text-700">المجموع الكلي</span>
+                <span class="font-bold text-xl text-primary">{{ fmt(est.total_amount) }} د.ع</span>
+              </div>
             </div>
           </div>
         </div>
-      </section>
+      </Panel>
 
-      <!-- ٤ - عمليات الشراء -->
-      <section v-if="data.procurements?.length" class="rpt-section">
-        <div class="rpt-sec-head">٤ — عمليات الشراء الفعلية</div>
-        <div class="rpt-sec-body">
-          <div v-for="(proc, idx) in data.procurements" :key="proc.id" class="item-box" style="margin-bottom:12px">
-            <div class="item-head">
-              <div class="item-head-title">
-                <span class="ltr">{{ proc.reference_no ?? ('PO-' + (idx+1)) }}</span>
-                &nbsp;<span :class="'badge b-' + proc.status">{{ proc.status_label }}</span>
+      <!-- ══════════════════════════════════════
+           ٤. عمليات الشراء الفعلية
+      ══════════════════════════════════════ -->
+      <Panel v-if="data.procurements?.length" class="mb-4" :toggleable="false">
+        <template #header>
+          <div class="flex align-items-center gap-2">
+            <i class="pi pi-shopping-bag text-primary" />
+            <span class="font-bold">٤ — عمليات الشراء الفعلية</span>
+          </div>
+        </template>
+
+        <div class="flex flex-column gap-4">
+          <div
+            v-for="(proc, idx) in data.procurements"
+            :key="proc.id"
+            class="surface-50 border-round-xl border-1 border-200 overflow-hidden"
+          >
+            <!-- رأس عملية الشراء -->
+            <div class="flex align-items-center justify-content-between flex-wrap gap-2 px-4 py-3 surface-100 border-bottom-1 border-200">
+              <div class="flex align-items-center gap-2">
+                <Badge :value="String(idx + 1)" severity="secondary" />
+                <Tag :value="proc.reference_no ?? `PO-${idx + 1}`" severity="secondary" class="font-mono" />
+                <Tag :value="proc.status_label" :severity="statusSeverity(proc.status)" />
               </div>
-              <div class="item-head-meta">
-                الإجمالي: <span class="ltr bold">{{ fmt(proc.total_amount) }} IQD</span>
-                &nbsp;|&nbsp; تاريخ الشراء: {{ proc.purchase_date ?? '—' }}
-                &nbsp;|&nbsp; بواسطة: {{ proc.created_by ?? '—' }}
+              <div class="flex flex-wrap gap-3 text-sm text-color-secondary">
+                <span><i class="pi pi-calendar ml-1" />{{ proc.purchase_date ?? '—' }}</span>
+                <span><i class="pi pi-user ml-1" />{{ proc.created_by ?? '—' }}</span>
+                <span class="font-bold text-xl text-primary">{{ fmt(proc.total_amount) }} د.ع</span>
               </div>
             </div>
-            <div class="item-body">
-              <div v-if="proc.notes" class="specs" style="margin-bottom:6px"><b>ملاحظات:</b> {{ proc.notes }}</div>
-              <table class="t-data">
-                <thead>
-                  <tr>
-                    <th class="tc" style="width:4%">#</th>
-                    <th>المادة</th>
-                    <th class="tc" style="width:8%">الوحدة</th>
-                    <th class="tc" style="width:8%">الكمية</th>
-                    <th class="tr" style="width:13%">سعر الشراء</th>
-                    <th class="tr" style="width:13%">سعر العرض</th>
-                    <th class="tr" style="width:10%">الفرق</th>
-                    <th class="tr" style="width:14%">الإجمالي (IQD)</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="(pi, i) in proc.items" :key="i" :class="i % 2 === 0 ? 'odd' : 'even'">
-                    <td class="tc">{{ i + 1 }}</td>
-                    <td>{{ pi.item_name }}</td>
-                    <td class="tc">{{ pi.unit ?? '—' }}</td>
-                    <td class="tc">{{ pi.quantity }}</td>
-                    <td class="tr ltr">{{ fmt(pi.purchase_price) }}</td>
-                    <td class="tr ltr">{{ pi.estimate_price > 0 ? fmt(pi.estimate_price) : '—' }}</td>
-                    <td class="tr ltr" :style="{ color: pi.difference > 0 ? '#c62828' : pi.difference < 0 ? '#2e7d32' : '' }">
-                      {{ pi.estimate_price > 0 ? fmt(pi.difference) : '—' }}
-                    </td>
-                    <td class="tr ltr bold">{{ fmt(pi.total_price) }}</td>
-                  </tr>
-                </tbody>
-                <tfoot>
-                  <tr>
-                    <td colspan="7" class="tc">المجموع الكلي</td>
-                    <td class="tr ltr bold">{{ fmt(proc.total_amount) }} IQD</td>
-                  </tr>
-                </tfoot>
-              </table>
+
+            <div class="p-4">
+
+              <div v-if="proc.notes" class="flex align-items-start gap-2 text-sm text-color-secondary mb-3">
+                <i class="pi pi-comment mt-1 flex-shrink-0" />
+                <span>{{ proc.notes }}</span>
+              </div>
+
+              <DataTable :value="proc.items" size="small" striped-rows class="p-datatable-sm">
+                <Column field="item_name" header="المادة" />
+                <Column field="unit" header="الوحدة" style="width:7rem" />
+                <Column field="quantity" header="الكمية" style="width:7rem" />
+                <Column header="سعر الشراء" style="width:9rem">
+                  <template #body="{ data: pi }">{{ fmt(pi.purchase_price) }} د.ع</template>
+                </Column>
+                <Column header="سعر العرض" style="width:9rem">
+                  <template #body="{ data: pi }">
+                    <span v-if="pi.estimate_price > 0">{{ fmt(pi.estimate_price) }} د.ع</span>
+                    <span v-else class="text-color-secondary">—</span>
+                  </template>
+                </Column>
+                <Column header="الفرق" style="width:8rem">
+                  <template #body="{ data: pi }">
+                    <span
+                      v-if="pi.estimate_price > 0"
+                      :class="pi.difference > 0 ? 'text-red-500' : pi.difference < 0 ? 'text-green-500' : 'text-color-secondary'"
+                      class="font-semibold"
+                    >{{ fmt(pi.difference) }}</span>
+                    <span v-else class="text-color-secondary">—</span>
+                  </template>
+                </Column>
+                <Column header="الإجمالي" style="width:9rem">
+                  <template #body="{ data: pi }">
+                    <strong class="text-primary">{{ fmt(pi.total_price) }} د.ع</strong>
+                  </template>
+                </Column>
+              </DataTable>
+
+              <div class="flex align-items-center justify-content-between mt-3 p-3 surface-100 border-round border-1 border-200">
+                <span class="font-semibold text-700">المجموع الكلي</span>
+                <span class="font-bold text-xl text-primary">{{ fmt(proc.total_amount) }} د.ع</span>
+              </div>
             </div>
           </div>
         </div>
-      </section>
+      </Panel>
 
-      <!-- ٥ - الملخص المالي -->
-      <section class="rpt-section">
-        <div class="rpt-sec-head">٥ — الملخص المالي</div>
-        <div class="rpt-sec-body">
-          <div class="fin-grid">
-            <div class="fin-card">
-              <div class="fin-val ltr">{{ fmt(data.financial.total_estimated_cost) }}</div>
-              <div class="fin-lbl">التكلفة التقديرية (IQD)</div>
-            </div>
-            <div class="fin-card fin-card-dark">
-              <div class="fin-val ltr">{{ fmt(data.financial.accepted_estimates_total) }}</div>
-              <div class="fin-lbl">العروض المقبولة (IQD)</div>
-            </div>
-            <div class="fin-card">
-              <div class="fin-val ltr">{{ fmt(data.financial.actual_procurement_total) }}</div>
-              <div class="fin-lbl">الشراء الفعلي (IQD)</div>
-            </div>
-            <div v-if="data.financial.saving !== null" class="fin-card fin-card-green">
-              <div class="fin-val ltr">{{ fmt(Math.abs(data.financial.saving)) }}</div>
-              <div class="fin-lbl">{{ data.financial.saving >= 0 ? 'التوفير المحقق' : 'الزيادة' }} (IQD)</div>
+      <!-- ══════════════════════════════════════
+           ٥. الملخص المالي
+      ══════════════════════════════════════ -->
+      <Panel class="mb-4" :toggleable="false">
+        <template #header>
+          <div class="flex align-items-center gap-2">
+            <i class="pi pi-wallet text-primary" />
+            <span class="font-bold">٥ — الملخص المالي</span>
+          </div>
+        </template>
+
+        <!-- بطاقات الأرقام الرئيسية -->
+        <div class="grid mb-4">
+          <div class="col-12 sm:col-6 lg:col-3">
+            <div class="surface-card border-round-xl border-1 border-200 p-4 text-center">
+              <i class="pi pi-calculator text-blue-500 text-2xl mb-2 block" />
+              <div class="text-color-secondary text-xs mb-1">التكلفة التقديرية</div>
+              <div class="font-bold text-xl text-900">{{ fmt(data.financial.total_estimated_cost) }}</div>
+              <div class="text-xs text-color-secondary">د.ع</div>
             </div>
           </div>
-
-          <div v-if="Object.keys(data.financial.estimates_by_vendor || {}).length" class="sub" style="margin-top:12px">
-            <div class="sub-title">توزيع العروض حسب المورد</div>
-            <table class="t-data" style="margin-top:0">
-              <thead>
-                <tr>
-                  <th class="tc" style="width:6%">#</th>
-                  <th>المورد</th>
-                  <th class="tr" style="width:30%">الإجمالي (IQD)</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(total, vendor, i) in data.financial.estimates_by_vendor" :key="vendor" :class="i % 2 === 0 ? 'odd' : 'even'">
-                  <td class="tc">{{ i + 1 }}</td>
-                  <td>{{ vendor }}</td>
-                  <td class="tr ltr bold">{{ fmt(total) }}</td>
-                </tr>
-              </tbody>
-            </table>
+          <div class="col-12 sm:col-6 lg:col-3">
+            <div class="surface-card border-round-xl border-1 border-200 p-4 text-center">
+              <i class="pi pi-check-circle text-green-500 text-2xl mb-2 block" />
+              <div class="text-color-secondary text-xs mb-1">العروض المقبولة</div>
+              <div class="font-bold text-xl text-900">{{ fmt(data.financial.accepted_estimates_total) }}</div>
+              <div class="text-xs text-color-secondary">د.ع</div>
+            </div>
           </div>
-
-          <hr style="border:none;border-top:1px dashed #c8d4e8;margin:12px 0">
-
-          <div class="stat-grid">
-            <div class="stat-box">
-              <div class="stat-val">{{ data.items?.length ?? 0 }}</div>
-              <div class="stat-lbl">عدد المواد</div>
+          <div class="col-12 sm:col-6 lg:col-3">
+            <div class="surface-card border-round-xl border-1 border-200 p-4 text-center">
+              <i class="pi pi-shopping-cart text-orange-500 text-2xl mb-2 block" />
+              <div class="text-color-secondary text-xs mb-1">الشراء الفعلي</div>
+              <div class="font-bold text-xl text-900">{{ fmt(data.financial.actual_procurement_total) }}</div>
+              <div class="text-xs text-color-secondary">د.ع</div>
             </div>
-            <div class="stat-box">
-              <div class="stat-val">{{ data.financial.estimates_count }}</div>
-              <div class="stat-lbl">عروض الأسعار</div>
-            </div>
-            <div class="stat-box stat-box-green">
-              <div class="stat-val" style="color:#1b5e20">{{ data.financial.accepted_estimates_count }}</div>
-              <div class="stat-lbl" style="color:#2e7d32">عروض مقبولة</div>
-            </div>
-            <div class="stat-box">
-              <div class="stat-val">{{ data.financial.procurements_count }}</div>
-              <div class="stat-lbl">عمليات شراء</div>
+          </div>
+          <div class="col-12 sm:col-6 lg:col-3">
+            <div class="surface-card border-round-xl border-1 border-200 p-4 text-center"
+              :class="(data.financial.saving ?? 0) >= 0 ? 'border-green-300' : 'border-red-300'">
+              <i class="pi pi-dollar text-2xl mb-2 block"
+                :class="(data.financial.saving ?? 0) >= 0 ? 'text-green-500' : 'text-red-500'" />
+              <div class="text-color-secondary text-xs mb-1">
+                {{ (data.financial.saving ?? 0) >= 0 ? 'التوفير المحقق' : 'الزيادة' }}
+              </div>
+              <div class="font-bold text-xl"
+                :class="(data.financial.saving ?? 0) >= 0 ? 'text-green-600' : 'text-red-600'">
+                {{ fmt(Math.abs(data.financial.saving ?? 0)) }}
+              </div>
+              <div class="text-xs text-color-secondary">د.ع</div>
             </div>
           </div>
         </div>
-      </section>
 
-      <!-- FOOTER -->
-      <div class="rpt-footer">
-        <p>هذا التقرير مُولَّد آلياً من نظام إدارة المشتريات — العتبة العباسية المقدسة</p>
-        <p>تاريخ الإصدار: {{ data.generatedAt }} &nbsp;|&nbsp; أصدره: {{ data.generatedBy }}</p>
+        <Divider />
+
+        <!-- إحصائيات العد -->
+        <div class="flex flex-wrap gap-4 mb-4">
+          <div class="flex align-items-center gap-2 text-sm">
+            <i class="pi pi-file text-blue-400" />
+            <span>عروض الأسعار: <strong>{{ data.financial.estimates_count }}</strong></span>
+          </div>
+          <div class="flex align-items-center gap-2 text-sm">
+            <i class="pi pi-check text-green-400" />
+            <span>المقبولة: <strong>{{ data.financial.accepted_estimates_count }}</strong></span>
+          </div>
+          <div class="flex align-items-center gap-2 text-sm">
+            <i class="pi pi-shopping-bag text-orange-400" />
+            <span>عمليات الشراء: <strong>{{ data.financial.procurements_count }}</strong></span>
+          </div>
+          <div class="flex align-items-center gap-2 text-sm">
+            <i class="pi pi-box text-purple-400" />
+            <span>عدد المواد: <strong>{{ data.items?.length ?? 0 }}</strong></span>
+          </div>
+        </div>
+
+        <!-- توزيع العروض على الموردين -->
+        <div v-if="Object.keys(data.financial.estimates_by_vendor || {}).length">
+          <Divider align="right">
+            <span class="text-sm text-color-secondary">توزيع عروض الأسعار على الموردين</span>
+          </Divider>
+          <DataTable
+            :value="vendorEstimatesRows"
+            size="small"
+            striped-rows
+            class="p-datatable-sm"
+          >
+            <Column field="vendor" header="المورد" />
+            <Column header="الإجمالي" style="width:12rem">
+              <template #body="{ data: row }">
+                <strong class="text-primary">{{ fmt(row.total) }} د.ع</strong>
+              </template>
+            </Column>
+          </DataTable>
+        </div>
+
+      </Panel>
+
+      <!-- ── تذييل التقرير ── -->
+      <div class="flex align-items-center justify-content-between flex-wrap gap-2 pt-3 border-top-1 border-200 text-xs text-color-secondary">
+        <span><i class="pi pi-clock ml-1" />تاريخ الإصدار: {{ data.generated_at }}</span>
+        <span><i class="pi pi-user ml-1" />أصدره: {{ data.generated_by }}</span>
       </div>
 
     </div><!-- /print-area -->
+
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
-import { ref } from 'vue'
 
+import Button          from 'primevue/button'
+import Card            from 'primevue/card'
+import Panel           from 'primevue/panel'
+import Tag             from 'primevue/tag'
+import Badge           from 'primevue/badge'
+import Divider         from 'primevue/divider'
+import DataTable       from 'primevue/datatable'
+import Column          from 'primevue/column'
+import Message         from 'primevue/message'
+import ProgressSpinner from 'primevue/progressspinner'
+
+// ─── Props ────────────────────────────────────────────────────────────────
 const props = defineProps<{
-  purchaseRequestId: number
+  id: number
+  purchaseRequest?: any
 }>()
 
-const emit = defineEmits(['close'])
-
-const data = ref<any>({
-  purchaseRequest: {},
-  items: [],
-  estimates: [],
-  procurements: [],
-  financial: {},
-  generatedAt: '',
-  generatedBy: '',
-})
-
+// ─── State ────────────────────────────────────────────────────────────────
+const data    = ref<any>(null)
 const loading = ref(true)
-const error = ref('')
+const error   = ref('')
 
-const fmt = (n: any) => {
+// ─── Computed ─────────────────────────────────────────────────────────────
+const vendorEstimatesRows = computed(() =>
+  Object.entries(data.value?.financial?.estimates_by_vendor ?? {}).map(([vendor, total]) => ({
+    vendor,
+    total,
+  }))
+)
+
+// ─── Helpers ──────────────────────────────────────────────────────────────
+const fmt = (n: any): string => {
   const num = parseFloat(n)
   if (isNaN(num)) return '0'
   return num.toLocaleString('en-US')
 }
 
-const printReport = () => {
-  window.print()
-}
+const statusSeverity = (status: string): any => ({
+  pending:     'warning',
+  approved:    'success',
+  accepted:    'success',
+  completed:   'success',
+  in_progress: 'info',
+  rejected:    'danger',
+  cancelled:   'danger',
+  draft:       'secondary',
+}[status] ?? 'secondary')
 
+const prioritySeverity = (priority: string): any => ({
+  high:   'danger',
+  medium: 'warning',
+  low:    'success',
+}[priority] ?? 'secondary')
+
+const availabilitySeverity = (availability: string): any => ({
+  available:   'success',
+  partial:     'warning',
+  unavailable: 'danger',
+}[availability] ?? 'secondary')
+
+const urgencySeverity = (level: string): any => ({
+  critical: 'danger',
+  high:     'danger',
+  medium:   'warning',
+  low:      'success',
+}[level] ?? 'secondary')
+
+const adminDecisionSeverity = (decision: string): any => ({
+  approved: 'success',
+  rejected: 'danger',
+  pending:  'warning',
+}[decision] ?? 'secondary')
+
+// ─── Print ────────────────────────────────────────────────────────────────
+const printReport = () => window.print()
+
+// ─── Fetch ────────────────────────────────────────────────────────────────
 onMounted(async () => {
   try {
-    const res = await axios.get(`/api/reports/generate/${props.purchaseRequestId}`)
-    data.value = res.data.data
+    const res = await axios.get(`/api/reports/${props.id}/data`)
+    data.value = res.data.data ?? res.data
   } catch (e: any) {
-    error.value = e.message
+    error.value = e.message ?? 'حدث خطأ أثناء جلب البيانات'
   } finally {
     loading.value = false
   }
@@ -436,262 +698,15 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-/* ── Controls Bar ── */
-.controls-bar {
-  position: fixed;
-  top: 0; right: 0; left: 0;
-  z-index: 1000;
-  background: #1a3a6e;
-  padding: 10px 24px;
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  box-shadow: 0 2px 8px rgba(0,0,0,.3);
-}
-
-.btn-print, .btn-close {
-  display: flex; align-items: center; gap: 8px;
-  padding: 8px 20px;
-  border: none; border-radius: 6px;
-  font-size: 14px; font-weight: 600;
-  cursor: pointer;
-  font-family: 'Segoe UI', Tahoma, sans-serif;
-}
-
-.btn-print {
-  background: #1e88e5; color: #fff;
-}
-.btn-print:hover { background: #1565c0; }
-
-.btn-close {
-  background: rgba(255,255,255,.15); color: #fff;
-}
-.btn-close:hover { background: rgba(255,255,255,.25); }
-
-/* ── Print Area ── */
-#print-area {
-  direction: rtl;
-  font-family: 'Segoe UI', Tahoma, 'Arial Unicode MS', Arial, sans-serif;
-  font-size: 11pt;
-  color: #1e2535;
-  background: #fff;
-  max-width: 900px;
-  margin: 70px auto 40px;
-  padding: 0 20px;
-  line-height: 1.6;
-}
-
-/* ── Header ── */
-.rpt-header {
-  background: #0f2044;
-  color: #fff;
-  padding: 18px 24px;
-  border-radius: 6px 6px 0 0;
-}
-.rpt-header-org  { font-size: 9pt; color: #a0b8d8; margin-bottom: 6px; }
-.rpt-header-title { font-size: 18pt; font-weight: 700; margin-bottom: 8px; }
-.rpt-header-meta { font-size: 9pt; color: #c0d4ec; display: flex; gap: 20px; flex-wrap: wrap; }
-
-.rpt-accent { height: 4px; background: #1e88e5; margin-bottom: 20px; }
-
-/* ── Section ── */
-.rpt-section {
-  margin-bottom: 18px;
-  border: 1px solid #d8e0f0;
-  border-radius: 6px;
-  overflow: hidden;
-}
-.rpt-sec-head {
-  background: #1a3a6e;
-  color: #fff;
-  padding: 8px 16px;
-  font-size: 11pt;
-  font-weight: 700;
-}
-.rpt-sec-body { padding: 14px 16px; }
-
-/* ── Info Table ── */
-.t-info { width: 100%; border-collapse: collapse; margin-bottom: 4px; }
-.t-info td {
-  padding: 5px 8px;
-  border: 1px solid #dde4f5;
-  font-size: 10pt;
-  vertical-align: top;
-}
-.t-info .lbl {
-  background: #f0f4fb;
-  font-weight: 700;
-  color: #2a3a5e;
-  width: 130px;
-  white-space: nowrap;
-}
-
-/* ── Data Table ── */
-.t-data { width: 100%; border-collapse: collapse; margin-top: 6px; }
-.t-data th {
-  background: #1a3a6e; color: #fff;
-  padding: 6px 8px; font-size: 9.5pt;
-  text-align: right;
-  border: 1px solid #122a52;
-}
-.t-data td {
-  padding: 5px 8px;
-  border: 1px solid #dde4f5;
-  font-size: 9.5pt;
-  vertical-align: middle;
-}
-.t-data .odd td  { background: #fff; }
-.t-data .even td { background: #f5f7fc; }
-.t-data tfoot td {
-  background: #e4eaf8;
-  font-weight: 700;
-  padding: 6px 8px;
-  border: 1px solid #c5d0e8;
-}
-
-/* ── Item Box ── */
-.item-box { border: 1px solid #c8d4ec; border-radius: 6px; margin-bottom: 14px; overflow: hidden; }
-.item-head { background: #e4eaf8; padding: 8px 14px; border-bottom: 1px solid #c8d4ec; }
-.item-head-title { font-size: 11pt; font-weight: 700; color: #1a3a6e; }
-.item-head-meta  { font-size: 9pt; color: #5a6a8a; margin-top: 2px; }
-.item-body { padding: 12px 14px; }
-
-/* ── Sub Section ── */
-.sub { margin-top: 10px; padding-right: 12px; border-right: 3px solid #1e88e5; }
-.sub-title { font-size: 9.5pt; font-weight: 700; color: #1565c0; margin-bottom: 6px; }
-
-/* ── Specs ── */
-.specs {
-  background: #f8fafc;
-  border-right: 2px solid #c5d5f0;
-  padding: 4px 10px;
-  margin-bottom: 8px;
-  font-size: 9.5pt;
-  color: #4a5a7a;
-}
-
-/* ── Vendor ── */
-.vendor {
-  background: #f0f5ff;
-  border: 1px solid #c5d5f0;
-  border-radius: 4px;
-  padding: 6px 10px;
-  margin-bottom: 8px;
-  font-size: 9.5pt;
-}
-
-/* ── Badges ── */
-.badge {
-  display: inline-block;
-  padding: 1px 9px;
-  border-radius: 12px;
-  font-size: 8.5pt;
-  font-weight: 700;
-}
-.b-pending     { background: #fff8e1; color: #e65100; }
-.b-approved    { background: #e8f5e9; color: #1b5e20; }
-.b-rejected    { background: #ffebee; color: #b71c1c; }
-.b-completed   { background: #e3f2fd; color: #0d47a1; }
-.b-accepted    { background: #e8f5e9; color: #1b5e20; }
-.b-in_progress { background: #e3f2fd; color: #0d47a1; }
-.b-cancelled   { background: #f5f5f5; color: #424242; }
-.b-draft       { background: #f3e5f5; color: #4a148c; }
-.b-available   { background: #e8f5e9; color: #1b5e20; }
-.b-partial     { background: #fff8e1; color: #e65100; }
-.b-unavailable { background: #ffebee; color: #b71c1c; }
-.b-high        { background: #ffebee; color: #b71c1c; }
-.b-medium      { background: #fff8e1; color: #e65100; }
-.b-low         { background: #e8f5e9; color: #1b5e20; }
-.b-critical    { background: #fce4ec; color: #880e4f; }
-
-/* ── Financial Grid ── */
-.fin-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-  margin-bottom: 12px;
-}
-.fin-card {
-  background: #f0f4fb;
-  border: 1px solid #d0daf0;
-  border-radius: 6px;
-  padding: 12px;
-  text-align: center;
-}
-.fin-card-dark  { background: #0f2044; border-color: #0f2044; }
-.fin-card-green { background: #e8f5e9; border-color: #81c784; }
-.fin-val { font-size: 14pt; font-weight: 700; color: #1a3a6e; }
-.fin-card-dark  .fin-val { color: #fff; }
-.fin-card-green .fin-val { color: #1b5e20; }
-.fin-lbl { font-size: 8pt; color: #5a6a8a; margin-top: 4px; }
-.fin-card-dark  .fin-lbl { color: #90aec8; }
-.fin-card-green .fin-lbl { color: #2e7d32; }
-
-/* ── Stats Grid ── */
-.stat-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-}
-.stat-box {
-  background: #f0f4fb;
-  border-radius: 6px;
-  padding: 10px;
-  text-align: center;
-}
-.stat-box-green { background: #e8f5e9; }
-.stat-val { font-size: 16pt; font-weight: 700; color: #1a3a6e; }
-.stat-lbl { font-size: 8pt; color: #5a6a8a; }
-
-/* ── No Data ── */
-.no-data {
-  text-align: center;
-  color: #9aa5be;
-  font-style: italic;
-  padding: 12px;
-  background: #f9fafc;
-  border-radius: 4px;
-  font-size: 9.5pt;
-}
-
-/* ── Footer ── */
-.rpt-footer {
-  margin-top: 24px;
-  padding-top: 10px;
-  border-top: 2px dashed #c8d4e8;
-  text-align: center;
-  color: #8a9ab8;
-  font-size: 8.5pt;
-  line-height: 1.8;
-}
-
-/* ── Utils ── */
-.tc   { text-align: center !important; }
-.tr   { text-align: left  !important; }
-.ltr  { direction: ltr; unicode-bidi: embed; }
-.bold { font-weight: 700; }
-
-/* ══════════════════════════════════════
-   PRINT STYLES
-══════════════════════════════════════ */
+/* ── Print Styles ── */
 @media print {
   .no-print { display: none !important; }
 
-  #print-area {
-    margin: 0 !important;
-    padding: 0 !important;
-    max-width: 100% !important;
-    font-size: 9pt;
-  }
+  :deep(.p-panel-header)  { background: #1a3a6e !important; color: #fff !important; }
+  :deep(.p-panel-content) { padding: 1rem !important; }
+  :deep(.p-card)          { box-shadow: none !important; border: 1px solid #ddd !important; }
 
-  .rpt-section  { page-break-inside: avoid; }
-  .item-box     { page-break-inside: avoid; }
-  .page-break   { page-break-before: always; }
-
-  .rpt-header   { border-radius: 0 !important; }
-
-  /* إخفاء scroll bars */
-  body { overflow: visible !important; }
+  :deep(.p-datatable-thead > tr > th) { background: #1a3a6e !important; color: #fff !important; }
 
   @page {
     size: A4 portrait;

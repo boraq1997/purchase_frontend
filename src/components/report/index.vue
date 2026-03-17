@@ -141,43 +141,50 @@
 
         <!-- ─── Dialog توليد تقرير جديد ─── -->
         <Dialog
-            v-model:visible="showGenerateDialog"
-            header="توليد تقرير جديد"
-            :modal="true"
-            :style="{ width: '28rem' }"
-            dir="rtl"
-        >
-            <div class="flex flex-column gap-4 pt-2">
-                <div class="flex flex-column gap-2">
-                    <label class="font-medium text-sm">رقم طلب الشراء <span class="text-red-400">*</span></label>
-                    <InputNumber
-                        v-model="generateForm.purchase_request_id"
-                        placeholder="أدخل رقم الطلب"
-                        :min="1"
-                        class="w-full"
-                    />
-                </div>
-                <div class="flex flex-column gap-2">
-                    <label class="font-medium text-sm">نوع التقرير</label>
-                    <Dropdown
-                        v-model="generateForm.report_type"
-                        :options="reportTypeOptions"
-                        option-label="label"
-                        option-value="value"
-                        class="w-full"
-                    />
-                </div>
-            </div>
-            <template #footer>
-                <Button label="إلغاء" text @click="showGenerateDialog = false" />
-                <Button
-                    label="توليد"
-                    icon="pi pi-check"
-                    :loading="generating"
-                    @click="generateReport"
-                />
-            </template>
-        </Dialog>
+    v-model:visible="showGenerateDialog"
+    header="توليد تقرير جديد"
+    :modal="true"
+    :style="{ width: '28rem' }"
+    dir="rtl"
+>
+    <div class="flex flex-column gap-4 pt-2">
+        <div class="flex flex-column gap-2">
+            <label class="font-medium text-sm">رقم طلب الشراء <span class="text-red-400">*</span></label>
+            <Select
+                v-model="generateForm.purchase_request_id"
+                :options="availablePurchaseRequests"
+                option-label="label"
+                option-value="value"
+                placeholder="اختر طلب الشراء..."
+                class="w-full"
+                :loading="loadingPurchaseRequests"
+                filter
+                filter-placeholder="ابحث..."
+                empty-message="لا توجد طلبات متاحة"
+                empty-filter-message="لا توجد نتائج"
+            />
+        </div>
+        <div class="flex flex-column gap-2">
+            <label class="font-medium text-sm">نوع التقرير</label>
+            <Select
+                v-model="generateForm.report_type"
+                :options="reportTypeOptions"
+                option-label="label"
+                option-value="value"
+                class="w-full"
+            />
+        </div>
+    </div>
+    <template #footer>
+        <Button label="إلغاء" text @click="showGenerateDialog = false" />
+        <Button
+            label="توليد"
+            icon="pi pi-check"
+            :loading="generating"
+            @click="generateReport"
+        />
+    </template>
+</Dialog>
 
         <!-- ─── Dialog عرض التقرير الكامل ─── -->
         <Dialog
@@ -216,17 +223,18 @@ import DataTable     from 'primevue/datatable'
 import Column        from 'primevue/column'
 import Tag           from 'primevue/tag'
 import InputText     from 'primevue/inputtext'
-import InputNumber   from 'primevue/inputnumber'
 import Dropdown      from 'primevue/dropdown'
 import Dialog        from 'primevue/dialog'
 import Paginator     from 'primevue/paginator'
 import ProgressSpinner from 'primevue/progressspinner'
 import ConfirmDialog from 'primevue/confirmdialog'
-
+import Select from 'primevue/select'
 import ReportViewer from './components/reportViewer.vue'
 import reportService from './reportService'
 import type { ReportMeta, ReportData } from './reportService'
+import { useRouter } from 'vue-router'
 
+const router = useRouter()
 const toast   = useToast()
 const confirm = useConfirm()
 
@@ -264,6 +272,8 @@ const activeReportData  = ref<ReportData | null>(null)
 
 // ── Regenerate ────────────────────────────────────────
 const regeneratingId = ref<number | null>(null)
+const availablePurchaseRequests = ref<{ label: string; value: number }[]>([])
+const loadingPurchaseRequests   = ref(false)
 
 // ── Fetch ─────────────────────────────────────────────
 async function fetchReports() {
@@ -284,6 +294,23 @@ async function fetchReports() {
     }
 }
 
+async function fetchAvailablePurchaseRequests() {
+    loadingPurchaseRequests.value = true
+    try {
+        const res = await reportService.getAvailablePurchaseRequests()
+        console.log(res.data.data)
+        availablePurchaseRequests.value = res.data.data.map((pr: any) => ({
+            label: `#${pr.request_number} — ${pr.title}`,
+            value: pr.id,
+        }))
+    } catch {
+        toast.add({ severity: 'error', summary: 'خطأ', detail: 'فشل تحميل طلبات الشراء', life: 3000 })
+    } finally {
+        loadingPurchaseRequests.value = false
+    }
+}
+
+
 function onFilter() {
     currentPage.value = 1
     fetchReports()
@@ -299,7 +326,9 @@ function onPageChange(event: { page: number; rows: number }) {
 function openGenerateDialog() {
     generateForm.value = { purchase_request_id: null, report_type: 'full_review' }
     showGenerateDialog.value = true
+    fetchAvailablePurchaseRequests() // ← أضف هذا
 }
+
 
 async function generateReport() {
     if (!generateForm.value.purchase_request_id) {
@@ -328,18 +357,9 @@ async function generateReport() {
 
 // ── View Report ───────────────────────────────────────
 async function openReport(report: ReportMeta) {
-    showReportDialog.value = true
-    activeReportData.value = null
-    reportLoading.value    = true
-    try {
-        const res = await reportService.getData(report.purchase_request.id)
-        activeReportData.value = res.data
-    } catch {
-        toast.add({ severity: 'error', summary: 'خطأ', detail: 'فشل تحميل بيانات التقرير', life: 3000 })
-        showReportDialog.value = false
-    } finally {
-        reportLoading.value = false
-    }
+  if (!report?.id) return
+
+  router.push(`/reportsPrint/${report.id}`)
 }
 
 // ── Regenerate ────────────────────────────────────────
