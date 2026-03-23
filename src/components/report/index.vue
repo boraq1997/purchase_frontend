@@ -141,50 +141,50 @@
 
         <!-- ─── Dialog توليد تقرير جديد ─── -->
         <Dialog
-    v-model:visible="showGenerateDialog"
-    header="توليد تقرير جديد"
-    :modal="true"
-    :style="{ width: '28rem' }"
-    dir="rtl"
->
-    <div class="flex flex-column gap-4 pt-2">
-        <div class="flex flex-column gap-2">
-            <label class="font-medium text-sm">رقم طلب الشراء <span class="text-red-400">*</span></label>
-            <Select
-                v-model="generateForm.purchase_request_id"
-                :options="availablePurchaseRequests"
-                option-label="label"
-                option-value="value"
-                placeholder="اختر طلب الشراء..."
-                class="w-full"
-                :loading="loadingPurchaseRequests"
-                filter
-                filter-placeholder="ابحث..."
-                empty-message="لا توجد طلبات متاحة"
-                empty-filter-message="لا توجد نتائج"
-            />
-        </div>
-        <div class="flex flex-column gap-2">
-            <label class="font-medium text-sm">نوع التقرير</label>
-            <Select
-                v-model="generateForm.report_type"
-                :options="reportTypeOptions"
-                option-label="label"
-                option-value="value"
-                class="w-full"
-            />
-        </div>
-    </div>
-    <template #footer>
-        <Button label="إلغاء" text @click="showGenerateDialog = false" />
-        <Button
-            label="توليد"
-            icon="pi pi-check"
-            :loading="generating"
-            @click="generateReport"
-        />
-    </template>
-</Dialog>
+            v-model:visible="showGenerateDialog"
+            header="توليد تقرير جديد"
+            :modal="true"
+            :style="{ width: '28rem' }"
+            dir="rtl"
+        >
+            <div class="flex flex-column gap-4 pt-2">
+                <div class="flex flex-column gap-2">
+                    <label class="font-medium text-sm">رقم طلب الشراء <span class="text-red-400">*</span></label>
+                    <Select
+                        v-model="generateForm.purchase_request_id"
+                        :options="availablePurchaseRequests"
+                        option-label="label"
+                        option-value="value"
+                        placeholder="اختر طلب الشراء..."
+                        class="w-full"
+                        :loading="loadingPurchaseRequests"
+                        filter
+                        filter-placeholder="ابحث..."
+                        empty-message="لا توجد طلبات متاحة"
+                        empty-filter-message="لا توجد نتائج"
+                    />
+                </div>
+                <div class="flex flex-column gap-2">
+                    <label class="font-medium text-sm">نوع التقرير</label>
+                    <Select
+                        v-model="generateForm.report_type"
+                        :options="reportTypeOptions"
+                        option-label="label"
+                        option-value="value"
+                        class="w-full"
+                    />
+                </div>
+            </div>
+            <template #footer>
+                <Button label="إلغاء" text @click="showGenerateDialog = false" />
+                <Button
+                    label="توليد"
+                    icon="pi pi-check"
+                    :loading="generating"
+                    @click="generateReport"
+                />
+            </template>
+        </Dialog>
 
         <!-- ─── Dialog عرض التقرير الكامل ─── -->
         <Dialog

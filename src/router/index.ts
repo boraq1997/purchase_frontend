@@ -8,10 +8,6 @@ const routes = [
         meta: { title: 'تسجيل الدخول' }
     },
     {
-        path: '/repo',
-        component: ()=>import('../components/test/print.vue'),
-    },
-    {
         path: '/home',
         name: 'home',
         component: () => import('../components/home/home.vue'),

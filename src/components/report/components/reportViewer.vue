@@ -2,11 +2,10 @@
     <div class="report-viewer flex flex-column gap-5" dir="rtl">
 
         <!-- ═══════════════════════════════════════════════════════
-             ١. معلومات طلب الشراء
+            ١. معلومات طلب الشراء
         ═══════════════════════════════════════════════════════ -->
         <Panel header="معلومات طلب الشراء" toggleable>
             <div class="grid">
-
                 <!-- يسار: البيانات الأساسية -->
                 <div class="col-12 md:col-8">
                     <div class="grid row-gap-3">
